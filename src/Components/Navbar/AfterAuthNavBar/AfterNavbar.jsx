@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Bell, CheckCheck, X } from "lucide-react";
 import { notificationData } from "../../../utils/constants";
 
-const AfterNavbar = ({ setIsLoggedIn }) => {
+const AfterNavbar = ({ setIsLoggedIn, profileRef, closeProfileDropdown , isProfileDropdownOpen, setIsProfileDropdownOpen}) => {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(notificationData || []);
   const buttonRef = useRef(null);
@@ -37,6 +38,8 @@ const AfterNavbar = ({ setIsLoggedIn }) => {
   const markAllRead = () =>
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
 
+  const user = {name:"tanmay shah", email:'tanmay@example.com'};
+
   return (
     <nav className="hidden md:block sticky top-0 z-40 w-full backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-gray-200">
       <div className="mx-auto max-w-7xl px-6 lg:px-10 py-4 flex items-center justify-between">
@@ -54,7 +57,7 @@ const AfterNavbar = ({ setIsLoggedIn }) => {
               onClick={() => setOpen((s) => !s)}
               aria-expanded={open}
               aria-controls="notif-popover"
-              className="relative inline-flex items-center justify-center rounded-full p-2 ring-1 ring-gray-200 bg-white hover:bg-gray-50 transition shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+              className="relative inline-flex items-center justify-center rounded-full p-2 ring-1 ring-gray-200 bg-white hover:bg-gray-50 transition shadow-sm focus:outline-none"
             >
               <Bell className="w-5 h-5 text-gray-700" />
               {unreadCount > 0 && (
@@ -158,21 +161,76 @@ const AfterNavbar = ({ setIsLoggedIn }) => {
           <span className="h-6 w-px bg-gray-200" aria-hidden />
 
           {/* Profile / Logout */}
-          <button
-            onClick={() => setIsLoggedIn(false)}
-            className="group inline-flex items-center gap-3 rounded-full pl-3 pr-3.5 py-1.5 bg-white hover:bg-gray-50 ring-1 ring-gray-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+          {/* <div className="bg-amber-400"> */}
+
+          
+        <div
+          ref={profileRef}
+          onClick={() => setIsProfileDropdownOpen(prev => !prev)}
+          className="group hover:cursor-pointer inline-flex items-center 
+                    rounded-full p-1 bg-white hover:bg-gray-50 
+                    ring-1 ring-gray-200 transition focus:outline-none 
+                    focus-visible:ring-2 focus-visible:ring-green-500"
+        >
+          <img
+            className="w-9 h-9 rounded-full ring-1 ring-gray-300 shadow-sm 
+                      object-cover group-hover:scale-[1.03] transition-transform"
+            src="https://randomuser.me/api/portraits/men/45.jpg"
+            alt="Profile"
+          />
+        </div>
+
+         {isProfileDropdownOpen && (
+        <div
+          className="absolute right-2 top-full mt-2 w-48 bg-white 
+                    rounded-xl shadow-xl py-1 z-50 border border-gray-200"
+        >
+          <div className="px-4 py-3 border-b border-gray-100">
+            <p className="text-sm font-semibold text-gray-900">
+              {user.name || 'User'}
+            </p>
+            <p className="text-xs text-gray-500 truncate">
+              {user.email}
+            </p>
+          </div>
+
+          <Link
+            to="/nodue/user-profile"
+            // onClick={()=>closeProfileDropdown()}
+            className="flex items-center px-4 py-2 font-medium text-sm text-gray-700 
+              hover:bg-gray-100 transition-colors"
           >
-            <img
-              className="w-7 h-7 rounded-full ring-1 ring-gray-200"
-              src="https://randomuser.me/api/portraits/men/45.jpg"
-              alt="Profile"
-            />
-            <span className="text-sm font-medium text-gray-700 group-hover:text-green-700">
-              Logout
-            </span>
+            <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            My Profile
+          </Link>
+
+          <button
+            onClick={()=>console.log("logout clicked") }
+            className="flex items-center w-full font-medium px-4 py-2 text-sm text-gray-700 
+                      hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
           </button>
         </div>
+        )}
+
+        </div>
+        {/* </div> */}
       </div>
+      {/* Click outside to close dropdown */}
+        {/* {isProfileDropdownOpen && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={closeProfileDropdown}
+        />
+      )} */}
     </nav>
   );
 };

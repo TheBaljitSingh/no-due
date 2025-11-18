@@ -59,8 +59,8 @@ const Cards = ({reasons}) => {
                 className="
                   pointer-events-none absolute -inset-20 rounded-[3rem]
                   bg-gradient-to-tr from-teal-100 via-emerald-100 to-green-100
-                  opacity-0 blur-2xl transition group-hover:opacity-60
-                  dark:from-teal-900/30 dark:via-emerald-900/20 dark:to-green-900/20
+                  opacity-0 blur-2xl transition group-hover:opacity-40
+                  dark:from-teal-700/30 dark:via-emerald-700/20 dark:to-green-700/20
                 "
               />
             </div>

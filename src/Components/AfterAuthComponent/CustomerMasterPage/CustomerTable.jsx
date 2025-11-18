@@ -23,11 +23,11 @@ const CustomerTable = ({TableHeaders , seedCustomers}) => {
                       <td className="px-6 py-4 font-medium text-gray-900">{c.id}</td>
                       <td className="px-6 py-4 text-gray-700">{c.name}</td>
                       <td className="px-6 py-4 text-gray-700">{c.company}</td>
-                      <td className="px-6 py-4">
+                      {/* <td className="px-6 py-4">
                         <a href={`mailto:${c.email}`} className="text-blue-600 hover:text-blue-800 hover:underline">
                           {c.email}
                         </a>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap text-gray-700">{c.mobile}</td>
                       <td className="px-6 py-4 font-medium text-gray-900">{currency(c.due)}</td>
                       <td className="px-6 py-4 font-medium text-red-600">{currency(c.overdue)}</td>

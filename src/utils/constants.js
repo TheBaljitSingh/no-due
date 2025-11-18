@@ -109,11 +109,7 @@ export const SidebarFeatures = [
         icon : "HistoryIcon",
         path: "reminder-history"
     },
-    {
-        name: "User Profile",
-        icon: "profileIcon",
-        path: "user-profile"
-    }
+   
   ]
 
 export const SideBarCTC = [
@@ -134,7 +130,7 @@ export const SideBarCTC = [
     },
   ]
 
-export const TableHeaders = ["Customer Id", "Customer Name", "Company Name" , "Email" , "Phone Number" , "Due", "Overdue" , "LastReminder", "Feedback", "Status", "Actions"]
+export const TableHeaders = ["Customer Id", "Customer Name", "Company Name" ,  "Phone Number" , "Due", "Overdue" , "LastReminder", "Feedback", "Status", "Actions"]
 
 export const seedCustomers = [
   {

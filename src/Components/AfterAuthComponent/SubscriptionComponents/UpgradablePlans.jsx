@@ -94,13 +94,13 @@ const UpgradablePlans = ({upgradablePlans, selectedUpgrade, setSelectedUpgrade, 
             />
 
             {/* Payment Methods */}
-            <PaymentMethods
+            {/* <PaymentMethods
                 selectedUpgrade={selectedUpgrade}
                 setPaymentMethod={setPaymentMethod}
                 paymentMethod={paymentMethod}
                 rupee={rupee}
                 currentPlan={currentPlan}
-            />
+            /> */}
           </div>
         </div>
       )}

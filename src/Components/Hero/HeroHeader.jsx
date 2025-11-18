@@ -100,14 +100,14 @@ const HeroHeader = () => {
               className="font-bold uppercase text-3xl md:text-6xl lg:text-7xl leading-tight primary-gradient-text"
               
             >
-              Smart WhatsApp & Voice
+              Smart Automation
             </h2>
-            <h2
+            {/* <h2
                 ref={text3Ref}
                 className="font-bold uppercase text-3xl md:text-6xl lg:text-7xl leading-tight secondary-gradient-text justify-center items-center gap-2"
                 >
                 Automation
-            </h2>
+            </h2> */}
             <h2
                 ref={text32Ref}
                 className="flex-col mt-[2vw] font-bold uppercase text-3xl leading-tight secondary-gradient-text items-center justify-center gap-4"

@@ -72,6 +72,11 @@ const customerSchema = new Schema({
         enum: ["male", "female", "other"],
         default: "other",
     },
+    CustomerOfComapny:{
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    }
 }, { timestamps: true });
 const Customer = connection.model('Customer', customerSchema);
 

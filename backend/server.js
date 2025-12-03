@@ -1,5 +1,6 @@
 import fs from 'fs';
 import dotenv from 'dotenv';
+import connectDB from './database/databaseConfig.js';
 
 if (fs.existsSync('.env.development.local')) {
     dotenv.config({ path: '.env.development.local' });
@@ -14,6 +15,7 @@ const PORT = process.env.PORT || 8383;
 const startServer = async () => {
 
     try {
+        await connectDB();
         const { default: app } = await import('./config/express.config.js');
 
         app.listen(PORT, () => {

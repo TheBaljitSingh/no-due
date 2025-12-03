@@ -1,5 +1,9 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { User, Mail, Phone, Building2, MapPin, Globe, Shield, Lock, Eye, EyeOff, Camera, Trash2, Save, Bell, Crown, CreditCard, QrCode, LogOut, CheckCircle2, Download } from "lucide-react";
+import { getUserProfile } from "../../utils/service/userService";
+
+//
+
 
 const MOCK_USER = {
   name: "Tanmay Shah",
@@ -24,6 +28,21 @@ const MOCK_INVOICES = [
 ];
 
 export default function UserProfile() {
+  //const [user, setUser] = useState(null); // Fetch from API
+// useEffect(() => {
+
+//   const fetchUser = async () => {
+//     // Mock fetch delay
+//    const response = await getUserProfile();
+//     console.log("User Profile Data:", response);
+//     setUser(response.user);
+//     //setUser(MOCK_USER);
+//   };
+
+    
+//   fetchUser();
+//   }, []);
+
   const [form, setForm] = useState(MOCK_USER);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [showPw, setShowPw] = useState(false);

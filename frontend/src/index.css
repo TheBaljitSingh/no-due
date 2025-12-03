@@ -10,27 +10,27 @@ html { scroll-behavior: smooth; }
 
 @font-face {
   font-family: font2;
-  src: url('/public/fonts/font2.woff2');
+  src: url('/fonts/font2.woff2');
 }
 
 @font-face {
   font-family: font3;
-  src: url('/public/fonts/font3.woff2');
+  src: url('/fonts/font3.woff2');
 }
 
 @font-face {
   font-family: font4;
-  src: url('/public/fonts/font4.woff2');
+  src: url('/fonts/font4.woff2');
 }
 
 @font-face {
   font-family: font5;
-  src: url('/public/fonts/font5.woff2');
+  src: url('/fonts/font5.woff2');
 }
 
 @font-face {
   font-family: font6;
-  src: url('/public/fonts/font6.woff2');
+  src: url('/fonts/font6.woff2');
 }
 
 @utility primary-gradient-text {

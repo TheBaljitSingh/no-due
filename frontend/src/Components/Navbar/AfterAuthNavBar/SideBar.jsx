@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { SideBarCTC, SidebarFeatures } from "../../../utils/constants";
 import NotificationPop from "../../../utils/AfterAuthUtils/SideBarUtils/NotificationPop";
 import MobileOpenButton from "../../../utils/AfterAuthUtils/SideBarUtils/MobileOpenButton";
-import { BadgeQuestionMark, BookOpen, Calculator, CircleUserRound, ClipboardClock, Clock, Contact, LayoutDashboard,  PanelLeft,  Upload } from "lucide-react";
+import { BadgeQuestionMark, BookOpen, Calculator, CircleUserRound, ClipboardClock, Clock, Contact, LayoutDashboard,  PanelLeft,  Upload, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const SideBar = ({setIsLoggedIn , ActivePage, handleCollapse, isCollapsed}) => {
@@ -51,6 +51,8 @@ const SideBar = ({setIsLoggedIn , ActivePage, handleCollapse, isCollapsed}) => {
         )
     }
   }
+
+  
   
   return (
 <div className="min-h-screen">
@@ -60,7 +62,7 @@ const SideBar = ({setIsLoggedIn , ActivePage, handleCollapse, isCollapsed}) => {
 
   {/* Sidebar */}
   <aside
-    className={`fixed md:sticky top-0 z-50 left-0 
+    className={`fixed md:sticky top-0 z-45 left-0 
       ${isCollapsed ? "w-14" : "w-64"} 
       h-screen transition-all bg-white border-r border-gray-200
       ${open ? "translate-x-0" : "-translate-x-full"}
@@ -87,6 +89,21 @@ const SideBar = ({setIsLoggedIn , ActivePage, handleCollapse, isCollapsed}) => {
         />
 
         {/* Collapse Icon (hover or always visible based on isCollapsed) */}
+        {/* on mobile, render cross, else render panelleft */}
+        
+          <X
+          onClick={()=>setOpen(false)}
+            className="
+              md:hidden        
+              block            
+              absolute right-2 top-4
+              w-7 h-7 text-gray-600 
+              p-1 rounded-md hover:bg-gray-100 
+              cursor-pointer transition z-50
+            "
+          />
+
+        
         <PanelLeft
           onClick={handleCollapse}
           className={`hidden md:block
@@ -100,6 +117,7 @@ const SideBar = ({setIsLoggedIn , ActivePage, handleCollapse, isCollapsed}) => {
             }
           `}
         />
+        
 
       </div>
 

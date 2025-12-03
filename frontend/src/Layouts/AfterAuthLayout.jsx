@@ -58,7 +58,7 @@ useEffect(()=>{
 useLayoutEffect(()=>{
   
     const isSidebarCollapsed = localStorage.getItem('sidebar-collapsed');
-    if(isSidebarCollapsed!==null){
+    if(isSidebarCollapsed!==null && window.innerWidth>425){
       setIsCollapsed(isSidebarCollapsed==='true') // using according to the localstorage
     }
   
@@ -72,15 +72,14 @@ useLayoutEffect(()=>{
     <div
       className={`
         
-        md:w-[${isCollapsed ? "60px" : "clamp(100px,20vw,200px)"}] top-0 h-full z-40 transition-all   h-screen
-        sticky top-0
+        md:w-[${isCollapsed ? "60px" : "clamp(100px,20vw,200px)"}] top-0 z-40 transition-all h-screen
+        sticky 
         bg-white
-        transition-all
       `}
     >
       {/* Sidebar inner scroll area: overflow-y-auto */}
 
-      <div className="h-full  sidebar-scroll overflow-visible">
+      <div className="h-full sidebar-scroll overflow-visible">
         <SideBar
           setIsLoggedIn={setIsLoggedIn}
           ActivePage={ActivePage}

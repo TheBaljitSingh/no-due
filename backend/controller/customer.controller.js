@@ -3,31 +3,57 @@ import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";// statusCode, message, data, success(automatic)
 
 export const createCustomer = async (req, res) => {
-    try {
-        //client have to send required data otherwise it wil produce error
-        
-        const customerData = req.body;
-        if(Array.isArray(customerData)){
-            // bulk upload
-            // [{},{}]
-            //ordered: false for continue even single row fail. default is true
-            const insertedData = await Customer.insertMany(customerData); 
-            console.log(insertedData);
+  try {
+    const customerData = req.body;
+    const userId = "6931a1b5ea27b875a683e9cd";
 
-            return new APIResponse(201, insertedData, `${insertedData.length} customers data Inserted`).send(res);
+    if (!customerData) {
+      return new APIResponse(400, null, "Data is required").send(res);
+    }
 
-        }else{
-            //normal creation
-            // {}
-            const newCustomer = new Customer(customerData);
-            await newCustomer.save();
-            return new APIResponse(201, newCustomer, "Customer created successfully").send(res);
-        }
+    if (Array.isArray(customerData)) {
 
-    } catch (error) {
-      return new APIError(500, error, "Failed to create customer").send(res);
-}
+      const formattedData = customerData.map(c => ({
+        ...c,
+        CustomerOfComapny: userId
+      }));
+
+      console.log("Formatted Data:", formattedData);
+
+      const inserted = await Customer.insertMany(formattedData ); // if any error it roll back, use boolean if required
+
+      return new APIResponse(
+        201,
+        inserted,
+        `${inserted.length} customers inserted`
+      ).send(res);
+    }
+
+    customerData.CustomerOfComapny = userId;
+
+    const newCustomer = new Customer(customerData);
+    await newCustomer.save();
+
+    return new APIResponse(201, newCustomer, "Customer created successfully").send(res);
+
+
+  } catch (error) {
+    console.log(error);
+
+    if (error.name === "ValidationError") {
+      const errors = {};
+
+      Object.keys(error.errors).forEach((field) => {
+        errors[field] = error.errors[field].message;
+      });
+
+      return new APIError(400, errors, "Validation Failed").send(res);
+    }
+
+    return new APIError(500, error?.message, "Failed to create customer").send(res);
+  }
 };
+
 
 export const getCustomers = async(req, res)=>{
     try {

@@ -12,9 +12,9 @@ const CustomerMobileCard = () => {
   useEffect(()=>{
       const fetchCustomers = async () => {
         try {
-          const customers = await getCustomers({page, limit});
+          const data = await getCustomers({page, limit});
           console.log(customers);
-          setCustomers(customers);
+          setCustomers(data.customers);
         } catch (error) {
           console.log(error);
         }

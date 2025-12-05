@@ -1,8 +1,64 @@
-import React from 'react'
+import React, { useEffect, useRef, useState} from 'react'
 import PageHeaders from '../../../utils/AfterAuthUtils/PageHeaders'
 import { UploadCloud, FileSpreadsheet } from 'lucide-react'
+import PreviewCustomerModel from "./PreviewCustomerModel"
 
 const BulkEntrySection = ({selectedFile , setSelectedFile}) => {
+
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState({});
+  const previewRef = useRef();
+
+
+  useEffect(()=>{
+    const handleMouseClick = (e)=>{
+      if(!showPreview) return;
+
+      if(previewRef!==undefined && previewRef.current.contains(e.target)){
+        return;
+      }
+
+      setShowPreview(false);
+    
+    }
+    document.addEventListener("mousedown", handleMouseClick);
+
+    return ()=> document.removeEventListener("mousedown", handleMouseClick);
+  });
+
+
+ const csvTextToJson = (csvText) => {
+  const lines = csvText.trim().split("\n");
+  const headers = lines[0].split(",").map(h => h.replace(/"/g, "").trim());
+
+  return lines.slice(1).map(line => {
+    const values = line.split(",").map(v => v.replace(/"/g, "").trim());
+    let obj = {};
+
+    headers.forEach((header, index) => {
+      obj[header] = values[index] || "";
+    });
+
+    return obj;
+  });
+};
+
+const csvFileToJson = (file) => {
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const csvText = event.target.result;
+    const json = csvTextToJson(csvText);
+    console.log("Converted JSON:", json);
+    setPreviewData(json);
+  };
+
+  reader.readAsText(file);
+};
+
+  const handleSubmitEntry = ()=>{
+    console.log("after preview sumit is clicked");
+  }
   return (
     <div className='min-w-0 w-full'>
         <PageHeaders 
@@ -41,7 +97,10 @@ const BulkEntrySection = ({selectedFile , setSelectedFile}) => {
                   id="dropzone-file" 
                   type="file" 
                   accept=".csv,.xls,.xlsx"
-                  onChange={(e) => setSelectedFile(e.target.files[0])} 
+                  onChange={e =>{
+                    setSelectedFile(e.target.files[0]);
+                    csvFileToJson(e.target.files[0]);
+                  }} 
                   className="hidden" 
                 />
             </label>
@@ -61,15 +120,20 @@ const BulkEntrySection = ({selectedFile , setSelectedFile}) => {
                 alert('Please select a file first');
                 return;
               }
-              alert('Bulk entries created successfully!');
-              setSelectedFile(null);
+              setShowPreview(true);
+              
             }} 
             className="px-5 py-2.5 text-sm font-medium text-white component-button-green transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!selectedFile}
           >
-            Upload & Create Entries
+            Preview & Create Entries
           </button>
         </div>
+
+      {showPreview && <div ref={previewRef}> 
+        <PreviewCustomerModel data={previewData} setData={setPreviewData} handleClose={()=>setShowPreview(false)} handleSubmit={handleSubmitEntry} /> </div>}
+      {/* i have to send the dummy data here */}
+
     </div>
   )
 }

@@ -1,8 +1,8 @@
-import api from "./api";
+import api from "../service/api.js";
 
 export const getUserProfile = async () => {
     try {
-        const response = await api.get('/v1/user/profile');
+        const response = await api.get('/api/v1/auth/me');
         return response.data;
     } catch (error) {
         throw error;

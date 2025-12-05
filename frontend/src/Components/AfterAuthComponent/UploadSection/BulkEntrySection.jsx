@@ -12,7 +12,7 @@ const BulkEntrySection = ({selectedFile , setSelectedFile}) => {
         buttonName={'Download Template'}
         />
       
-        <div className="flex items-center justify-center md:w-6xl w-full mt-6">
+        <div className="flex items-center justify-center w-full mt-6">
             <label 
               htmlFor="dropzone-file" 
               className="flex flex-col items-center justify-center w-1/2 h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors group"

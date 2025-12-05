@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from 'react-toastify';
-import api from "../api/api.js";
+import api from "../utils/service/api.js";
 
 
 const AuthContext = createContext();
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (credentials) => {
         const response = await api.post("/api/v1/auth/login", credentials);
-        // await fetchUser(); // refresh user after login
+        await fetchUser(); // refresh user after login
         return response;
     };
 

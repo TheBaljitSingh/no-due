@@ -1,5 +1,5 @@
 import React from "react";
-import { seedCustomers, TableHeaders } from "../../utils/constants";
+import { TableHeaders } from "../../utils/constants";
 import PageHeaders from "../../utils/AfterAuthUtils/PageHeaders";
 import CustomerTable from "../../Components/AfterAuthComponent/CustomerMasterPage/CustomerTable";
 import CustomerMobileCard from "../../Components/AfterAuthComponent/CustomerMasterPage/CustomerMobileCard";
@@ -19,10 +19,11 @@ const CustomerMaster = () => {
      />
 
       {/* Desktop Table */}
-      <CustomerTable TableHeaders={TableHeaders} seedCustomers={seedCustomers}/>
+      <CustomerTable TableHeaders={TableHeaders}/>
 
       {/* Mobile Cards */}
-      <CustomerMobileCard seedCustomers={seedCustomers}/>
+      <CustomerMobileCard />
+      {/* seedCustomers={seedCustomers} */}
     </div>
   );
 };

@@ -40,14 +40,16 @@ const AfterNavbar = ({ setIsLoggedIn, profileRef, closeProfileDropdown, isProfil
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
 
   // const user = {name:"Tanmay Singh", email:"tanmay@singh.com"}
-  const {user} = useAuth();
+  const {user, logout} = useAuth();
+
+
 
   return ( 
     <nav className="hidden md:block sticky top-0 z-40 w-full backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-gray-200">
       <div className="mx-auto md:max-w-7xl  px-10 md:px-12 lg:px-10 py-4 flex items-center justify-between">
         {/* Welcome */}
         <h1 className="text-[17px] sm:text-lg font-semibold tracking-tight text-gray-800">
-          Welcome, <span className="text-gray-900">Tanmay Seth</span> 👋
+          Welcome, <span className="text-gray-900">{user?.name}</span> 👋
         </h1>
 
         {/* Right cluster */}
@@ -208,7 +210,7 @@ const AfterNavbar = ({ setIsLoggedIn, profileRef, closeProfileDropdown, isProfil
               </Link>
 
               <button
-                onClick={() => alert("logged out")}
+                onClick={logout}
                 className="flex hover:cursor-pointer items-center w-full font-medium px-4 py-2 text-sm text-gray-700 
                       hover:bg-gray-100 transition-colors"
               >

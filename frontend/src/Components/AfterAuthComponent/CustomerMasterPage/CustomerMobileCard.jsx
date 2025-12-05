@@ -1,11 +1,33 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { currency, formatDate, StatusBadge } from '../../../utils/AfterAuthUtils/Helpers'
+import { getCustomers } from '../../../utils/service/customerService';
 
-const CustomerMobileCard = ({seedCustomers}) => {
+const CustomerMobileCard = () => {
+
+
+  const [customers, setCustomers] = useState([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  
+  useEffect(()=>{
+      const fetchCustomers = async () => {
+        try {
+          const customers = await getCustomers({page, limit});
+          console.log(customers);
+          setCustomers(customers);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+  
+      fetchCustomers();
+  
+  },[page, limit]);
+
   return (
     <div className="md:hidden space-y-4">
-           {seedCustomers.map((c) => (
-             <div key={c.id} className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+           {customers.map((c) => (
+             <div key={c._id} className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
                <div className="p-4 space-y-3">
                  <div className="flex items-start justify-between">
                    <div className="flex-1 min-w-0">
@@ -18,7 +40,7 @@ const CustomerMobileCard = ({seedCustomers}) => {
                  <div className="space-y-2 text-sm">
                    <div className="flex justify-between">
                      <span className="text-gray-600">ID:</span>
-                     <span className="font-medium text-gray-900">{c.id}</span>
+                     <span className="font-medium text-gray-900">{c._id}</span>
                    </div>
                    <div className="flex justify-between">
                      <span className="text-gray-600">Due:</span>
@@ -53,7 +75,7 @@ const CustomerMobileCard = ({seedCustomers}) => {
              </div>
            ))}
    
-           {seedCustomers.length === 0 && (
+           {customers.length === 0 && (
              <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-12 text-center text-gray-500">
                No customers found.
                <img className="mx-auto" src="https://img.freepik.com/premium-vector/file-folder-mascot-character-design-vector_166742-4371.jpg" alt="" />
@@ -65,7 +87,7 @@ const CustomerMobileCard = ({seedCustomers}) => {
            <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-4">
              <div className="flex flex-col gap-3">
                <div className="text-sm text-gray-700">
-                 Total: <strong className="font-semibold text-gray-900">{seedCustomers.length}</strong> customers
+                 Total: <strong className="font-semibold text-gray-900">{customers.length}</strong> customers
                </div>
                <div className="flex gap-2">
                  <button className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Export CSV</button>

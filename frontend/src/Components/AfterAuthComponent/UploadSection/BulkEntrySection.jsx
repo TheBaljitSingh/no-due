@@ -5,6 +5,7 @@ import PreviewCustomerModel from "./PreviewCustomerModel"
 import { createCustomers } from '../../../utils/service/customerService'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
+import logger from "../../../utils/logger.js"
 
 const BulkEntrySection = () => {
 
@@ -86,7 +87,7 @@ const csvFileToJson = (file) => {
         <PageHeaders 
         header={'Upload Bulk Entries'} 
         subheader={'Import multiple customer records at once using CSV or Excel files'} 
-        handleOnClick={() => console.log('clicked from upload section')} 
+        handleOnClick={() => logger.log('clicked from upload section')} 
         buttonName={'Download Template'}
         />
       

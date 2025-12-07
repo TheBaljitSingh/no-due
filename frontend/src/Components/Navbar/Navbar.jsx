@@ -6,6 +6,8 @@ import { href, Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../../utils/service/userService";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
+import logger from "../../utils/logger.js";
+
 
 const links = [
   { href: "/",     label: "Home" },
@@ -186,7 +188,7 @@ const Navbar = ({setIsLoggedIn}) => {
                   onClose={() => setOpenLogin(false)}
                   setIsLoggedIn={setIsLoggedIn}
                   onSubmit={(creds) => {
-                  console.log("Login with:", creds);
+                  logger.log("Login with:", creds);
                   // TODO: call your API; on success:
                   setOpenLogin(false);
                   }}

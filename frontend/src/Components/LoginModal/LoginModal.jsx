@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate} from "react-router-dom";
 import { registerUser } from "../../utils/service/userService";
+import logger from "../../utils/logger.js"
 
 export default function AuthModal({ open, onClose, onSubmit , setIsLoggedIn }) {
   const dialogRef = useRef(null);
@@ -281,14 +282,14 @@ function Demo() {
   const [open, setOpen] = useState(true);
   
   const handleSubmit = async(data) => {
-    console.log('Form submitted:', data);
+    logger.log('Form submitted:', data);
 
     if(data.type=="signup"){
-      console.log("signup is begin called");
+      logger.log("signup is begin called");
       // const response = register(data);
-      console.log(response);
+      logger.log(response);
     }else{
-      console.log("sign in");
+      logger.log("sign in");
       //login
     }
 

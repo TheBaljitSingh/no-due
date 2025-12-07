@@ -3,6 +3,7 @@ import React, { useState, useCallback } from "react";
 import logo from "../../assets/logo.png";
 import LoginModal from "../LoginModal/LoginModal";
 import { href, Link, useNavigate } from "react-router-dom";
+import logger from "../../utils/logger.js";
 
 const links = [
   { href: "/",     label: "Home" },
@@ -90,7 +91,7 @@ const Navbar = ({setIsLoggedIn}) => {
                 onClose={() => setOpenLogin(false)}
                 setIsLoggedIn={setIsLoggedIn}
                 onSubmit={(creds) => {
-                console.log("Login with:", creds);
+                logger.log("Login with:", creds);
                 // TODO: call your API; on success:
                 setOpenLogin(false);
                 }}
@@ -148,7 +149,7 @@ const Navbar = ({setIsLoggedIn}) => {
                   onClose={() => setOpenLogin(false)}
                   setIsLoggedIn={setIsLoggedIn}
                   onSubmit={(creds) => {
-                  console.log("Login with:", creds);
+                  logger.log("Login with:", creds);
                   // TODO: call your API; on success:
                   setOpenLogin(false);
                   }}

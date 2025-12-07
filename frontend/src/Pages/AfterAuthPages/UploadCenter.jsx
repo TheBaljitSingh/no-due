@@ -3,6 +3,7 @@ import { ArrowDownUp, ArrowUpDown} from 'lucide-react'
 import { CustomerNames } from '../../utils/constants';
 import BulkEntrySection from '../../Components/AfterAuthComponent/UploadSection/BulkEntrySection';
 import SingleEntryCreation from '../../Components/AfterAuthComponent/UploadSection/SingleEntryCreation';
+import logger from '../../utils/logger.js';
 
 const UploadCenter = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -10,7 +11,7 @@ const UploadCenter = () => {
   const [inverted , setInverted] = useState(false);
 
 
-  console.log(CustomerNames)
+  logger.log(CustomerNames)
   return (
   <div className="max-w-7xl mx-auto md:px-4 px-6 lg:px-8 py-6">
     {

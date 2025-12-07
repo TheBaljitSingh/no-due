@@ -2,7 +2,6 @@ import { Check } from 'lucide-react';
 import React from 'react'
 
 const DownGradablePlans = ({downgradePlan, selectedUpgrade, setSelectedUpgrade, rupee, currentPlan}) => {
-    console.log("sd", downgradePlan);
     
   return (
     <div>

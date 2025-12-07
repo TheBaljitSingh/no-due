@@ -1,6 +1,7 @@
 import React from 'react'
 import PageHeaders from '../../../utils/AfterAuthUtils/PageHeaders'
 import { UploadCloud, FileSpreadsheet } from 'lucide-react'
+import logger from "../../../utils/logger/js"
 
 const BulkEntrySection = ({selectedFile , setSelectedFile}) => {
   return (
@@ -8,7 +9,7 @@ const BulkEntrySection = ({selectedFile , setSelectedFile}) => {
         <PageHeaders 
         header={'Upload Bulk Entries'} 
         subheader={'Import multiple customer records at once using CSV or Excel files'} 
-        handleOnClick={() => console.log('clicked from upload section')} 
+        handleOnClick={() => logger.log('clicked from upload section')} 
         buttonName={'Download Template'}
         />
       

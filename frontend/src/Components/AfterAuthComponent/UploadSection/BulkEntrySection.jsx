@@ -4,6 +4,7 @@ import { UploadCloud, FileSpreadsheet } from 'lucide-react'
 import PreviewCustomerModel from "./PreviewCustomerModel"
 import { createCustomers } from '../../../utils/service/customerService'
 import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router-dom'
 
 const BulkEntrySection = () => {
 
@@ -11,6 +12,7 @@ const BulkEntrySection = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewData, setPreviewData] = useState({});
   const previewRef = useRef();
+  const naviage = useNavigate();
 
 
   useEffect(()=>{
@@ -67,12 +69,14 @@ const csvFileToJson = (file) => {
       toast.success(response?.message);
       setTimeout(()=>{
         setShowPreview(false);
+        setSelectedFile(null);
+        naviage("/nodue/customer-master");
       },2000)
     }
       
     } catch (error) {
       console.log(error);
-      toast.error("Failed to create bulk entries");
+      toast.error(error?.response?.data?.message ||"Failed to create bulk entries");
       
     }
 

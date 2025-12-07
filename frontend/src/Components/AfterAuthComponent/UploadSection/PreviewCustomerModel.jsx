@@ -19,12 +19,11 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
       <div className="bg-white w-[90%] max-w-4xl rounded-lg shadow-lg p-6 relative">
 
         {/* Close Button */}
-        <button
-          onClick={handleClose}
-          className="absolute hover:cursor-pointer top-3 right-3 text-gray-600 hover:text-gray-800"
-        >
-          <X size={28} />
-        </button>
+      <button onClick={handleClose} className="absolute top-3 right-3 bg-white rounded-2xl shadow-[0_8px_10px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_12px_rgba(0,0,0,0.4)] text-gray-600 hover:text-gray-800 flex items-center justify-center cursor-pointer">
+  <X size={22} />
+</button>
+
+
 
         {/* Header */}
         <h2 className="text-xl font-semibold mb-4 text-gray-800">

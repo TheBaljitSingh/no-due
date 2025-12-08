@@ -1,13 +1,13 @@
 import session from 'express-session';
-// import MongoStore from 'connect-mongo';
+import MongoStore from 'connect-mongo';
 
 const isProd = process.env.NODE_ENV === 'production';
 
-// export const sessionStore = MongoStore.create({
-//   mongoUrl: process.env.MONGODB1_URL,
-//   ttl: 24 * 60 * 60,
-//   touchAfter: 24 * 3600,
-// });
+export const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGO_URI,
+  ttl: 24 * 60 * 60,
+  touchAfter: 24 * 3600,
+});
 
 export const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET,
@@ -15,7 +15,7 @@ export const sessionMiddleware = session({
   saveUninitialized: false,
   name: 'connect.sid',
   proxy: true,
-//   store: sessionStore,
+  store: sessionStore,
   cookie: {
     secure: isProd, //user secure in prod
     httpOnly: true, // prevent client side javascript from accessing cookies 

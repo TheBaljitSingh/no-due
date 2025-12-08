@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../utils/service/userService";
-import { loginUser } from "../../utils/service/authService";
+import { googleLogin, loginUser } from "../../utils/service/authService";
 import LoadingSkeleton from "../../utils/LoadingSkeleton";
 
 export default function LoginModal({ open, onClose, setIsLoggedIn }) {
@@ -185,6 +185,20 @@ export default function LoginModal({ open, onClose, setIsLoggedIn }) {
     };
   };
 
+  const googleLoginButton=async()=>{
+    console.log("Google login clicked");
+    try{
+      setLoading(true);
+     const response= await googleLogin();
+     console.log("Google login response:",response);
+    }catch(err){
+      console.error("Error during Google login:", err);
+      setErr("Google login failed. Please try again.");
+    }finally{
+      setLoading(false);
+    }
+  };
+
   if (!open) return null;
 
   if (Loading) {
@@ -224,6 +238,19 @@ export default function LoginModal({ open, onClose, setIsLoggedIn }) {
         </div>
 
         <div className="space-y-4">
+        <button
+  type="button"
+  onClick={googleLoginButton}
+  className="w-full flex items-center justify-center gap-2 rounded border border-gray-300 px-4 py-3 text-sm font-medium hover:bg-gray-50 transition"
+>
+  <img
+    src="https://www.svgrepo.com/show/475656/google-color.svg"
+    className="h-5 w-5"
+  />
+  Continue with Google
+</button>
+
+
           {isSignUp && (
             <div className="flex gap-3">
               <div className="flex-1">

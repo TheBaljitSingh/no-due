@@ -1,6 +1,7 @@
 import { Schema } from 'mongoose';
 import validator from 'validator';
 import { connection } from '../database/databaseConfig';
+import bcrypt from 'bcryptjs';
 
 const addressSchema = new Schema({
     street: {
@@ -71,6 +72,10 @@ const userSchema = new Schema({
             message:
                 'Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.',
         },
+    },
+    googleId: {
+        type: String,
+        unique: false,//as local users will have the same id field
     },
     phone: {
         type: String,

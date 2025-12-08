@@ -15,19 +15,6 @@ export const googleLoginCallback = passport.authenticate('google',{
     session: true,
 });
 
-export const myProfile = (req, res)=>{
-   try {
-     if(!req.user){
-             return new APIError(401,['unauthorized']).send(res);
-     }
- 
-     return new APIResponse(200, req.user, "Your Data").send();
-   } catch (error) {
-        return new APIError(401,['error while feching your profile']).send(res);
-    
-   }
-
-}
 
 export const geGoogleProfile = (req,res) => {
     if(!req.user){

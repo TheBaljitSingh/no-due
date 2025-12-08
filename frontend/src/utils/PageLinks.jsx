@@ -17,6 +17,8 @@ import Documentation from "../Pages/AfterAuthCTCPages/Documentation";
 import HelpPage from "../Pages/AfterAuthCTCPages/HelpPage";
 import Error404Page from "../Pages/Error404Page";
 import CustomerCreationPage from "../Pages/AfterAuthPages/CustomerCreationPage";
+import ProtectedRoute from "../context/ProtectedRoute.jsx"
+import LoginComponent from "../Components/auth/LoginComponent.jsx"
 
 const PageLinks = () => {
   const location = useLocation();
@@ -37,12 +39,13 @@ const PageLinks = () => {
           }
         />
         <Route path="/contact" element={<PageShell keyId={keyId}><Contact /></PageShell>} />
+        <Route path="/login" element={<Navigate to="/" state={{openLogin: true}} replace />} />
       </Route>
 
       {/* AUTH AREA */}
       <Route
         path="/nodue"
-        element={<AfterAuthLayout setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />}
+        element={<ProtectedRoute> <AfterAuthLayout setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} /></ProtectedRoute>}
       >
         {/* If user hits /nodue, land on first active page */}
         <Route index element={<Navigate to="customer-master" replace />} />

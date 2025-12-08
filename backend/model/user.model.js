@@ -133,15 +133,18 @@ const userSchema = new Schema({
     },
 }, { timestamps: true });
 
-userSchema.pre('save', function (next) {
-    if (!this.isModified('password')) return next();
-    try {
-        const salt = bcrypt.genSaltSync(10);
-        this.password = bcrypt.hashSync(this.password, salt);
-        return next();
-    } catch (err) {
-        return err;
-    }
+userSchema.pre('save', async function (next) {
+   try {
+    if (!this.isModified('password')) return ;
+    const salt =  bcrypt.genSaltSync(10);
+    this.password =  bcrypt.hashSync(this.password, salt);
+    
+    return;
+   } catch (error) {
+    
+    console.log(error);
+    
+   }
 
 });
 

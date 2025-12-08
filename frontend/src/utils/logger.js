@@ -1,5 +1,7 @@
 
-const isDev = import.meta.env.ENVIRONMENT === "development"; 
+const isDev = import.meta.env.VITE_APP_ENVIRONMENT === "development"; 
+const isProd = import.meta.env.VITE_APP_ENVIRONMENT === "production";
+
 
 const logger = {
   log: (...args) => {
@@ -16,6 +18,16 @@ const logger = {
 
   error: (...args) => {
     console.error(...args);
+
+    if (!isProd) return; 
+
+    const first = args[0];
+
+    if (first instanceof Error) {
+      Sentry.captureException(first);
+    } else {
+      Sentry.captureMessage(args.join(" "), { level: "error" });
+    }
   },
 };
 

@@ -11,10 +11,11 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
 
+
     const fetchUser = async () => {
         try {
-            const {data}  = await api.get("/api/v1/auth/me"); // backend route to return user info
-            setUser(data.user);
+            const {data}  = await api.get("/api/v1/auth/check-auth"); // backend route to return user info
+            setUser(data?.data?.user);
         } catch (err) {
             // toast.error(err?.message)
             setUser(null);

@@ -1,8 +1,8 @@
 // Navbar.jsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import logo from "../../assets/logo.png";
 import LoginModal from "../LoginModal/LoginModal";
-import { href, Link, useNavigate } from "react-router-dom";
+import { href, Link, useNavigate, useLocation } from "react-router-dom";
 import { registerUser } from "../../utils/service/userService";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
@@ -25,6 +25,19 @@ const Navbar = ({setIsLoggedIn}) => {
 
   const navigate = useNavigate();
   const {login, register} = useAuth();
+
+
+  const location = useLocation();
+
+  useEffect(()=>{
+    //this is very important usecase of useLocation state
+    if(location?.state?.openLogin){
+      logger.log(location.state);
+      setOpenLogin(true);
+    }
+
+    navigate(location.pathname, {replace:true, state:null});
+  },[]);
 
 
   const handleNavClick = useCallback((e, href) => {
@@ -53,6 +66,7 @@ const Navbar = ({setIsLoggedIn}) => {
 
   const handleLogin = async (data) => {
   if (data.type === 'signup') {
+    //SIGNUP FORM
     const filteredData = {
       name: `${data.firstName}${data.lastName}`,
       email: data.email,
@@ -62,8 +76,13 @@ const Navbar = ({setIsLoggedIn}) => {
     try {
       const response = await register(filteredData);
       console.log(response);
+      if(!response.data.success){
+        toast.error("Signup failed");
+        return;
+      }
+      toast.success("Signup Successfully");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Signup failed");
+      toast.error(error.response?.data?.errors[0] || error.response?.data?.message || "Signup failed");
     }
 
   } else {
@@ -81,8 +100,9 @@ const Navbar = ({setIsLoggedIn}) => {
       setTimeout(() => navigate("/nodue"), 1500);
 
     } catch (error) {
+      logger.log(error);
 
-      toast.error(error.response?.data?.message || "Invalid credentials");
+      toast.error(error.response?.data?.errors[0] || error.response?.data?.message || "Invalid credentials");
     }
   }
 };

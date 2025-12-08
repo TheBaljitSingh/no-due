@@ -7,6 +7,8 @@ export const googleLogin = passport.authenticate('google',{
     session: true,
 });
 
+console.log(process.env.backend_URL);
+
 export const googleLoginCallback = passport.authenticate('google',{
     successRedirect:`${process.env.backend_URL}/api/v1/auth/profile`,
     failureRedirect:`${process.env.CLIENT_URL}/login`,
@@ -18,11 +20,11 @@ export const geGoogleProfile = (req,res) => {
         return new APIError(401,['unauthorized']).send(res);
     }
 
-    if(req.user.isProfileComplete){
-        return res.redirect(`${process.env.CLIENT_URL}/dashboard`)
+    if(req.user.isProfileComplete){ //will decide later
+        return res.redirect(`${process.env.CLIENT_URL}/nodue/dashboard`)
     }
     else{
-    res.redirect(`${process.env.CLIENT_URL}/profile`)
+    res.redirect(`${process.env.CLIENT_URL}/nodue/dashboard`)
     }
 };
 

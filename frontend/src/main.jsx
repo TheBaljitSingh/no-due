@@ -7,6 +7,12 @@ import "flowbite";
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import * as Sentry from "@sentry/react";
+
+Sentry.init({ // for loggin and error on production
+  dsn: import.meta.VITE_SENETRY_DNS,
+  sendDefaultPii: true
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

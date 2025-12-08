@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import { Schema, Types } from "mongoose";
 import { connection } from "../database/databaseConfig.js";
 
 const customerSchema = new Schema({
@@ -69,8 +69,7 @@ const customerSchema = new Schema({
         default: "other",
     },
     CustomerOfComapny:{
-        //foreign key related to user
-        type: Schema.Types.ObjectId,
+        type: Types.ObjectId,
         ref: 'User',
         required: true,
     }

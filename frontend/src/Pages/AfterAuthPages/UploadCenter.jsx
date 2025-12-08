@@ -10,7 +10,6 @@ const UploadCenter = () => {
 
 
   logger.log(CustomerNames)
-
   return (
   <div className="max-w-7xl mx-auto md:px-4 px-6 lg:px-8 py-6">
     {

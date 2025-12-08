@@ -1,26 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { User, Mail, Phone, Building2, MapPin, Globe, Shield, Lock, Eye, EyeOff, Camera, Trash2, Save, Bell, Crown, CreditCard, QrCode, LogOut, CheckCircle2, Download } from "lucide-react";
 
-
 //
 
 
-const MOCK_USER = {
-  name: "Tanmay Shah",
-  email: "tanmay@example.com",
-  phone: "+91 99999 99999",
-  company: "Insansa Techknowledge Pvt Ltd",
-  gst: "27ABCDE1234F1Z5",
-  website: "https://insansa.com",
-  country: "India",
-  state: "Rajasthan",
-  city: "Udaipur",
-  pincode: "313001",
-  address: "24, Lakeview Park",
-  locale: "en-IN",
-  timezone: "Asia/Kolkata",
-  plan: { name: "Growth", price: 999, renewsOn: "2025-11-01" },
-};
+// const MOCK_USER = {
+//   name: "Tanmay Shah",
+//   email: "tanmay@example.com",
+//   phone: "+91 99999 99999",
+//   company: "Insansa Techknowledge Pvt Ltd",
+//   gst: "27ABCDE1234F1Z5",
+//   website: "https://insansa.com",
+//   country: "India",
+//   state: "Rajasthan",
+//   city: "Udaipur",
+//   pincode: "313001",
+//   address: "24, Lakeview Park",
+//   locale: "en-IN",
+//   timezone: "Asia/Kolkata",
+//   plan: { name: "Growth", price: 999, renewsOn: "2025-11-01" },
+// };
 
 const MOCK_INVOICES = [
   { id: "INV-1008", date: "2025-10-01", amount: 499, status: "Paid" },
@@ -28,22 +27,21 @@ const MOCK_INVOICES = [
 ];
 
 export default function UserProfile() {
-  //const [user, setUser] = useState(null); // Fetch from API
-// useEffect(() => {
+  // const [user, setUser] = useState(null); // Fetch from API
+  const {user} = useAuth();
+  const [form, setForm] = useState(user);
 
-//   const fetchUser = async () => {
-//     // Mock fetch delay
-//    const response = await getUserProfile();
-//     console.log("User Profile Data:", response);
-//     setUser(response.user);
-//     //setUser(MOCK_USER);
-//   };
+  useEffect(()=>{
+    if(user) {
+      setForm((prev)=>({
+        ...prev,
+        ...user,
+        plan :{ name: "Growth", price: 999, renewsOn: "2025-11-01" }, //taking dummy data  
+      }));
+    }
+  },[user])
 
-    
-//   fetchUser();
-//   }, []);
 
-  const [form, setForm] = useState(MOCK_USER);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [twoFA, setTwoFA] = useState(false);
@@ -73,6 +71,10 @@ export default function UserProfile() {
     setPwd({ current: "", next: "", confirm: "" });
   };
 
+  // useEffect(()=>{
+  //   console.log(form);
+  // },[])
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Google-style Header */}
@@ -117,16 +119,16 @@ export default function UserProfile() {
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatar}/>
               </div>
               <div className="flex-1 pt-4">
-                <h2 className="text-2xl font-semibold text-gray-100">{form.name || "—"}</h2>
-                <p className="text-gray-600">{form.email}</p>
-                <p className="text-sm text-gray-500">{form.phone}</p>
+                <h2 className="text-2xl font-semibold text-gray-100">{form?.name || "—"}</h2>
+                <p className="text-gray-600">{form?.email}</p>
+                <p className="text-sm text-gray-500">{form?.phone}</p>
               </div>
               <div className="pt-4">
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg px-4 py-3">
                   <Crown className="w-5 h-5 text-amber-600"/>
                   <div>
                     <div className="text-xs font-medium text-amber-900">Current Plan</div>
-                    <div className="text-sm font-semibold text-amber-900">{form?.plan?.name} · {planText}</div>
+                    <div className="text-sm font-semibold text-amber-900">{form?.plan?.name } · {planText}</div>
                   </div>
                 </div>
               </div>
@@ -144,28 +146,28 @@ export default function UserProfile() {
                 <Field 
                   label="Full Name" 
                   icon={<User className='w-4 h-4'/>} 
-                  value={form.name} 
+                  value={form?.name} 
                   onChange={(v)=>onChange('name', v)} 
                   placeholder="Enter your full name"
                 />
                 <Field 
                   label="Email Address" 
                   icon={<Mail className='w-4 h-4'/>} 
-                  value={form.email} 
+                  value={form?.email} 
                   onChange={(v)=>onChange('email', v)} 
                   placeholder="you@company.com"
                 />
                 <Field 
                   label="Phone Number" 
                   icon={<Phone className='w-4 h-4'/>} 
-                  value={form.phone} 
+                  value={form?.phone} 
                   onChange={(v)=>onChange('phone', v)} 
                   placeholder="+91 XXXXX XXXXX"
                 />
                 <Field 
                   label="Website" 
                   icon={<Globe className='w-4 h-4'/>} 
-                  value={form.website} 
+                  value={form?.website} 
                   onChange={(v)=>onChange('website', v)} 
                   placeholder="https://example.com"
                 />
@@ -178,14 +180,14 @@ export default function UserProfile() {
                 <Field 
                   label="Company Name" 
                   icon={<Building2 className='w-4 h-4'/>} 
-                  value={form.company} 
+                  value={form?.companyName} 
                   onChange={(v)=>onChange('company', v)} 
                   placeholder="Your company name"
                 />
                 <Field 
                   label="GST Number" 
                   icon={<CreditCard className='w-4 h-4'/>} 
-                  value={form.gst} 
+                  value={form?.GSTNumber} 
                   onChange={(v)=>onChange('gst', v)} 
                   placeholder="27ABCDE1234F1Z5"
                 />
@@ -199,32 +201,32 @@ export default function UserProfile() {
                   <Field 
                     label="Street Address" 
                     icon={<MapPin className='w-4 h-4'/>} 
-                    value={form.address} 
+                    value={form?.address?.street} 
                     onChange={(v)=>onChange('address', v)} 
                     placeholder="Street, Area, Landmark"
                   />
                 </div>
                 <Field 
                   label="City" 
-                  value={form.city} 
+                  value={form?.address?.city} 
                   onChange={(v)=>onChange('city', v)} 
                   placeholder="City"
                 />
                 <Field 
                   label="State" 
-                  value={form.state} 
+                  value={form?.address?.state} 
                   onChange={(v)=>onChange('state', v)} 
                   placeholder="State"
                 />
                 <Field 
                   label="PIN Code" 
-                  value={form.pincode} 
+                  value={form?.address?.pinCode} 
                   onChange={(v)=>onChange('pincode', v)} 
                   placeholder="000000"
                 />
                 <Field 
                   label="Country" 
-                  value={form.country} 
+                  value={form?.address?.country} 
                   onChange={(v)=>onChange('country', v)} 
                   placeholder="Country"
                 />
@@ -236,13 +238,13 @@ export default function UserProfile() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field 
                   label="Timezone" 
-                  value={form.timezone} 
+                  value={form?.timezone} 
                   onChange={(v)=>onChange('timezone', v)} 
                   placeholder="Asia/Kolkata"
                 />
                 <Field 
                   label="Language & Locale" 
-                  value={form.locale} 
+                  value={form?.address?.country} //locale 
                   onChange={(v)=>onChange('locale', v)} 
                   placeholder="en-IN"
                 />

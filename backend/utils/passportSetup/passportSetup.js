@@ -51,11 +51,13 @@ passport.use(new GoogleStrategy({
                 return done(null, user);
             }
 
+            console.log('Creating new user from Google profile',profile);
+
             user = await User.create({
                 googleId: profile.id,
-                name: profile.displayName,
+                businessName: profile.displayName,
                 email: profile.emails[0].value,
-                password: Math.random().toString(36),
+                password: "GoogleUser@" + Math.random().toString(36).slice(-8) // strong password
             });
 
             const isProfileComplete = user.name && user.phone && user.address?.city;
@@ -65,7 +67,7 @@ passport.use(new GoogleStrategy({
 
         }catch(err){
             console.error('Error in Google strategy:', err);
-            return done(err);
+            return done(err,null);
         }
 }));
 
@@ -79,7 +81,7 @@ passport.deserializeUser(async (id, done) => {
         const user = await User.findById(id);
         done(null, user);
     }catch(err){
-        done(err);
+        done(err,null);
     }
 });
 

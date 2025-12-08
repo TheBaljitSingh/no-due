@@ -17,8 +17,8 @@ export const sessionMiddleware = session({
   proxy: true,
   store: sessionStore,
   cookie: {
-    secure: isProd,
-    httpOnly: true,
+    secure: isProd, //user secure in prod
+    httpOnly: true, // prevent client side javascript from accessing cookies 
     sameSite: isProd ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000,
   },

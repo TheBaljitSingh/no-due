@@ -1,11 +1,7 @@
-import { Schema,Types } from "mongoose";
+import { Schema, Types } from "mongoose";
 import { connection } from "../database/databaseConfig.js";
 
 const customerSchema = new Schema({
-    customerId: {
-        type: String,
-        required: true,
-    },
     name: {
         type: String,
         required: true,
@@ -34,10 +30,10 @@ const customerSchema = new Schema({
         type: String,
         trim: true,
         lowercase: true,
-        minlength: [5, "Email must be at least 5 characters long"],
-        maxlength: [255, "Email can be at most 255 characters long"],
         validate: {
             validator: function (v) {
+                if(!v) return true; // allowing empty or null emails
+                if(v.length<5 || v.length>255) return false;
                 return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v);
             },
             message: "Please enter a valid email address!!"

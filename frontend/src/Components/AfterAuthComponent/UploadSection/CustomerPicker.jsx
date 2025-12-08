@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { ChevronDown, Plus, UserRound } from "lucide-react";
 
 function CustomerPicker({ items = [], onSelect }) {
-  console.log("f", items);
   
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("Choose Customer");
@@ -33,6 +32,8 @@ function CustomerPicker({ items = [], onSelect }) {
   }, [open]);
 
   const choose = (value, text) => {
+    //id, name(customerName)
+    
     setLabel(text);
     setOpen(false);
     onSelect?.(value);
@@ -75,22 +76,22 @@ function CustomerPicker({ items = [], onSelect }) {
             </div>
             ) : (
               <ul className="max-h-64 overflow-y-auto py-1" role="none">
-              {items.map((name, idx) => (
+              {items.map((it, idx) => (
                 <li key={idx} role="none">
                   <button
                     type="button"
-                    onClick={() => choose(name.name, name.name)}
+                    onClick={() => choose(it._id, it.name)}
                     className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     role="menuitem"
                   >
                     <img
                       className="h-8 w-8 rounded-full object-cover ring-2 ring-gray-100"
-                      src={name.gender === 'male'
+                      src={it.gender === 'male'
                         ? "https://img.freepik.com/free-vector/smiling-man-with-glasses_1308-174409.jpg"
                         : "https://img.freepik.com/free-vector/smiling-woman-with-long-brown-hair_1308-175662.jpg"}
-                      alt={`${name.name}'s profile`}
+                      alt={`${it.name}'s profile`}
                     />
-                    <span className="flex-1 truncate font-medium">{name.name}</span>
+                    <span className="flex-1 truncate font-medium">{it.name}</span>
                   </button>
                 </li>
               ))}

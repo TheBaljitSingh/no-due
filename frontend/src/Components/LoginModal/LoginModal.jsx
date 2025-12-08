@@ -5,7 +5,7 @@ import { googleLogin, loginUser } from "../../utils/service/authService";
 import LoadingPage from "../AfterAuthComponent/ReminderHistoryPage/LoadingPage";
 import { useUser } from "../../contexts/UserContext";
 
-export default function LoginModal({ open, onClose}) {
+export default function LoginModal({ open, onClose }) {
   const dialogRef = useRef(null);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPw, setShowPw] = useState(false);
@@ -23,8 +23,8 @@ export default function LoginModal({ open, onClose}) {
 
 
   const [err, setErr] = useState({});
-  const [Loading,setLoading]=useState(false);
-  const {setUser,setIsUserLoggedOut}=useUser();
+  const [Loading, setLoading] = useState(false);
+  const { setUser, setIsUserLoggedOut } = useUser();
 
   useEffect(() => {
     if (!open) return;
@@ -184,46 +184,37 @@ export default function LoginModal({ open, onClose}) {
     } catch (err) {
       console.error("Error during form submission:", err);
       setErr(err.response?.data?.errors[0] || "An error occurred. Please try again.");
-    }finally {
-      setLoading(false) 
+    } finally {
+      setLoading(false)
     };
   };
 
-  const googleLoginButton=async()=>{
+  const googleLoginButton = () => {
     console.log("Google login clicked");
-    try{
+    try {
       setLoading(true);
-     const response= await googleLogin();
-      console.log("Google login response:", response);
-      if(response.status===200){
-        setUser(response.data.user);
-        setIsUserLoggedOut(false);
-        localStorage.setItem('isUserLoggedIn', 'true');
-        resetForm();
-        onClose();
-        navigate('/customer-master');
-      }
-    }catch(err){
+       googleLogin();
+    } catch (err) {
       console.error("Error during Google login:", err);
       setErr("Google login failed. Please try again.");
-    }finally{
+    } finally {
       setLoading(false);
     }
-    
+
   };
 
   if (!open) return null;
 
   if (Loading) {
-    return ( 
-    <>
-    <LoadingPage/>
-    </>
+    return (
+      <>
+        <LoadingPage />
+      </>
     );
   };
 
   return (
-    
+
     <div
       className="fixed min-h-screen inset-0 z-50 grid place-items-center"
       aria-modal="true"
@@ -251,17 +242,23 @@ export default function LoginModal({ open, onClose}) {
         </div>
 
         <div className="space-y-4">
-        <button
-  type="button"
-  onClick={googleLoginButton}
-  className="w-full flex items-center justify-center gap-2 rounded border border-gray-300 px-4 py-3 text-sm font-medium hover:bg-gray-50 transition"
->
-  <img
-    src="https://www.svgrepo.com/show/475656/google-color.svg"
-    className="h-5 w-5"
-  />
-  Continue with Google
-</button>
+          <button
+            type="button"
+            onClick={googleLoginButton}
+            className="w-full flex items-center justify-center gap-2 rounded border border-gray-300 px-4 py-3 text-sm font-medium hover:bg-gray-50 transition"
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              className="h-5 w-5"
+            />
+            Continue with Google
+          </button>
+
+          <div className="flex items-center gap-3">
+            <hr className="flex-grow border-t border-gray-300" />
+            <span className="text-sm text-gray-500">or</span>
+            <hr className="flex-grow border-t border-gray-300" />
+          </div>
 
 
           {isSignUp && (

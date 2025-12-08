@@ -43,7 +43,6 @@ const userSchema = new Schema({
       fname: {
     type: String,
     trim: true,
-    required: [true, 'First name is required'],
     minLength: [2, 'enter a valid first name'],
     validate: {
       validator: function (v) {
@@ -55,7 +54,6 @@ const userSchema = new Schema({
   lname: {
     type: String,
     trim: true,
-    required: [true, 'Last name is required'],
     minLength: [2, 'enter a valid last name'],
     validate: {
       validator: function (v) {
@@ -157,12 +155,12 @@ const userSchema = new Schema({
     },
 }, { timestamps: true });
 
-userSchema.pre('save', function (next) {
-    if (!this.isModified('password')) return next();
+userSchema.pre('save', async function () {
+    if (!this.isModified('password') || !this.password) return next();
     try {
         const salt = bcrypt.genSaltSync(10);
         this.password = bcrypt.hashSync(this.password, salt);
-        return;
+        return ;
     } catch (err) {
         return next(err);
     }

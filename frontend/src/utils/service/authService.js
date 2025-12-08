@@ -5,7 +5,7 @@ export const loginUser = async (loginData) => {
         return response.data;
 };
 
-export const googleLogin = async () => {
+export const googleLogin = () => {
         const baseURL = api.defaults.baseURL;
         const googleLoginURL = `${baseURL}/v1/auth/google-login`;
         window.location.href = googleLoginURL;
@@ -18,5 +18,10 @@ export const checkAuth = async () => {
 
 export const logoutUser = async () => {
         const response = await api.get('/v1/auth/logout');
+        return response.data;
+};
+
+export const getGoogleProfile = async () => {
+        const response = await api.get('/v1/auth/profile');
         return response.data;
 };

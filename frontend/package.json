@@ -4,21 +4,24 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@sentry/react": "^10.29.0",
     "@tailwindcss/vite": "^4.1.14",
     "axios": "^1.13.2",
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.12.9",
+    "framer-motion": "^12.23.25",
     "gsap": "^3.13.0",
     "lucide-react": "^0.546.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4",
+    "react-toastify": "^11.0.5",
     "tailwindcss": "^4.1.14"
   },
   "devDependencies": {

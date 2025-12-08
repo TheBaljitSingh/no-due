@@ -5,19 +5,16 @@ import BulkEntrySection from '../../Components/AfterAuthComponent/UploadSection/
 import SingleEntryCreation from '../../Components/AfterAuthComponent/UploadSection/SingleEntryCreation';
 
 const UploadCenter = () => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedCustomer , setSelectedCustomer] = useState(null);
   const [inverted , setInverted] = useState(false);
 
 
-  console.log(CustomerNames)
   return (
   <div className="max-w-7xl mx-auto md:px-4 px-6 lg:px-8 py-6">
     {
       inverted ? (
-        <SingleEntryCreation selectedCustomer={selectedCustomer} setSelectedCustomer={setSelectedCustomer}/>
+        <SingleEntryCreation />
       ) : (
-        <BulkEntrySection selectedFile={selectedFile} setSelectedFile={setSelectedFile}/>
+        <BulkEntrySection />
       )
     }
 
@@ -38,9 +35,9 @@ const UploadCenter = () => {
 
     {
       inverted ? (
-        <BulkEntrySection selectedFile={selectedFile} setSelectedFile={setSelectedFile}/>
+        <BulkEntrySection />
       ) : (
-        <SingleEntryCreation selectedCustomer={selectedCustomer} setSelectedCustomer={setSelectedCustomer}/>
+        <SingleEntryCreation />
       )
     }
     

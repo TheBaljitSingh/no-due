@@ -20,6 +20,7 @@ import { useUser } from "../contexts/UserContext";
 import { checkAuth } from "./service/authService";
 import LoadingPage from "../Components/AfterAuthComponent/ReminderHistoryPage/LoadingPage";
 import Hero from "../Pages/Hero";
+import AuthSuccess from "../Components/auth/AuthSuccess";
 
 
 const PageLinks = () => {
@@ -67,6 +68,7 @@ const PageLinks = () => {
       {/* PUBLIC AREA */}
       <Route element={<BeforeAuthLayout/>}>
         <Route path ='/' element = {<Hero/>} />
+        <Route path='/google-success' element={<AuthSuccess />} />
         <Route path="/contact" element={<PageShell keyId={keyId}><Contact /></PageShell>} />
       </Route>
 

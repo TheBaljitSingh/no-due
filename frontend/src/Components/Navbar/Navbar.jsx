@@ -1,8 +1,8 @@
-// Navbar.jsx
-import React, { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import logo from "../../assets/logo.png";
 import LoginModal from "../LoginModal/LoginModal";
-import { href, Link, useNavigate } from "react-router-dom";
+import { href, Link, useNavigate, useLocation } from "react-router-dom";
+
 
 const links = [
   { href: "/",     label: "Home" },
@@ -19,6 +19,17 @@ const Navbar = () => {
   const [openLogin , setOpenLogin] = useState(false);
 
   const navigate = useNavigate();
+
+  const location = useLocation();
+
+  useEffect(()=>{
+    //this is very important usecase of useLocation state
+    if(location?.state?.openLogin){
+      setOpenLogin(true);
+    }
+
+    navigate(location.pathname, {replace:true, state:null});
+  },[]);
 
 
   const handleNavClick = useCallback((e, href) => {
@@ -44,6 +55,8 @@ const Navbar = () => {
     navigate(href);
     setOpen(false);
   }, [navigate]);
+
+
   return (
     <header className="sticky top-0 z-50 py-4 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 ">
       <nav className="mx-auto px-4 sm:px-6 lg:px-14">

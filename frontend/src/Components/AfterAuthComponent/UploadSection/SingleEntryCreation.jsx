@@ -1,12 +1,46 @@
-import React from 'react'
+import React, { use, useEffect, useState } from 'react'
 import CustomerPicker from './CustomerPicker';
-import { CustomerDetailsMap, CustomerNames } from '../../../utils/constants';
+// import { CustomerDetailsMap, CustomerNames } from '../../../utils/constants';
 import PageHeaders from '../../../utils/AfterAuthUtils/PageHeaders';
 import { useNavigate } from 'react-router-dom';
+import { createCustomers, getCustomers } from '../../../utils/service/customerService';
 
-const SingleEntryCreation = ({setSelectedCustomer , selectedCustomer}) => {
+const SingleEntryCreation = () => {
 
     const navigate = useNavigate();
+    const [customers, setCustomers] = useState([]);
+    const [selectedCustomer , setSelectedCustomer] = useState(null); //it will store name only
+    const [formData, setFormData] = useState({ dueAmount: "", dueDate: "", customerId: "",});
+    
+
+const CustomerNames = customers.map(customer => ({
+      id: customer._id,
+      name: customer.name,
+      gender: customer.gender
+    }));
+      
+const CustomerDetailsMap  = (name) =>  {
+  return customers.find(customer => customer.name === name);
+}
+
+
+  useEffect(()=>{
+    const fetchCustomers = async()=>{
+      const data = await getCustomers();
+      setCustomers(data.customers);
+    }
+
+    fetchCustomers();
+
+  },[]);
+
+
+  const handleCreateEntry = async()=>{
+    console.log("called created entry< selectedCustomer", formData);
+    await createCustomers(formData);
+    setSelectedCustomer(null)
+
+  }
 
   return (
     <div className='min-w-0 w-full'>
@@ -20,10 +54,14 @@ const SingleEntryCreation = ({setSelectedCustomer , selectedCustomer}) => {
       <div className="flex flex-col gap-6 mt-6">
         {/* Customer Picker */}
         <CustomerPicker
-          items={CustomerNames}
+          items={customers} // passing entire customers
           onSelect={(value) => {
             if (value === "add-new") navigate("../customer-creation");
-            else setSelectedCustomer(value);
+            else{
+              console.log(value);
+               setSelectedCustomer(value);
+               setFormData(prev=>({...prev, customerId: value}));
+            }
           }}
         />
 
@@ -41,6 +79,8 @@ const SingleEntryCreation = ({setSelectedCustomer , selectedCustomer}) => {
               </label>
               <input
                 type="text"
+                value={formData?.dueAmount}
+                onChange={(e)=>setFormData(prev=>({...prev, dueAmount: e.target.value}))}
                 placeholder="₹ 0.00"
                 className="border border-gray-300 text-gray-900 rounded-lg py-2.5 px-3.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors outline-none"
               />
@@ -53,6 +93,8 @@ const SingleEntryCreation = ({setSelectedCustomer , selectedCustomer}) => {
               </label>
               <input
                 type="date"
+                value={formData?.dueDate}
+                onChange={(e)=>setFormData(prev=>({...prev, dueDate: e.target.value}))}
                 className="border border-gray-300 text-gray-900 rounded-lg py-2.5 px-3.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors outline-none"
               />
             </div>
@@ -113,10 +155,7 @@ const SingleEntryCreation = ({setSelectedCustomer , selectedCustomer}) => {
             Reset
           </button>
           <button 
-            onClick={() => {
-              alert('New entry created successfully!') 
-              setSelectedCustomer(null)
-            }} 
+            onClick={handleCreateEntry} 
             className="px-5 py-2.5 text-sm font-medium text-white component-button-green transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             Create Entry

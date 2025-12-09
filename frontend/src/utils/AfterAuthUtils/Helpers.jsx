@@ -1,31 +1,71 @@
 /* helpers */
 
-import { Pencil, Trash2 } from "lucide-react";
+import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
-export const ActionBadge = ({onEdit, onDelete})=>{
+export const ActionBadge = ({ onEdit, onDelete }) => {
+  const [actionOptions, setActionOptions] = useState(false);
+  const menuRef = useRef(null);
+  const verticalIconRef = useRef(null);
+
+  // close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if(verticalIconRef.current && verticalIconRef.current.contains(event.target)){
+        return;
+      }
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setActionOptions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
- <div className="flex items-center px-6 py-4 gap-3">
-  {/* <button
-    onClick={onEdit}
-    disabled
-    className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 
-               transition-all shadow-sm hover:shadow-md hover:cursor-pointer"
-  >
-    <Pencil size={16} className="text-gray-700" />
-  </button> */}
+    <div className="relative px-6 py-4 " 
+ >
+      {/* Three dot button */}
+      <button
+      ref={verticalIconRef}
+        // disabled={actionOptions}
+        onClick={() => setActionOptions((prev) => !prev)}
+        className="p-2 rounded-lg hover:bg-gray-200 transition-all outline-none"
+      >
+        <EllipsisVertical size={18} className="text-gray-700 hover:cursor-pointer" />
+      </button>
 
-  <button
-    onClick={onDelete}
-    className="p-2 rounded-lg bg-red-100 hover:bg-red-200 
-               transition-all shadow-sm hover:shadow-md hover:cursor-pointer"
-  >
-    <Trash2 size={16} className="text-red-600" />
-  </button>
-</div>
+      {/* Dropdown menu */}
+      {actionOptions && (
+        <div className="absolute right-1 mt-2 w-32 rounded-lg shadow-lg bg-white border border-gray-200 z-100" ref={menuRef}>
+          <button
+            onClick={() => {
+              setActionOptions(false);
+              // onEdit();
+              alert("comming soon")
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
+          >
+            <Pencil size={16} className="text-gray-600" />
+            Edit
+          </button>
 
-  )
-}
+          <button
+            onClick={() => {
+              setActionOptions(false);
+              onDelete();
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
+          >
+            <Trash2 size={16} className="text-gray-600" />
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 export const currency = (n) =>
     Number(n || 0).toLocaleString("en-IN", {
       style: "currency",

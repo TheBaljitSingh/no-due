@@ -20,3 +20,8 @@ export const deleteCustomerById = async(id)=>{
     const response = await api.delete(`/api/v1/customers/${id}`);
     return response.data;
 }
+
+export const getAllcustomers = async()=>{
+    const response = await api.get(`/api/v1/customers?limit=all`);
+    return response.data;
+}

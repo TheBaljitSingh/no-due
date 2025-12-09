@@ -14,7 +14,7 @@ const CustomerMobileCard = () => {
         try {
           const data = await getCustomers({page, limit});
           console.log(customers);
-          setCustomers(data.customers);
+          setCustomers(data.data.customers);
         } catch (error) {
           console.log(error);
         }

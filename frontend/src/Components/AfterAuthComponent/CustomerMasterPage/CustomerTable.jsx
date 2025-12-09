@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { currency, formatDate, StatusBadge } from '../../../utils/AfterAuthUtils/Helpers'
-import { Download, FileText } from 'lucide-react'
+import { currency, formatDate, StatusBadge, ActionBadge } from '../../../utils/AfterAuthUtils/Helpers'
+import { Download, FileText, Pencil, Trash2 } from 'lucide-react'
 
-import {getCustomers} from "../../../utils/service/customerService";
+import {deleteCustomerById, getAllcustomers, getCustomers} from "../../../utils/service/customerService";
+import { toast } from 'react-toastify';
 
 const CustomerTable = ({TableHeaders }) => {
 
@@ -10,13 +11,20 @@ const CustomerTable = ({TableHeaders }) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [totalPages, setTotalPages] = useState();
+  const [totalCustomers, setTotalCustomers] = useState();
+  const [deletingId, setDeletingId] = useState(null);
+
+
+
+  console.log(customers);
 
   useEffect(()=>{
     const fetchCustomers = async () => {
       try {
         const data = await getCustomers({page, limit});
-        setCustomers(data.customers);
-        setTotalPages(data.totalPages)
+        setCustomers(data.data.customers);
+        setTotalPages(data.data.totalPages)
+        setTotalCustomers(data.data.total);
       } catch (error) {
         console.log(error);
       }
@@ -27,14 +35,90 @@ const CustomerTable = ({TableHeaders }) => {
   },[page]); 
 
 
+  const handleEditCustomer = (customer)=>{
+    console.log("edit called",customer);
+
+  }
+
+  const handleDeleteCustomer = async(id)=>{
+    // console.log("delete called",id);
+    //call the api
+    const res = await deleteCustomerById(id);
+    // console.log(res);
+    if(res.success){
+      setDeletingId(id);
+      setTimeout(()=>{
+        const updatedCustomers = customers.filter(c=>c._id!==id);
+        setCustomers(updatedCustomers);
+        setTotalCustomers(prev=>prev-1);
+        setDeletingId(null);
+        // console.log(updatedCustomers);
+
+      },300)
+    }else{
+      toast.error(res?.error || "error while deleting");
+    }
+  }
+
+  const handleDownloadCsv = async()=>{
+    // console.log(customers);
+
+    //data will be customers data
+   try {
+     const response = await getAllcustomers();
+    const data = response.data.customers;
+    const headers = Object.keys(data[0]).filter(row=> !['__v','CustomerOfComapny','createdAt','updatedAt'].includes(row)); // keys array will be stored
+
+    // Convert headers to CSV row
+    const csvRows = [headers.join(",")]; // keystring
+
+    // Convert data rows: N*N Time Complexity
+    data.forEach((row) => {
+      const values = headers.map((header) => {
+        //for each keys
+        let val = row[header] !== null && row[header] !== undefined ? row[header] : "";
+        return `"${val}"`; // wrap values in quotes to avoid comma issues
+      });
+      csvRows.push(values.join(","));
+    });
+
+    // Convert rows to CSV format
+    const csvString = csvRows.join("\n");
+
+    // Create blob file
+    const blob = new Blob([csvString], { type: "text/csv" });
+
+    // Create link to download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "allcustomers.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("successfully downloaded csv data");
+
+   } catch (error) {
+    console.log(error);
+    
+   }
+
+
+  }
+
+  const handleDownloadPdf = ()=>{
+
+  }
+
+
+
   return (
-          <div className="hidden md:block rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+          <div className="hidden md:block rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ">
+            <div className="overflow-x-auto ">
+              <table className="w-full text-left text-sm ">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     {TableHeaders.map((h, i) => (
-                      <th key={i} className="px-6 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                      <th key={i} className="px-2 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap align-middle">
                         {h}
                       </th>
                     ))}
@@ -43,26 +127,30 @@ const CustomerTable = ({TableHeaders }) => {
     
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {customers.map((c) => (
-                    <tr key={c._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-gray-900">{c._id}</td>
-                      <td className="px-6 py-4 text-gray-700">{c.name}</td>
-                      <td className="px-6 py-4 text-gray-700">{c.company}</td>
+                    
+                    <tr key={c._id} className={`transition-all duration-300 overflow-hidden hover:bg-gray-50 ${deletingId === c._id ? "opacity-0 h-0" : "opacity-100 h-auto"}`}>
+                      <td className="px-2 py-4 font-medium text-gray-900 align-middle">{c._id}</td>
+                      <td className="px-2 py-4 text-gray-700 align-middle">{c.name}</td>
+                      <td className="px-2 py-4 text-gray-700 align-middle">{c.company}</td>
                       {/* <td className="px-6 py-4">
                         <a href={`mailto:${c.email}`} className="text-blue-600 hover:text-blue-800 hover:underline">
                           {c.email}
                         </a>
                       </td> */}
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">{c.mobile}</td>
-                      <td className="px-6 py-4 font-medium text-gray-900">{currency(c.due)}</td>
-                      <td className="px-6 py-4 font-medium text-red-600">{currency(c.overdue)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">{formatDate(c.lastReminder)}</td>
-                      <td className="px-6 py-4 max-w-xs">
+                      <td className="px-2 py-4 whitespace-nowrap text-gray-700 align-middle">{c.mobile}</td>
+                      <td className="px-2 py-4 font-medium text-gray-900">{currency(c.due)}</td>
+                      <td className="px-2 py-4 font-medium text-red-600">{currency(c.overdue)}</td>
+                      <td className="px-2 py-4 whitespace-nowrap text-gray-700">{formatDate(c.lastReminder)}</td>
+                      {/* <td className="px-6 py-4 max-w-xs">
                         <span className="line-clamp-2 text-gray-700" title={c.feedback}>
                           {c.feedback || "-"}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
+                      </td> */}
+                      <td className="px-6 py-4 align-middle">
                         <StatusBadge value={c.status} />
+                      </td>
+                      <td >
+                       <ActionBadge onEdit={()=>handleEditCustomer(c)} onDelete={()=>handleDeleteCustomer(c._id)} />
                       </td>
                     </tr>
                   ))}
@@ -91,7 +179,7 @@ const CustomerTable = ({TableHeaders }) => {
             {/* Footer */}
             <div className="md:flex inline-flex md:flex-wrap items-center justify-between border-gray-200 bg-gray-50 px-2 md:px-2 py-3 text-sm text-gray-700 gap-3">
 
-              <span>Total: <strong className="font-semibold text-gray-900">{customers.length}</strong> customers</span>          
+              <span>Total: <strong className="font-semibold text-gray-900">{totalCustomers}</strong> customers</span>          
 
 
                 <div className="md:flex items-center md:justify-center justify-end gap-3 p-4   bg-gray-50">
@@ -126,11 +214,11 @@ const CustomerTable = ({TableHeaders }) => {
 
             </div>
               <div className="flex gap-2">
-                <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200">
+                <button onClick={handleDownloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 hover:cursor-pointer">
                   <Download className="w-4 h-4" />
                   CSV
                 </button>
-                <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200">
+                <button onClick={handleDownloadPdf} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 hover:cursor-pointer">
                   <FileText className="w-4 h-4" />
                   PDF
                 </button>

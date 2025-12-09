@@ -5,8 +5,8 @@ const router = exapress.Router();
 
 
 router.get("/", getCustomers); //get all customers
-router.delete("/", deleteCustomers);
 router.post("/", createCustomer);
+router.delete("/:customerId", deleteCustomers);
 router.get("/:customerId", getCustomersById);
 router.put("/:customerId", updateCustomer);
 

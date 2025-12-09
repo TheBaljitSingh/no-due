@@ -27,7 +27,7 @@ const CustomerDetailsMap  = (name) =>  {
   useEffect(()=>{
     const fetchCustomers = async()=>{
       const data = await getCustomers();
-      setCustomers(data.customers);
+      setCustomers(data.data.customers);
     }
 
     fetchCustomers();

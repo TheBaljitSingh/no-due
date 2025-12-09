@@ -38,7 +38,7 @@ export const ActionBadge = ({ onEdit, onDelete }) => {
 
       {/* Dropdown menu */}
       {actionOptions && (
-        <div className="absolute right-1 mt-2 w-32 rounded-lg shadow-lg bg-white border border-gray-200 z-100" ref={menuRef}>
+        <div className="absolute z-50 right-6 mt-1 w-32 rounded-lg shadow-lg bg-white border border-gray-200" ref={menuRef}>
           <button
             onClick={() => {
               setActionOptions(false);

@@ -4,6 +4,9 @@ import { Download, FileText, Pencil, Trash2 } from 'lucide-react'
 
 import {deleteCustomerById, getAllcustomers, getCustomers} from "../../../utils/service/customerService";
 import { toast } from 'react-toastify';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 
 const CustomerTable = ({TableHeaders }) => {
 
@@ -14,9 +17,6 @@ const CustomerTable = ({TableHeaders }) => {
   const [totalCustomers, setTotalCustomers] = useState();
   const [deletingId, setDeletingId] = useState(null);
 
-
-
-  console.log(customers);
 
   useEffect(()=>{
     const fetchCustomers = async () => {
@@ -92,7 +92,9 @@ const CustomerTable = ({TableHeaders }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "allcustomers.csv";
+    const d = new Date();
+    const fileName = `nodue-customerlist-${formatDate(d.toISOString().split("T")[0])}`;
+    a.download = `${fileName}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("successfully downloaded csv data");
@@ -105,7 +107,56 @@ const CustomerTable = ({TableHeaders }) => {
 
   }
 
-  const handleDownloadPdf = ()=>{
+  const handleDownloadPdf = async()=>{
+    try {
+      const response = await getAllcustomers();
+      const data = response.data.customers;
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text("All Customers History", 14, 20);
+
+   
+      const tableColumns = Object.keys(data[0]).filter(row=> !['_id','__v','email','feedback','CustomerOfComapny','createdAt','updatedAt'].includes(row));// array of headers
+
+
+      const tableRows = [];  //rows according to headers
+      data.forEach((row)=>{
+        const values = tableColumns.map((header)=>{
+          return row[header]; //taking only that is defined in filtered tableColumns above
+        });
+
+        tableRows.push(values);
+      })
+
+      const updatedColumns = tableColumns.map(hd=>hd.charAt(0).toUpperCase() + hd.substring(1));
+
+
+      // Generate table
+      autoTable(doc, {
+        head: [updatedColumns],
+        body: tableRows,
+        startY: 30,
+        styles: { fontSize: 10 },
+        headStyles:{
+          fillColor:[123, 241, 168],
+          textColor: [0, 0, 0],       // header text color
+          fontStyle: "bold",
+          halign: "left",
+        }
+      });
+
+      // Save the PDF // nodue-customerlist-date.pdf
+      const d = new Date();
+      const fileName = `nodue-customerlist-${formatDate(d.toISOString().split("T")[0])}`;
+      doc.save(`${fileName}.pdf`);
+      toast.success("successfully downloaded");
+
+    } catch (error) {
+      console.log(error);
+      
+    }
+
 
   }
 
@@ -113,7 +164,8 @@ const CustomerTable = ({TableHeaders }) => {
 
   return (
           <div className="hidden md:block rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ">
-            <div className="overflow-x-auto ">
+            <div className=" "> 
+              {/* removed overflow-x-auto just for action button functionality */}
               <table className="w-full text-left text-sm ">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -125,7 +177,7 @@ const CustomerTable = ({TableHeaders }) => {
                   </tr>
                 </thead>
     
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-gray-200">
                   {customers.map((c) => (
                     
                     <tr key={c._id} className={`transition-all duration-300 overflow-hidden hover:bg-gray-50 ${deletingId === c._id ? "opacity-0 h-0" : "opacity-100 h-auto"}`}>

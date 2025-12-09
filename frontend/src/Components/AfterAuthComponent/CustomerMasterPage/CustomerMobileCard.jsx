@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { currency, formatDate, StatusBadge } from '../../../utils/AfterAuthUtils/Helpers'
-import { getCustomers } from '../../../utils/service/customerService';
+import { getAllcustomers, getCustomers } from '../../../utils/service/customerService';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { toast } from 'react-toastify';
 
 const CustomerMobileCard = () => {
 
@@ -8,6 +11,8 @@ const CustomerMobileCard = () => {
   const [customers, setCustomers] = useState([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [totalCustomers, setTotalCustomers] = useState();
+  
   
   useEffect(()=>{
       const fetchCustomers = async () => {
@@ -15,6 +20,8 @@ const CustomerMobileCard = () => {
           const data = await getCustomers({page, limit});
           console.log(customers);
           setCustomers(data.data.customers);
+          setTotalCustomers(data.data.total);
+
         } catch (error) {
           console.log(error);
         }
@@ -23,6 +30,107 @@ const CustomerMobileCard = () => {
       fetchCustomers();
   
   },[page, limit]);
+
+
+    const handleDownloadCsv = async()=>{
+      // console.log(customers);
+  
+      //data will be customers data
+     try {
+       const response = await getAllcustomers();
+      const data = response.data.customers;
+      const headers = Object.keys(data[0]).filter(row=> !['__v','CustomerOfComapny','createdAt','updatedAt'].includes(row)); // keys array will be stored
+  
+      // Convert headers to CSV row
+      const csvRows = [headers.join(",")]; // keystring
+  
+      // Convert data rows: N*N Time Complexity
+      data.forEach((row) => {
+        const values = headers.map((header) => {
+          //for each keys
+          let val = row[header] !== null && row[header] !== undefined ? row[header] : "";
+          return `"${val}"`; // wrap values in quotes to avoid comma issues
+        });
+        csvRows.push(values.join(","));
+      });
+  
+      // Convert rows to CSV format
+      const csvString = csvRows.join("\n");
+  
+      // Create blob file
+      const blob = new Blob([csvString], { type: "text/csv" });
+  
+      // Create link to download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const d = new Date();
+      const fileName = `nodue-customerlist-${formatDate(d.toISOString().split("T")[0])}`;
+      a.download = `${fileName}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("successfully downloaded csv data");
+  
+     } catch (error) {
+      console.log(error);
+      
+     }
+  
+  
+    }
+  
+    const handleDownloadPdf = async()=>{
+      try {
+        const response = await getAllcustomers();
+        const data = response.data.customers;
+        const doc = new jsPDF();
+  
+        doc.setFontSize(16);
+        doc.text("All Customers History", 14, 20);
+  
+     
+        const tableColumns = Object.keys(data[0]).filter(row=> !['_id','__v','email','feedback','CustomerOfComapny','createdAt','updatedAt'].includes(row));// array of headers
+  
+  
+        const tableRows = [];  //rows according to headers
+        data.forEach((row)=>{
+          const values = tableColumns.map((header)=>{
+            return row[header]; //taking only that is defined in filtered tableColumns above
+          });
+  
+          tableRows.push(values);
+        })
+  
+        const updatedColumns = tableColumns.map(hd=>hd.charAt(0).toUpperCase() + hd.substring(1));
+  
+  
+        // Generate table
+        autoTable(doc, {
+          head: [updatedColumns],
+          body: tableRows,
+          startY: 30,
+          styles: { fontSize: 10 },
+          headStyles:{
+            fillColor:[123, 241, 168],
+            textColor: [0, 0, 0],       // header text color
+            fontStyle: "bold",
+            halign: "left",
+          }
+        });
+  
+        // Save the PDF // nodue-customerlist-date.pdf
+        const d = new Date();
+        const fileName = `nodue-customerlist-${formatDate(d.toISOString().split("T")[0])}`;
+        doc.save(`${fileName}.pdf`);
+        toast.success("successfully downloaded");
+  
+      } catch (error) {
+        console.log(error);
+        
+      }
+  
+  
+    }
 
   return (
     <div className="md:hidden space-y-4">
@@ -87,11 +195,11 @@ const CustomerMobileCard = () => {
            <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-4">
              <div className="flex flex-col gap-3">
                <div className="text-sm text-gray-700">
-                 Total: <strong className="font-semibold text-gray-900">{customers.length}</strong> customers
+                 Total: <strong className="font-semibold text-gray-900">{totalCustomers}</strong> customers
                </div>
                <div className="flex gap-2">
-                 <button className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Export CSV</button>
-                 <button className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Export PDF</button>
+                 <button onClick={handleDownloadCsv} className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Export CSV</button>
+                 <button onClick={handleDownloadPdf} className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Export PDF</button>
                </div>
              </div>
            </div>

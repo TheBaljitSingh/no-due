@@ -115,9 +115,9 @@ export const updateCustomer = async(req, res)=>{
 
 export const deleteCustomers = async(req, res)=>{
     try {
-        const {customerId} = req.body;
+        const {customerId} = req.params;
 
-        const customer = await Customer.find(customerId);
+        const customer = await Customer.find({customerId});
 
         if(!customer){
             return new APIResponse(404, null, "Customer not found").send(res);
@@ -129,6 +129,7 @@ export const deleteCustomers = async(req, res)=>{
 
 
     } catch (error) {
+      console.log(error);
         return new APIError(500, error, "Failed to delete customer").send(res);
         
     }

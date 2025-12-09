@@ -61,13 +61,14 @@ export const getCustomers = async(req, res)=>{
         //user will get thair own customer only
         const {page = 1 , limit = 10} = req.query;
         const offset = (page - 1)*limit;
+        const queryLimit = limit==="all"?0:parseInt(limit);
 
         const userId = req.user._id;
 
 
         const query = {CustomerOfComapny:userId}; //basically finters
     
-        const customers = await Customer.find(query).skip(offset).limit(limit); 
+        const customers = await Customer.find(query).skip(offset).limit(queryLimit); 
 
         
         const total = await Customer.countDocuments(query);

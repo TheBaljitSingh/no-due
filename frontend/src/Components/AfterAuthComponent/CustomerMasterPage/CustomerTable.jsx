@@ -98,8 +98,7 @@ const CustomerTable = ({TableHeaders }) => {
     toast.success("successfully downloaded csv data");
 
    } catch (error) {
-
-
+    console.log(error);
     
    }
 

@@ -4,7 +4,6 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import "flowbite";
-import { AuthProvider } from './context/AuthContext.jsx'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -12,7 +11,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
       <BrowserRouter>
         <App />
       </BrowserRouter>
@@ -29,6 +27,5 @@ createRoot(document.getElementById('root')).render(
         pauseOnHover
         theme="light"
       />
-    </AuthProvider>
   </StrictMode>,
 )

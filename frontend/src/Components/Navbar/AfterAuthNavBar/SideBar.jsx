@@ -5,7 +5,7 @@ import MobileOpenButton from "../../../utils/AfterAuthUtils/SideBarUtils/MobileO
 import { BadgeQuestionMark, BookOpen, Calculator, CircleUserRound, ClipboardClock, Clock, Contact, LayoutDashboard,  PanelLeft,  Upload, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const SideBar = ({setIsLoggedIn , ActivePage, handleCollapse, isCollapsed}) => {
+const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
   //have to add  Tooltip for each icons, currently facing positions porblems
   const [open, setOpen] = useState(false);
 

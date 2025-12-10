@@ -36,7 +36,6 @@ const CustomerDetailsMap  = (name) =>  {
 
 
   const handleCreateEntry = async()=>{
-    console.log("called created entry< selectedCustomer", formData);
     await createCustomers(formData);
     setSelectedCustomer(null)
 
@@ -58,7 +57,6 @@ const CustomerDetailsMap  = (name) =>  {
           onSelect={(value) => {
             if (value === "add-new") navigate("../customer-creation");
             else{
-              console.log(value);
                setSelectedCustomer(value);
                setFormData(prev=>({...prev, customerId: value}));
             }

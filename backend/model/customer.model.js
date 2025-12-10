@@ -73,9 +73,7 @@ const customerSchema = new Schema({
         ref: 'User',
         required: true,
     }
-}, { timestamps: true,
-    // _id: false
- });
+}, { timestamps: true });
 const Customer = connection.model('Customer', customerSchema);
 
 export default Customer;

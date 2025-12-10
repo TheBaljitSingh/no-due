@@ -2,16 +2,14 @@ import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import SideBar from "../Components/Navbar/AfterAuthNavBar/SideBar";
 import AfterNavbar from "../Components/Navbar/AfterAuthNavBar/AfterNavbar";
+//
 
-const AfterAuthLayout = ({ setIsLoggedIn, isLoggedIn }) => {
-  // if (!isLoggedIn) return <Navigate to="/" replace />;
-
+const AfterAuthLayout = () => {
   const location = useLocation();
   const [ActivePage, setActivePage] = useState("customer-master");
   const profileRef = useRef(null);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-
 
 
   useEffect(() => {
@@ -81,7 +79,6 @@ useLayoutEffect(()=>{
 
       <div className="h-full sidebar-scroll overflow-visible">
         <SideBar
-          setIsLoggedIn={setIsLoggedIn}
           ActivePage={ActivePage}
           handleCollapse={handleCollapse}
           isCollapsed={isCollapsed}
@@ -95,7 +92,6 @@ useLayoutEffect(()=>{
       {/* Navbar */}
       <header className="sticky top-0 z-30 mt-10 md:mt-0 bg-white shadow-sm ">
         <AfterNavbar
-          setIsLoggedIn={setIsLoggedIn}
           profileRef={profileRef}
           isProfileDropdownOpen={isProfileDropdownOpen}
           setIsProfileDropdownOpen={setIsProfileDropdownOpen}
@@ -105,7 +101,7 @@ useLayoutEffect(()=>{
       {/* Page Content */}
       <main className="p-4 md:p-8 w-full">
         <div className="max-w-7xl mx-auto">
-          <Outlet context={{ isLoggedIn, setIsLoggedIn }} />
+          <Outlet/>
         </div>
       </main>
     </div>

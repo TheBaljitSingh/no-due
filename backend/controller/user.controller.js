@@ -3,7 +3,6 @@ import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 
 export const registerUser = async (req, res) => {
-    console.log('Register User Request Body:', req.body);
     const userData  = req.body;
     try{
         const savedUser = await User.create(userData);

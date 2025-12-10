@@ -5,7 +5,7 @@ import PreviewCustomerModel from "./PreviewCustomerModel"
 import { createCustomers } from '../../../utils/service/customerService'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
-import logger from "../../../utils/logger.js"
+
 
 
 const BulkEntrySection = () => {
@@ -56,7 +56,6 @@ const csvFileToJson = (file) => {
   reader.onload = function (event) {
     const csvText = event.target.result;
     const json = csvTextToJson(csvText);
-    console.log("Converted JSON:", json);
     setPreviewData(json);
   };
 
@@ -64,7 +63,7 @@ const csvFileToJson = (file) => {
 };
 
   const handleSubmitEntry = async()=>{
-    // console.log("after preview sumit is clicked");
+
     try {
       const response = await createCustomers(previewData); 
       if(response.success){
@@ -88,7 +87,7 @@ const csvFileToJson = (file) => {
         <PageHeaders 
         header={'Upload Bulk Entries'} 
         subheader={'Import multiple customer records at once using CSV or Excel files'} 
-        handleOnClick={() => logger.log('clicked from upload section')} 
+              handleOnClick={() => console.log('clicked from upload section')} 
         buttonName={'Download Template'}
         />
       

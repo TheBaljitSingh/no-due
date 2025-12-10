@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { User, Mail, Phone, Building2, MapPin, Globe, Shield, Lock, Eye, EyeOff, Camera, Trash2, Save, Bell, Crown, CreditCard, QrCode, LogOut, CheckCircle2, Download } from "lucide-react";
-import { getUserProfile } from "../../utils/service/userService";
+// import { getUserProfile } from "../../utils/service/userService";
 import { useLayoutEffect } from "react";
 import {useAuth} from "../../context/AuthContext.jsx";
 
@@ -34,34 +34,39 @@ export default function UserProfile() {
   const {user} = useAuth();
   const [form, setForm] = useState(user);
 
-useEffect(() => {
+// useEffect(() => {
 
-  const fetchUser = async () => {
-    console.log("calling fetch user")
-    // Mock fetch delay
-   const response = await getUserProfile();
-    // console.log(  "User Profile Data:", response);
-    setUser(response?.user);
+  // const fetchUser = async () => {
+  //   console.log("calling fetch user")
+  //   // Mock fetch delay
+  //  const response = await getUserProfile();
+  //   // console.log(  "User Profile Data:", response);
+  //   setUser(response?.user);
 
-  };
+  // };
 
     
   // fetchUser(); // it is required if sessin is still in the brwser and it is not expired then it is not saved in context then it should fetch the logged in user data and it will render here.
 
-  }, []);
+  // }, []);
 
   useEffect(()=>{
     if(user) {
       setForm((prev)=>({
         ...prev,
         ...user,
+        fullName:user?.name?user.name:user?.fname?`${user.fname} ${user.lname}`:'',
         plan :{ name: "Growth", price: 999, renewsOn: "2025-11-01" }, //taking dummy data  
       }));
+      console.log("form is there",form);
     }
-  },[user])
+  },[user]);
+
+  
 
 
-  const [avatarUrl, setAvatarUrl] = useState("");
+
+  const [avatarUrl, setAvatarUrl] = useState(user?.profileImageUrl);
   const [showPw, setShowPw] = useState(false);
   const [twoFA, setTwoFA] = useState(false);
   const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
@@ -90,9 +95,9 @@ useEffect(() => {
     setPwd({ current: "", next: "", confirm: "" });
   };
 
-  // useEffect(()=>{
-  //   console.log(form);
-  // },[])
+  useEffect(()=>{
+    console.log(form);
+  },[])
  
   return (
     <div className="min-h-screen bg-gray-50">
@@ -138,7 +143,7 @@ useEffect(() => {
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatar}/>
               </div>
               <div className="flex-1 pt-4">
-                <h2 className="text-2xl font-semibold text-gray-100">{form?.name || "—"}</h2>
+                <h2 className="text-2xl font-semibold text-gray-800">{form?.businessName || "—"}</h2>
                 <p className="text-gray-600">{form?.email}</p>
                 <p className="text-sm text-gray-500">{form?.phone}</p>
               </div>
@@ -165,7 +170,7 @@ useEffect(() => {
                 <Field 
                   label="Full Name" 
                   icon={<User className='w-4 h-4'/>} 
-                  value={form?.name} 
+                  value={form?.fullName} 
                   onChange={(v)=>onChange('name', v)} 
                   placeholder="Enter your full name"
                 />
@@ -179,7 +184,7 @@ useEffect(() => {
                 <Field 
                   label="Phone Number" 
                   icon={<Phone className='w-4 h-4'/>} 
-                  value={form?.phone} 
+                  value={form?.phoneNumber} 
                   onChange={(v)=>onChange('phone', v)} 
                   placeholder="+91 XXXXX XXXXX"
                 />

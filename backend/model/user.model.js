@@ -1,4 +1,4 @@
-import { Schema, mongoose, Types } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import validator from 'validator';
 import { connection } from '../database/databaseConfig.js';
 import bcrypt from 'bcryptjs';
@@ -43,7 +43,6 @@ const userSchema = new Schema({
       fname: {
     type: String,
     trim: true,
-    required: [true, 'First name is required'],
     minLength: [2, 'enter a valid first name'],
     validate: {
       validator: function (v) {
@@ -55,7 +54,6 @@ const userSchema = new Schema({
   lname: {
     type: String,
     trim: true,
-    required: [true, 'Last name is required'],
     minLength: [2, 'enter a valid last name'],
     validate: {
       validator: function (v) {
@@ -157,19 +155,15 @@ const userSchema = new Schema({
     },
 }, { timestamps: true });
 
-userSchema.pre('save', async function (next) {
-   try {
-    if (!this.isModified('password')) return ;
-    const salt =  bcrypt.genSaltSync(10);
-    this.password =  bcrypt.hashSync(this.password, salt);
-    
-    return;
-   } catch (error) {
-    
-    console.log(error);
-    
-   }
-
+userSchema.pre('save', async function () {
+    if (!this.isModified('password') || !this.password) return next();
+    try {
+        const salt = bcrypt.genSaltSync(10);
+        this.password = bcrypt.hashSync(this.password, salt);
+        return ;
+    } catch (err) {
+        return next(err);
+    }
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {

@@ -7,47 +7,50 @@ export const googleLogin = passport.authenticate('google',{
     session: true,
 });
 
-console.log(process.env.backend_URL);
-
-export const googleLoginCallback = passport.authenticate('google',{
-    successRedirect:`${process.env.backend_URL}/api/v1/auth/profile`,
-    failureRedirect:`${process.env.CLIENT_URL}/login`,
-    session: true,
+export const googleLoginCallback = passport.authenticate('google', {
+  successRedirect: `${process.env.CLIENT_BASE_URL}/google-success`,
+  failureRedirect: `${process.env.CLIENT_BASE_URL}`,
+  session: true,
 });
 
-
-export const geGoogleProfile = (req,res) => {
-    if(!req.user){
-        return new APIError(401,['unauthorized']).send(res);
-    }
-
-    if(req.user.isProfileComplete){ //will decide later
-        return res.redirect(`${process.env.CLIENT_URL}/nodue/dashboard`)
-    }
-    else{
-    res.redirect(`${process.env.CLIENT_URL}/nodue/dashboard`)
-    }
+export const getGoogleProfile = (req, res) => {
+  if (!req.user) return new APIError(401, ['unauthorized']).send(res);
+    return new APIResponse(200, { user: req.user }, 'Google profile fetched successfully').send(res);
 };
-
 
 export const checkAuth = async (req,res) => {
+    if(req.user)
     return new APIResponse(200,{user: req.user},'session found').send(res);
+    return new APIError(401,['No active session found','Unauthorized']).send(res);
 };
 
-export const logout = (req,res) => {    
-    req.logout((err) => {
-        if(err){
-            return new APIError(500,['Logout failed']).send(res);
-        };
-        req.session.destroy((err) => {
-            if(err){
-                return new APIError(500,['Session destruction failed']).send(res);
-            };
-            req.clearCookie('connect.sid');
-            return new APIResponse(200,{},'Logout successful').send(res);
-        });
+export const logout = (req, res) => {
+  console.log("Logging out user:", req.user ? req.user.id : "No user in request");
+
+  req.logout(err => {
+    if (err) {
+      return new APIError(500, ["Logout failed"]).send(res);
+    }
+
+    req.session.destroy(err => {
+      if (err) {
+        return new APIError(500, ["Session destruction failed"]).send(res);
+      }
+
+      // CLEAR COOKIE PROPERLY
+      res.clearCookie("connect.sid", {
+        path: "/",           // REQUIRED
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV==='development'?false:true,       
+      });
+
+      console.log("Session + cookie cleared successfully");
+      return new APIResponse(200, {}, "Logout successful").send(res);
     });
+  });
 };
+
 
 const setMaxAge = (req, rememberMe) => {
   req.session.cookie.maxAge = rememberMe
@@ -85,8 +88,10 @@ export const localLogin = (req,res) => {
                         //to update the last login time, and destroy the other sessions
                         //call this 
 
-                        const id = String(user._id || user.id);
-                        return new APIResponse(200,  { user: { id } },'Login successful').send(res);
+                        // const id = String(user._id || user.id);
+                        const userResponse = user.toObject ? user.toObject() : user;
+                        delete userResponse.password;
+                        return new APIResponse(200,  { user:userResponse },'Login successful').send(res);
                     });
 
                 }catch(err){

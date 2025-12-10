@@ -13,6 +13,12 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
     setData(updated);
   };
 
+  const dropdownFields = {
+  gender: ["male", "female", "other"],
+  status: ["Paid", "Due", "Overdue", "Pending"]
+};
+
+
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-start py-12 z-50">
 
@@ -58,15 +64,29 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
                 <tr key={rowIndex} className="hover:bg-gray-50">
                   {headers.map((key, colIndex) => (
                     <td key={colIndex} className="px-4 py-2">
-                      <input
-                        type="text"
-                        value={row[key] || ""}
-                        onChange={(e) =>
-                          handleCellChange(rowIndex, key, e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </td>
+
+  {dropdownFields[key.toLowerCase()] ? (
+    <select
+      value={row[key] || ""}
+      onChange={(e) => handleCellChange(rowIndex, key, e.target.value)}
+      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+    >
+      <option value="">Select</option>
+      {dropdownFields[key.toLowerCase()].map((opt, idx) => (
+        <option key={idx} value={opt}>{opt}</option>
+      ))}
+    </select>
+  ) : (
+    <input
+      type="text"
+      value={row[key] || ""}
+      onChange={(e) => handleCellChange(rowIndex, key, e.target.value)}
+      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+    />
+  )}
+
+</td>
+
                   ))}
                 </tr>
               ))}

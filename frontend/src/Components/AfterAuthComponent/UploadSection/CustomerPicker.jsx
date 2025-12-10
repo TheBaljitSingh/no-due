@@ -1,10 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronDown, Plus, UserRound } from "lucide-react";
-import logger from "../../../utils/logger.js";
 
 function CustomerPicker({ items = [], onSelect }) {
-  //here items = customers
-  logger.log("f", items);
   
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("Choose Customer");

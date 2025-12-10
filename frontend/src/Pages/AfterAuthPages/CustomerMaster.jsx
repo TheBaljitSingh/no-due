@@ -3,7 +3,6 @@ import { TableHeaders } from "../../utils/constants";
 import PageHeaders from "../../utils/AfterAuthUtils/PageHeaders";
 import CustomerTable from "../../Components/AfterAuthComponent/CustomerMasterPage/CustomerTable";
 import CustomerMobileCard from "../../Components/AfterAuthComponent/CustomerMasterPage/CustomerMobileCard";
-import logger from "../../utils/logger.js";
 
 
 const CustomerMaster = () => {
@@ -13,7 +12,6 @@ const CustomerMaster = () => {
      <PageHeaders 
       header={'Customer Master'} 
       subheader={'All customers with dues, reminders, and their status.'} 
-      handleOnClick={() => logger.log("clicked from customer master")} 
       buttonName={'Upload CSV/XLSX'} 
       navigate={"../upload-center"} 
       navigateName={"Add Customer"}

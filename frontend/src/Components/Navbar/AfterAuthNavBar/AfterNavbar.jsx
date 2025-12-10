@@ -2,18 +2,23 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, X } from "lucide-react";
 import { notificationData } from "../../../utils/constants";
+import LogoutModal from "../../auth/LogoutModal";
 import { useAuth } from "../../../context/AuthContext";
 
-const AfterNavbar = ({ setIsLoggedIn, profileRef, closeProfileDropdown, isProfileDropdownOpen, setIsProfileDropdownOpen }) => {
+const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, setIsProfileDropdownOpen }) => {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(notificationData || []);
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const unreadCount = useMemo(
     () => items.filter((n) => !n.read).length,
     [items]
   );
+  const {user, logout} = useAuth();
+  console.log(user);
+  const fullName =  user?.name || user?.businessName ||  (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "") || "";
 
   useEffect(() => {
     const onDown = (e) => {
@@ -40,22 +45,28 @@ const AfterNavbar = ({ setIsLoggedIn, profileRef, closeProfileDropdown, isProfil
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
 
   // const user = {name:"Tanmay Singh", email:"tanmay@singh.com"}
-  const {user, logout} = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const handleLogout = async()=>{
     await logout();
-    navigate("/login");    
+    localStorage.setItem("isUserLoggedIn",false);
   }
 
 
 
   return ( 
+    <>
+       {
+        showLogoutModal &&
+        <LogoutModal setShowLogoutModal={setShowLogoutModal} />
+      }
+
     <nav className="hidden md:block sticky top-0 z-40 w-full backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-gray-200">
+   
       <div className="mx-auto md:max-w-7xl  px-10 md:px-12 lg:px-10 py-4 flex items-center justify-between">
         {/* Welcome */}
         <h1 className="text-[17px] sm:text-lg font-semibold tracking-tight text-gray-800">
-          Welcome, <span className="text-gray-900">{user?.name}</span> 👋
+          Welcome, <span className="text-gray-900">{fullName}</span> 👋
         </h1>
 
         {/* Right cluster */}
@@ -204,7 +215,6 @@ const AfterNavbar = ({ setIsLoggedIn, profileRef, closeProfileDropdown, isProfil
 
               <Link
                 to="/nodue/user-profile"
-                // onClick={()=>closeProfileDropdown()}
                 className="flex items-center px-4 py-2 font-medium text-sm text-gray-700 
               hover:bg-gray-100 transition-colors"
               >
@@ -235,6 +245,7 @@ const AfterNavbar = ({ setIsLoggedIn, profileRef, closeProfileDropdown, isProfil
       </div>
     
     </nav>
+    </>
   );
 };
 

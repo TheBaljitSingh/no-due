@@ -1,6 +1,6 @@
 import Customer from "../model/customer.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
-import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";// statusCode, message, data, success(automatic)
+import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 
 export const createCustomer = async (req, res) => {
   try {
@@ -15,7 +15,7 @@ export const createCustomer = async (req, res) => {
 
       const formattedData = customerData.map(c => ({
         ...c,
-        CustomerOfComapny: userId
+        CustomerOfComapny: req.user._id
       }));
 
       // console.log("Formatted Data:", formattedData);
@@ -29,7 +29,7 @@ export const createCustomer = async (req, res) => {
       ).send(res);
     }
 
-    customerData.CustomerOfComapny = userId;
+    customerData.CustomerOfComapny =  req.user._id;
 
     const newCustomer = new Customer(customerData);
     await newCustomer.save();
@@ -57,8 +57,6 @@ export const createCustomer = async (req, res) => {
 
 export const getCustomers = async(req, res)=>{
     try {
-        console.log("customers call");
-        //user will get thair own customer only
         const {page = 1 , limit = 10} = req.query;
         const offset = (page - 1)*limit;
         const queryLimit = limit==="all"?0:parseInt(limit);
@@ -66,7 +64,7 @@ export const getCustomers = async(req, res)=>{
         const userId = req.user._id;
 
 
-        const query = {CustomerOfComapny:userId}; //basically finters
+        const query = {CustomerOfComapny:userId}; 
     
         const customers = await Customer.find(query).skip(offset).limit(queryLimit); 
 

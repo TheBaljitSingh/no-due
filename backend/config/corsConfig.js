@@ -1,10 +1,12 @@
     import cors from 'cors';
 
 export const corsMiddleware = () => {
-  const allowedOrigins = (process.env.CLIENT_BASE_URL || '')
-    .split(',')
-    .map(s => s.trim().replace(/\/$/, ''))
-    .filter(Boolean);
+const allowedOrigins = (process.env.CLIENT_BASE_URL || '')
+  .split(',')
+  .map(url => url.trim())
+  .filter(Boolean);
+
+console.log("Allowed Origins:", allowedOrigins);
 
   return cors({
     origin(origin, callback) {

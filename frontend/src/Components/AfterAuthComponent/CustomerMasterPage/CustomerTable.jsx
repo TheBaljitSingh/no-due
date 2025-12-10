@@ -22,6 +22,7 @@ const CustomerTable = ({TableHeaders }) => {
     const fetchCustomers = async () => {
       try {
         const data = await getCustomers({page, limit});
+        console.log(data);
         setCustomers(data.data.customers);
         setTotalPages(data.data.totalPages)
         setTotalCustomers(data.data.total);

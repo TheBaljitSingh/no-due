@@ -104,10 +104,22 @@ export const getCustomersById = async(req, res)=>{
 
 export const updateCustomer = async(req, res)=>{
     try {
-        //have to discuss what we are allowing to update 
+        const {customerId} = req.params;
+        const userId = req.user._id;
+        const updatedData = req.body;
+        if(!updatedData){
+          return new APIResponse(400, null, `No data provided to update`).send(res);
+        }
+        const filters = {};
+        filters.CustomerOfComapny = userId;
+        filters._id = customerId; 
         
+        const response = await Customer.findOneAndUpdate(filters, updatedData, {new: true});
+        return new APIResponse(200, response, "Successfully updated").send(res);
+
     } catch (error) {
-        
+        return new APIError(500, error, "Failed to Update Customer",).send(res);
+
     }
 }
 

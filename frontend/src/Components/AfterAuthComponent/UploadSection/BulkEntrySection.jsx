@@ -82,12 +82,18 @@ const csvFileToJson = (file) => {
     }
 
   }
+  const handleDownloadCSVFormat = async()=>{
+    const link = document.createElement('a');
+    link.href = '../../../../public/Template.csv'; 
+    link.download="CSVFormat-nodue.csv";
+    link.click();
+  }
   return (
     <div className='min-w-0 w-full'>
         <PageHeaders 
         header={'Upload Bulk Entries'} 
         subheader={'Import multiple customer records at once using CSV or Excel files'} 
-              handleOnClick={() => console.log('clicked from upload section')} 
+        handleOnClick={handleDownloadCSVFormat} 
         buttonName={'Download Template'}
         />
       

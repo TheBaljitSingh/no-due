@@ -1,6 +1,6 @@
 /* helpers */
 
-import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
+import { EllipsisVertical, IndianRupee, Pencil, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 export const ActionBadge = ({ onEdit, onDelete }) => {
@@ -42,8 +42,8 @@ export const ActionBadge = ({ onEdit, onDelete }) => {
           <button
             onClick={() => {
               setActionOptions(false);
-              // onEdit();
-              alert("comming soon")
+              onEdit();
+              // alert("comming soon")
             }}
             className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
           >
@@ -60,6 +60,13 @@ export const ActionBadge = ({ onEdit, onDelete }) => {
           >
             <Trash2 size={16} className="text-gray-600" />
             Delete
+          </button>
+          <button
+          onClick={()=>alert("manual pay comming soon")}
+          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
+          >
+            <IndianRupee size={16} className="text-gray-600" />
+             Pay
           </button>
         </div>
       )}

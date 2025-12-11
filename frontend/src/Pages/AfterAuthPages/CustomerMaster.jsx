@@ -12,7 +12,7 @@ const CustomerMaster = () => {
      <PageHeaders 
       header={'Customer Master'} 
       subheader={'All customers with dues, reminders, and their status.'} 
-      buttonName={'Upload CSV/XLSX'} 
+      // buttonName={'Upload CSV/XLSX'} 
       navigate={"../upload-center"} 
       navigateName={"Add Customer"}
      />

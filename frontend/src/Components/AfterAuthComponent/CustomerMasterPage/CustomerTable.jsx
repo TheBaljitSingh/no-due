@@ -6,6 +6,7 @@ import {deleteCustomerById, getAllcustomers, getCustomers} from "../../../utils/
 import { toast } from 'react-toastify';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useNavigate } from 'react-router-dom';
 
 
 const CustomerTable = ({TableHeaders }) => {
@@ -16,6 +17,7 @@ const CustomerTable = ({TableHeaders }) => {
   const [totalPages, setTotalPages] = useState();
   const [totalCustomers, setTotalCustomers] = useState();
   const [deletingId, setDeletingId] = useState(null);
+  const navigate = useNavigate();
 
 
   useEffect(()=>{
@@ -58,6 +60,10 @@ const CustomerTable = ({TableHeaders }) => {
     }else{
       toast.error(res?.error || "error while deleting");
     }
+  }
+
+  const handleDetails = (cid)=>{
+    navigate('/nodue/customers/'+cid);
   }
 
   const handleDownloadCsv = async()=>{
@@ -190,8 +196,8 @@ const CustomerTable = ({TableHeaders }) => {
                         </a>
                       </td> */}
                       <td className="px-2 py-4 whitespace-nowrap text-gray-700 align-middle">{c.mobile}</td>
-                      <td className="px-2 py-4 font-medium text-gray-900">{currency(c.due)}</td>
-                      <td className="px-2 py-4 font-medium text-red-600">{currency(c.overdue)}</td>
+                      <td className="px-2 py-4 font-medium text-gray-900">{currency(c.currentDue)}</td>
+                      <td className="px-2 py-4 font-medium text-red-600">{currency(c.lastTransaction)}</td>
                       <td className="px-2 py-4 whitespace-nowrap text-gray-700">{formatDate(c.lastReminder)}</td>
                       {/* <td className="px-6 py-4 max-w-xs">
                         <span className="line-clamp-2 text-gray-700" title={c.feedback}>
@@ -202,7 +208,7 @@ const CustomerTable = ({TableHeaders }) => {
                         <StatusBadge value={c.status} />
                       </td>
                       <td >
-                       <ActionBadge onEdit={()=>handleEditCustomer(c)} onDelete={()=>handleDeleteCustomer(c._id)} />
+                       <ActionBadge onEdit={()=>handleEditCustomer(c)} onDelete={()=>handleDeleteCustomer(c._id)} onDetails={()=>handleDetails(c._id)} />
                       </td>
                     </tr>
                   ))}

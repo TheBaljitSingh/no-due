@@ -1,7 +1,8 @@
-import exapress from 'express';
+import express from 'express';
 import { createCustomer, deleteCustomers, getCustomers, getCustomersById, updateCustomer } from '../controller/customer.controller.js';
+import { addDue, getTransactions, makePayment,editDue } from "../controller/customerTransaction.controller.js";
 
-const router = exapress.Router();
+const router = express.Router();
 
 
 router.get("/", getCustomers); //get all customers
@@ -9,5 +10,10 @@ router.post("/", createCustomer);
 router.delete("/:customerId", deleteCustomers);
 router.get("/:customerId", getCustomersById);
 router.put("/:customerId", updateCustomer);
+
+router.post("/:id/add-due", addDue);
+router.post("/:id/add-payment",  makePayment);
+router.post("/:id/edit-due", editDue);
+router.get("/:id/transactions", getTransactions);
 
 export default router;

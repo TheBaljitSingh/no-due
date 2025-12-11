@@ -85,11 +85,9 @@ export const getCustomersById = async(req, res)=>{
     try {
         //only users's customer should be queried
         const {customerId } = req.params;
-        
-        const customer = await Customer.find({customerId: customerId});
-    
 
-        if(!customer.length){
+        const customer = await Customer.findById(customerId);
+        if(!customer){
             return new APIResponse(404, null, `No customer found for this Id ${customerId}`).send(res); 
         }
         

@@ -3,7 +3,7 @@
 import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-export const ActionBadge = ({ onEdit, onDelete }) => {
+export const ActionBadge = ({ onEdit, onDelete ,onDetails}) => {
   const [actionOptions, setActionOptions] = useState(false);
   const menuRef = useRef(null);
   const verticalIconRef = useRef(null);
@@ -60,6 +60,14 @@ export const ActionBadge = ({ onEdit, onDelete }) => {
           >
             <Trash2 size={16} className="text-gray-600" />
             Delete
+          </button>
+          <button
+            onClick={() => {setActionOptions(false);
+              onDetails();
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
+          >
+            details
           </button>
         </div>
       )}

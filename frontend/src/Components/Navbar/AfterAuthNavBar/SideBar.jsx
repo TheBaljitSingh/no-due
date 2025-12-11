@@ -70,7 +70,7 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
     `}
   >
 
-    <div className="h-full px-3 py-5 overflow-y-auto">
+    <div className="h-full px-3 py-5 ">
 
       <div className="relative h-16 group flex items-center px-2 mb-6">
 
@@ -128,7 +128,7 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
           <li key={features.name}>
             <Link
               to={features.path}
-              className={`flex items-center ${isCollapsed?"justify-center":""} px-3 py-2.5 rounded-lg transition-all text-sm font-medium 
+              className={`flex group items-center ${isCollapsed?"justify-center":""} px-3 py-2.5 rounded-lg transition-all text-sm font-medium 
                 ${ActivePage === features.path ? "bg-green-50 text-green-600" : "text-gray-700 hover:bg-gray-100"}`}
             >
               <span className="shrink-0">
@@ -137,10 +137,25 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
 
               {/* Hide text when collapsed */}
               {!isCollapsed && <span className="ml-3">{features.name}</span>}
+              {
+                isCollapsed &&
+                <span
+              //left-full contain offset,
+              //left-0 it not contain offset
+                className="absolute left-full -ml-2
+                opacity-0 group-hover:opacity-100 
+                whitespace-nowrap
+                bg-black/85 text-white text-xs px-2 py-1 rounded-md
+                transition shadow-lg pointer-events-none z-50"
+              >
+                {features.name}
+              </span>
+              }
             </Link>
           </li>
         ))}
       </ul>
+      
 
       {/* CTC Section */}
       <ul className="pt-4 mt-4 space-y-1 font-medium border-t border-gray-200">
@@ -148,7 +163,7 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
           <li key={ctc.name}>
             <Link
               to={ctc.path}
-              className={`flex items-center  ${isCollapsed?"justify-center":""} px-3 py-2.5 rounded-lg transition-all text-sm font-medium 
+              className={`group relative flex items-center  ${isCollapsed?"justify-center":""} px-3 py-2.5 rounded-lg transition-all text-sm font-medium 
                 ${ActivePage === ctc.path ? "bg-green-50 text-green-600" : "text-gray-700 hover:bg-gray-100"}`}
             >
               <span className="shrink-0">
@@ -156,6 +171,23 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
               </span>
 
               {!isCollapsed && <span className="ml-3">{ctc.name}</span>}
+
+              { isCollapsed &&(
+                       
+                 <span
+                  //left-full contain offset,
+                  //left-0 it not contain offset
+                  className="absolute left-full ml-1 
+                  opacity-0 group-hover:opacity-100 
+                  whitespace-nowrap
+                  bg-black/85 text-white text-xs px-2 py-1 rounded-md
+                  transition shadow-lg pointer-events-none z-50"
+                  >
+                  {ctc.name}
+                  </span>
+
+            )}
+
             </Link>
           </li>
         ))}

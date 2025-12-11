@@ -67,24 +67,15 @@ useLayoutEffect(()=>{
   return (
    <div className="flex h-screen overflow-hidden">
     {/* Sidebar wrapper: fixed height, not scrollable */}
-    <div
-      className={`
-        
-        md:w-[${isCollapsed ? "60px" : "clamp(100px,20vw,200px)"}] top-0 z-40 transition-all h-screen
-        sticky 
-        bg-white
-      `}
-    >
+  
       {/* Sidebar inner scroll area: overflow-y-auto */}
-
-      <div className="h-full sidebar-scroll overflow-visible">
+      <div className="h-full sidebar-scroll overflow-visible z-50 ">
         <SideBar
           ActivePage={ActivePage}
           handleCollapse={handleCollapse}
           isCollapsed={isCollapsed}
         />
       </div>
-    </div>
 
     {/* MAIN CONTENT AREA (scrollable) */}
     <div className="flex flex-col flex-1 overflow-y-auto sidebar-scroll min-w-0">

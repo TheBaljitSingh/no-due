@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import EditCustomerModal from "./EditCustomerModal.jsx"
+import ConfirmModal from "./ConfirmModal.jsx"
 
 
 const CustomerTable = ({TableHeaders }) => {
@@ -19,7 +20,11 @@ const CustomerTable = ({TableHeaders }) => {
   const [deletingId, setDeletingId] = useState(null);
   const [editcustomer, setEditCustomer] = useState([]);
   const [showEditMOdal, setShowEditModal] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
   const editRef = useRef();
+
 
     useEffect(()=>{
       const handleMouseClick = (e)=>{
@@ -82,22 +87,34 @@ const CustomerTable = ({TableHeaders }) => {
   const handleDeleteCustomer = async(id)=>{
     // console.log("delete called",id);
     //call the api
-    const res = await deleteCustomerById(id);
+    console.log(id);
+    setDeletingId(id);
+    setConfirmOpen(true);   
+    
+    
+  }
+
+  const handleConfirmDelete = async () => {
+
+    const res = await deleteCustomerById(deletingId);
     // console.log(res);
     if(res.success){
-      setDeletingId(id);
       setTimeout(()=>{
-        const updatedCustomers = customers.filter(c=>c._id!==id);
+        const updatedCustomers = customers.filter(c=>c._id!==deletingId);
         setCustomers(updatedCustomers);
         setTotalCustomers(prev=>prev-1);
         setDeletingId(null);
         // console.log(updatedCustomers);
 
       },300)
+      toast.success("Customer deleted");
     }else{
       toast.error(res?.error || "error while deleting");
     }
-  }
+
+    setConfirmOpen(false);
+};
+
 
   const handleDownloadCsv = async()=>{
     // console.log(customers);
@@ -319,6 +336,15 @@ const CustomerTable = ({TableHeaders }) => {
             { showEditMOdal &&  <div ref={editRef}> 
               <EditCustomerModal customer={editcustomer} setEditCustomer={setEditCustomer} handleClose={()=>setShowEditModal(false)} handleEditSubmit={handleEditSubmit} /> 
                </div>}
+               {/* confirmation dialogue */}
+           { confirmOpen &&
+             <ConfirmModal
+              open={confirmOpen}
+              onClose={() => setConfirmOpen(false)}
+              onConfirm={handleConfirmDelete}
+              message="Are you sure you want to delete this customer?"
+            />
+           }
           </div>
   )
 }

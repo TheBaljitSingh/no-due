@@ -1,0 +1,389 @@
+import { X } from "lucide-react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
+import { addDueToCustomer, addPaymentForCustomer, editCustomerDue, getCustomerById, getCustomerTransactions } from "../../../utils/service/customerService";
+
+
+export default function TransactionHistoryModal({
+  customer,
+  setCurrentCustomer, //setter for customers
+  handleClose,
+  transactions, setTransactions
+ 
+}) {
+  if (!customer) return null;
+
+  // const [loading, setLoading] = useState(true);
+
+  console.log(transactions);
+
+
+  // useLayoutEffect(()=>{
+  //   async function loadTxn(){
+  //     try {
+  //         const tsx = await getCustomerTransactions(customer._id);
+  //         setTransactions(tsx.data?.transactions || tsx.transactions || []);
+    
+  //       }
+  //     catch (error) {
+  //       console.error(error);
+  //     } finally{
+  //       setLoading(false);
+  //     }
+  //   }
+  //   loadTxn();
+  // },[]);
+
+  
+  // const transactions = [
+  //           {
+  //               "_id": "693be3910fa689781d94e210",
+  //               "customerId": "693badedcb2c3e2b9e2a5a30",
+  //               "type": "DUE_EDITED",
+  //               "amount": 50,
+  //               "previousDue": 50,
+  //               "newDue": 0,
+  //               "metadata": {
+  //                   "note": "taken cash no due is here",
+  //                   "operatorId": "69392b73c70447c56f9a888c"
+  //               },
+  //               "createdAt": "2025-12-12T09:42:41.913Z",
+  //               "updatedAt": "2025-12-12T09:42:41.913Z",
+  //               "__v": 0
+  //           },
+  //           {
+  //               "_id": "693be37f0fa689781d94e20b",
+  //               "customerId": "693badedcb2c3e2b9e2a5a30",
+  //               "type": "PAYMENT",
+  //               "amount": 150,
+  //               "previousDue": 200,
+  //               "newDue": 50,
+  //               "metadata": {
+  //                   "note": "recovered 70%",
+  //                   "operatorId": "69392b73c70447c56f9a888c"
+  //               },
+  //               "createdAt": "2025-12-12T09:42:23.580Z",
+  //               "updatedAt": "2025-12-12T09:42:23.580Z",
+  //               "__v": 0
+  //           },
+  //           {
+  //               "_id": "693be3730fa689781d94e206",
+  //               "customerId": "693badedcb2c3e2b9e2a5a30",
+  //               "type": "DUE_ADDED",
+  //               "amount": 200,
+  //               "previousDue": 0,
+  //               "newDue": 200,
+  //               "metadata": {
+  //                   "note": "for pizza",
+  //                   "operatorId": "69392b73c70447c56f9a888c"
+  //               },
+  //               "createdAt": "2025-12-12T09:42:11.137Z",
+  //               "updatedAt": "2025-12-12T09:42:11.137Z",
+  //               "__v": 0
+  //           }
+  //       ];
+
+  const [activeTab, setActiveTab] = useState("VIEW");
+  const [form, setForm] = useState({ amount: "", note: "" });
+
+  // Badge style function
+  const getActionBadge = (type) => {
+    const base = "px-2 py-0.5 rounded-full text-xs font-medium";
+
+    switch (type) {
+      case "DUE_ADDED":
+        return <span className={`${base} bg-blue-100 text-blue-700`}>Due Added</span>;
+      case "PAYMENT":
+        return <span className={`${base} bg-green-100 text-green-700`}>Payment</span>;
+      case "DUE_EDITED":
+        return <span className={`${base} bg-yellow-100 text-yellow-700`}>Due Edited</span>;
+      default:
+        return <span className={`${base} bg-gray-100 text-gray-700`}>{type}</span>;
+    }
+  };
+
+
+  //this will be the function that handle requirement or call apis
+    const handleAddBill = async () => {
+      
+      try {
+        const data = await addDueToCustomer(customer._id, { amount: Number(form.amount), note: form.note });
+        setCurrentCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
+        setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
+        // setShowAddBill(false);
+        setForm({ amount: "", note: "" });
+        setActiveTab("VIEW");
+
+      } catch (err) {
+        console.log(err.message || "Error");
+      }
+    };
+  
+    const handlePayment = async () => {
+      
+      try {
+        const data = await addPaymentForCustomer(customer._id, { amount: Number(form.amount), note: form.note });
+        setCurrentCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
+        setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
+        // setShowPay(false);
+        setForm({ amount: "", note: "" });
+        setActiveTab("VIEW");
+      } catch (err) {
+        console.log(err.message || "Error");
+      }
+    };
+  
+    const handleEditDue = async () => {
+      
+      try {
+        const data = await editCustomerDue(customer._id, { correctedDue: Number(form.amount), note: form.note });
+        setCurrentCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
+        setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
+        // setShowEdit(false);
+        setForm({ amount: "", note: "" });
+        setActiveTab("VIEW");
+      } catch (err) {
+        console.log(err.message || "Error");
+      }
+    };
+
+  // Render dynamic content based on tab
+  const renderTabContent = () => {
+    switch (activeTab) {
+
+      case "VIEW":
+        return (
+          <div className="max-h-90 overflow-y-auto scroll-smooth">   {/* <-- add height */}
+          <table className="w-full rounded-lg text-sm outline-none">
+            <thead className="bg-gray-50 text-gray-600 text-xs uppercase  sticky top-0 z-10">
+              <tr>
+                <th className="p-2 text-left">Type</th>
+                <th className="p-2 text-right">Amount</th>
+                <th className="p-2 text-right">Prev Due</th>
+                <th className="p-2 text-right">New Due</th>
+                <th className="p-2 text-left">Date</th>
+                <th className="p-2 text-left">Note</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {transactions.map((tx) => (
+                <tr key={tx._id} className="border-b hover:bg-gray-50 transition">
+                  <td className="p-2">{getActionBadge(tx.type)}</td>
+                  <td className="p-2 text-right font-medium">₹{tx.amount}</td>
+                  <td className="p-2 text-right">₹{tx.previousDue}</td>
+                  <td className="p-2 text-right font-semibold">₹{tx.newDue}</td>
+                  <td className="p-2 whitespace-nowrap">
+                    {new Date(tx.createdAt).toLocaleString()}
+                  </td>
+                  <td className="p-2">{tx?.metadata?.note || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+  {transactions.length === 0 && (
+    <p className="text-center py-6 text-gray-500">No transactions found.</p>
+  )}
+</div>
+
+        );
+
+      case "ADD_DUE":
+        return (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddBill(form);
+              setForm({ amount: "", note: "" });
+            }}
+            className="space-y-3"
+          >
+            <input
+              type="number"
+              placeholder="Amount"
+              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            />
+
+            <textarea
+              placeholder="Note"
+              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+            />
+
+            <button className="bg-green-600 text-white px-4 py-2 rounded-lg w-full border-none">
+              Add Due
+            </button>
+          </form>
+        );
+
+      case "EDIT_DUE":
+        return (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleEditDue(form);
+              setForm({ amount: "", note: "" });
+            }}
+            className="space-y-3"
+          >
+            <input
+              type="number"
+              placeholder="Corrected Due"
+              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            />
+
+            <textarea
+              placeholder="Note"
+              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+            />
+
+            <button  className="bg-yellow-600 text-white px-4 py-2 rounded-lg w-full border-none">
+              Save Correction
+            </button>
+          </form>
+        );
+
+      case "PAY":
+        return (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handlePayment(form);
+              setForm({ amount: "", note: "" });
+            }}
+            className="space-y-3"
+          >
+            <input
+              type="number"
+              placeholder="Payment Amount"
+              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            />
+
+            <textarea
+              placeholder="Note"
+              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+            />
+
+            <button  className="bg-green-600 text-white px-4 py-2 rounded-lg w-full border-none">
+              Record Payment
+            </button>
+          </form>
+        );
+
+      default:
+        return null;
+    }
+
+  };
+
+
+  // if(loading) return <div>Loading...</div>
+
+  // return;
+
+  return (
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-start py-12 z-50">
+      
+      <div className="w-11/12 md:w-3/4 lg:w-1/2 bg-white rounded-xl shadow-xl relative animate-fadeIn max-h-[80vh] overflow-hidden">
+
+        {/* Close */}
+        <button
+          onClick={()=>{
+            //before closing i want to set the customerData for particular id
+              
+            handleClose()
+          }}
+          className="absolute top-4 right-4 bg-white rounded-full p-2 shadow hover:shadow-md transition"
+        >
+          <X size={20} />
+        </button>
+
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b">
+          <h2 className="text-xl font-semibold">
+            Transaction History • {customer.name}
+          </h2>
+
+          {/* CURRENT DUE */}
+          <p className="text-lg font-bold text-gray-700 mt-1">
+            Current Due: ₹{customer.currentDue || 0}
+          </p>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-4 ">
+            <button
+              onClick={() => setActiveTab("VIEW")}
+              className={`px-3 py-1 rounded-lg border-none hover:cursor-pointer ${
+                activeTab === "VIEW" ? "bg-gray-600 text-white" : "bg-gray-100"
+              }`}
+            >
+              View
+            </button>
+
+            <button
+              onClick={() => setActiveTab("ADD_DUE")}
+              className={`px-3 py-1 rounded-lg border-none hover:cursor-pointer ${
+                activeTab === "ADD_DUE" ? "bg-green-600 text-white" : "bg-green-100"
+              }`}
+            >
+              Add Due
+            </button>
+
+            <button
+              onClick={() => setActiveTab("EDIT_DUE")}
+              className={`px-3 py-1 rounded-lg border-none hover:cursor-pointer ${
+                activeTab === "EDIT_DUE" ? "bg-yellow-600 text-white" : "bg-yellow-100"
+              }`}
+            >
+              Edit Due
+            </button>
+
+            <button
+              onClick={() => setActiveTab("PAY")}
+              className={`px-3 py-1 rounded-lg border-none  ml-auto mr-4 hover:cursor-pointer ${
+                activeTab === "PAY" ? "bg-green-600 text-white" : "bg-green-100"
+              }`}
+            >
+              Add Payment
+            </button>
+          </div>
+        </div>
+
+        {/* CONTENT AREA */}
+        <div className="overflow-y-auto max-h-[60vh] px-6 py-4">
+          {renderTabContent()}
+        </div>
+
+      </div>
+    </div>
+  );
+}

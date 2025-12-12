@@ -32,22 +32,22 @@ const customerSchema = new Schema({
         lowercase: true,
         validate: {
             validator: function (v) {
-                if(!v) return true; // allowing empty or null emails
-                if(v.length<5 || v.length>255) return false;
+                if (!v) return true; // allowing empty or null emails
+                if (v.length < 5 || v.length > 255) return false;
                 return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v);
             },
             message: "Please enter a valid email address!!"
         },
     },
-    due: {
-        type: Number,
-        default: 0,
-        min: [0, "Due amount cannot be negative"],
+    currentDue: { 
+        type: Number, 
+        default: 0 ,
+         min: [0, "Due amount cannot be negative"],
     },
-    overdue: {
-        type: Number,
-        default: 0,
-        min: [0, "Overdue amount cannot be negative"],
+    lastTransaction: {
+         type: Schema.Types.ObjectId, ref: "Transaction", 
+         default: null ,
+         min: [0, "Overdue amount cannot be negative"],
     },
     lastReminder: {
         type: Date,
@@ -68,12 +68,14 @@ const customerSchema = new Schema({
         enum: ["male", "female", "other"],
         default: "other",
     },
-    CustomerOfComapny:{
+    CustomerOfComapny: {
         type: Types.ObjectId,
         ref: 'User',
         required: true,
     }
 }, { timestamps: true });
+
 const Customer = connection.model('Customer', customerSchema);
+
 
 export default Customer;

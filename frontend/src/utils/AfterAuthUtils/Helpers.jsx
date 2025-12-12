@@ -3,7 +3,7 @@
 import { EllipsisVertical, IndianRupee, Pencil, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-export const ActionBadge = ({ onEdit, onDelete }) => {
+export const ActionBadge = ({ onEdit, onDelete, onTransaction}) => {
   const [actionOptions, setActionOptions] = useState(false);
   const menuRef = useRef(null);
   const verticalIconRef = useRef(null);
@@ -38,7 +38,7 @@ export const ActionBadge = ({ onEdit, onDelete }) => {
 
       {/* Dropdown menu */}
       {actionOptions && (
-        <div className="absolute z-50 right-6 mt-1 w-32 rounded-lg shadow-lg bg-white border border-gray-200" ref={menuRef}>
+        <div className="absolute z-50 right-6 mt-1 w-42 rounded-lg shadow-lg bg-white border border-gray-200" ref={menuRef}>
           <button
             onClick={() => {
               setActionOptions(false);
@@ -53,7 +53,7 @@ export const ActionBadge = ({ onEdit, onDelete }) => {
 
           <button
             onClick={() => {
-              setActionOptions(false);
+              setActionOptions(false); 
               onDelete();
             }}
             className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
@@ -62,11 +62,15 @@ export const ActionBadge = ({ onEdit, onDelete }) => {
             Delete
           </button>
           <button
-          onClick={()=>alert("manual pay comming soon")}
+          onClick={()=>{
+            // closing the action dropdowns
+            setActionOptions(false);
+            onTransaction()
+          }}
           className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
           >
-            <IndianRupee size={16} className="text-gray-600" />
-             Pay
+            <IndianRupee size={16} className="text-gray-600 inline-flex" />
+             All Transactions
           </button>
         </div>
       )}

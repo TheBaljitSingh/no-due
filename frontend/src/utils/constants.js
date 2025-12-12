@@ -130,7 +130,7 @@ export const SideBarCTC = [
     },
   ]
 
-export const TableHeaders = ["Customer Id", "Customer Name", "Company Name" ,  "Phone Number" , "Due", "Overdue" , "LastReminder", "Status", "Actions"]
+export const TableHeaders = ["Customer Id", "Customer Name", "Company Name" ,  "Phone Number" , "Due", "LastReminder", "Status", "Actions"]
 
 export const seedCustomers = [
   {

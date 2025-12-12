@@ -1,5 +1,4 @@
 import React from "react";
-import { TableHeaders } from "../../utils/constants";
 import PageHeaders from "../../utils/AfterAuthUtils/PageHeaders";
 import CustomerTable from "../../Components/AfterAuthComponent/CustomerMasterPage/CustomerTable";
 import CustomerMobileCard from "../../Components/AfterAuthComponent/CustomerMasterPage/CustomerMobileCard";
@@ -18,7 +17,7 @@ const CustomerMaster = () => {
      />
 
       {/* Desktop Table */}
-      <CustomerTable TableHeaders={TableHeaders}/>
+      <CustomerTable/>
 
       {/* Mobile Cards */}
       <CustomerMobileCard />

@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { currency, formatDate, StatusBadge, ActionBadge } from '../../../utils/AfterAuthUtils/Helpers'
 import { Download, FileText, Pencil, Trash2 } from 'lucide-react'
-
-import {deleteCustomerById, getAllcustomers, getCustomers, updatecustomer} from "../../../utils/service/customerService";
+import { TableHeaders } from "../../../utils/constants.js";
+import {deleteCustomerById, getAllcustomers, getCustomers, getCustomerTransactions, updatecustomer} from "../../../utils/service/customerService";
 import { toast } from 'react-toastify';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import EditCustomerModal from "./EditCustomerModal.jsx"
 import ConfirmModal from "./ConfirmModal.jsx"
+import TransactionHistoryModal from "./TransactionHistoryModal.jsx"
+import { useNavigate } from 'react-router-dom';
 
 
-const CustomerTable = ({TableHeaders }) => {
+const CustomerTable = () => {
 
   const [customers, setCustomers] = useState([]);
   const [page, setPage] = useState(1);
@@ -18,23 +20,34 @@ const CustomerTable = ({TableHeaders }) => {
   const [totalPages, setTotalPages] = useState();
   const [totalCustomers, setTotalCustomers] = useState();
   const [deletingId, setDeletingId] = useState(null);
-  const [editcustomer, setEditCustomer] = useState([]);
+
+  const [currentCustomer, setCurrentCustomer] = useState([]); // current action is going to perform like edit, delete, view transactinHistory
   const [showEditMOdal, setShowEditModal] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [deletedCustomerId, setDeletedCustomerId] = useState(); //to show the delete animation
+
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  
+
 
   const editRef = useRef();
+  const transactionRef = useRef();
+
+  const navigate = useNavigate();
 
 
     useEffect(()=>{
       const handleMouseClick = (e)=>{
-        if(!showEditMOdal) return;
+        if(!showEditMOdal || !showTransactionModal) return;
   
-        if(editRef!==undefined && editRef.current.contains(e.target)){
+        if((editRef!==undefined && editRef.current.contains(e.target)) ||(transactionRef!=undefined && transactionRef.current.contains(e.target))){
           return;
         }
   
         setShowEditModal(false);
+        setShowTransactionModal(false);
       
       }
       document.addEventListener("mousedown", handleMouseClick);
@@ -61,20 +74,20 @@ const CustomerTable = ({TableHeaders }) => {
 
 
   const handleEditCustomer = (customer)=>{
-    setEditCustomer(customer);
-    setEditCustomer(Object.fromEntries(Object.entries(customer).filter(([key])=>!['__v','createdAt','updatedAt'].includes(key)))); // removing unwanted keys for update
+    setCurrentCustomer(customer);
+    setCurrentCustomer(Object.fromEntries(Object.entries(customer).filter(([key])=>!['__v','createdAt','updatedAt'].includes(key)))); // removing unwanted keys for update
     setShowEditModal(true);
 
   }
 
   const handleEditSubmit = async()=>{
-    const response = await updatecustomer(editcustomer._id, editcustomer);
+    const response = await updatecustomer(currentCustomer._id, currentCustomer);
     console.log(response);
     //else{call update api with data and id
     if(response.status===200){
       toast.success("Customer updated");
       //update the existing array obj
-      setCustomers(prev=>prev.map(c=>c._id===editcustomer._id?response.data:c)); //updated the customer no extra call
+      setCustomers(prev=>prev.map(c=>c._id===currentCustomer._id?response.data:c)); //updated the customer no extra  api call
       setShowEditModal(false);
 
 
@@ -87,7 +100,6 @@ const CustomerTable = ({TableHeaders }) => {
   const handleDeleteCustomer = async(id)=>{
     // console.log("delete called",id);
     //call the api
-    console.log(id);
     setDeletingId(id);
     setConfirmOpen(true);   
     
@@ -98,7 +110,9 @@ const CustomerTable = ({TableHeaders }) => {
 
     const res = await deleteCustomerById(deletingId);
     // console.log(res);
+    
     if(res.success){
+      setDeletedCustomerId(deletingId); // to show the delete animation
       setTimeout(()=>{
         const updatedCustomers = customers.filter(c=>c._id!==deletingId);
         setCustomers(updatedCustomers);
@@ -115,6 +129,39 @@ const CustomerTable = ({TableHeaders }) => {
     setConfirmOpen(false);
 };
 
+
+  const handleAllTransactions = (c)=>{
+    //input: customer obj
+    //
+    setCurrentCustomer(c); //current customer have to perform actions
+    console.log("clicked on the view all transactions",c);
+    console.log(c);
+    async function loadTxn(){
+      try {
+          const tsx = await getCustomerTransactions(c._id);
+          setTransactions(tsx.data?.transactions || tsx.transactions || []);
+          console.log(tsx);
+        }
+      catch (error) {
+        console.error(error);
+          } finally{
+      }
+      }
+
+    loadTxn();
+    setShowTransactionModal(true);
+    
+  }
+
+  
+
+  const handleCloseTransaction = ()=>{
+    //assuing it will only called when comming from transaction view modal
+
+    //update the totalDUE in UI
+    setCustomers(prev=>prev.map(c=>c._id===currentCustomer._id?{...c, "currentDue":transactions[0]?.newDue}:c));
+    setShowTransactionModal(false);
+  }
 
   const handleDownloadCsv = async()=>{
     // console.log(customers);
@@ -236,7 +283,7 @@ const CustomerTable = ({TableHeaders }) => {
                 <tbody className="divide-y divide-gray-200">
                   {customers.map((c) => (
                     
-                    <tr key={c._id} className={`transition-all duration-300 overflow-hidden hover:bg-gray-50 ${deletingId === c._id ? "opacity-0 h-0" : "opacity-100 h-auto"}`}>
+                    <tr key={c._id} className={`transition-all duration-300 overflow-hidden hover:bg-gray-50 ${deletedCustomerId === c._id ? "opacity-0 h-0" : "opacity-100 h-auto"}`}>
                       <td className="px-2 py-4 font-medium text-gray-900 align-middle">{c._id}</td>
                       <td className="px-2 py-4 text-gray-700 align-middle">{c.name}</td>
                       <td className="px-2 py-4 text-gray-700 align-middle">{c.company}</td>
@@ -246,8 +293,8 @@ const CustomerTable = ({TableHeaders }) => {
                         </a>
                       </td> */}
                       <td className="px-2 py-4 whitespace-nowrap text-gray-700 align-middle">{c.mobile}</td>
-                      <td className="px-2 py-4 font-medium text-gray-900">{currency(c.due)}</td>
-                      <td className="px-2 py-4 font-medium text-red-600">{currency(c.overdue)}</td>
+                      <td className="px-2 py-4 font-medium text-gray-900">{currency(c.currentDue)}</td>
+                      {/* <td className="px-2 py-4 font-medium text-red-600">{currency(c.lastTransaction)}</td> */}
                       <td className="px-2 py-4 whitespace-nowrap text-gray-700">{formatDate(c.lastReminder)}</td>
                       {/* <td className="px-6 py-4 max-w-xs">
                         <span className="line-clamp-2 text-gray-700" title={c.feedback}>
@@ -258,7 +305,7 @@ const CustomerTable = ({TableHeaders }) => {
                         <StatusBadge value={c.status} />
                       </td>
                       <td >
-                       <ActionBadge onEdit={()=>handleEditCustomer(c)} onDelete={()=>handleDeleteCustomer(c._id)} />
+                       <ActionBadge onEdit={()=>handleEditCustomer(c)} onDelete={()=>handleDeleteCustomer(c._id)} onTransaction={()=>handleAllTransactions(c)} />
                       </td>
                     </tr>
                   ))}
@@ -334,7 +381,7 @@ const CustomerTable = ({TableHeaders }) => {
             </div>
 
             { showEditMOdal &&  <div ref={editRef}> 
-              <EditCustomerModal customer={editcustomer} setEditCustomer={setEditCustomer} handleClose={()=>setShowEditModal(false)} handleEditSubmit={handleEditSubmit} /> 
+              <EditCustomerModal customer={currentCustomer} setEditCustomer={setCurrentCustomer} handleClose={()=>setShowEditModal(false)} handleEditSubmit={handleEditSubmit} /> 
                </div>}
                {/* confirmation dialogue */}
            { confirmOpen &&
@@ -344,6 +391,19 @@ const CustomerTable = ({TableHeaders }) => {
               onConfirm={handleConfirmDelete}
               message="Are you sure you want to delete this customer?"
             />
+           }
+           { showTransactionModal && 
+           <div ref={transactionRef}>
+            <TransactionHistoryModal
+            //i have to send the id for which customer i'm going to fetch the transaction history
+            customer={currentCustomer}
+            setCurrentCustomer={setCurrentCustomer}
+            setCustomers={setCustomers} // to update on the UI, no extra call at time
+            transactions={transactions}
+            setTransactions={setTransactions}
+            handleClose={handleCloseTransaction}
+            />
+            </div>
            }
           </div>
   )

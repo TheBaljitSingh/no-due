@@ -174,54 +174,7 @@ export default function TransactionHistoryModal({
           </form>
         );
 
-      case "EDIT_DUE":
-        return (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleEditDue(form);
-              setForm({ amount: "", note: "" , lastDuePaymentDate : "" });
-            }}
-            className="space-y-3"
-          >
-            <input
-              type="number"
-              placeholder="Corrected Due"
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
-                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
-                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            />
-
-            <textarea
-              placeholder="Note"
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
-                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
-                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
-              value={form.note}
-              onChange={(e) => setForm({ ...form, note: e.target.value })}
-            />
-
-            <input
-              type="date"
-              placeholder="Last Due Payment Date"
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl
-                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2
-                          focus:border-gray-300 focus:bg-gray-100 border-transparent
-                          transition-all duration-200 outline-none"
-              value={form.lastDuePaymentDate}
-              onChange={(e) => setForm({ ...form, lastDuePaymentDate: e.target.value })}
-            />
-
-            <button  className="bg-yellow-600 text-white px-4 py-2 rounded-lg w-full border-none">
-              Save Correction
-            </button>
-          </form>
-        );
-
+     
       case "PAY":
         return (
           <form
@@ -318,14 +271,6 @@ export default function TransactionHistoryModal({
               Add Due
             </button>
 
-            <button
-              onClick={() => setActiveTab("EDIT_DUE")}
-              className={`px-3 py-1 rounded-lg border-none hover:cursor-pointer ${
-                activeTab === "EDIT_DUE" ? "bg-yellow-600 text-white" : "bg-yellow-100"
-              }`}
-            >
-              Edit Due
-            </button>
 
             <button
               onClick={() => setActiveTab("PAY")}
@@ -333,7 +278,7 @@ export default function TransactionHistoryModal({
                 activeTab === "PAY" ? "bg-green-600 text-white" : "bg-green-100"
               }`}
             >
-              Add Payment
+              Receive Payment
             </button>
           </div>
         </div>

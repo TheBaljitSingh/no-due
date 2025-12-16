@@ -3,15 +3,18 @@ import CustomerPicker from './CustomerPicker';
 // import { CustomerDetailsMap, CustomerNames } from '../../../utils/constants';
 import PageHeaders from '../../../utils/AfterAuthUtils/PageHeaders';
 import { useNavigate } from 'react-router-dom';
-import { createCustomers, getCustomers } from '../../../utils/service/customerService';
+import { addDueToCustomer, createCustomers, getCustomers } from '../../../utils/service/customerService';
+import { toast } from 'react-toastify';
 
 //in future we can delete this part as it is handled on teh main page now
 const SingleEntryCreation = () => {
 
     const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
-    const [selectedCustomer , setSelectedCustomer] = useState(null); //it will store name only
-    const [formData, setFormData] = useState({ dueAmount: "", dueDate: "", customerId: "",});
+    const [selectedCustomer , setSelectedCustomer] = useState(null);
+    const [formData, setFormData] = useState({ dueAmount: "", dueDate: "", customer: "",});
+    
+
     
 
 const CustomerNames = customers.map(customer => ({
@@ -36,11 +39,21 @@ const CustomerDetailsMap  = (name) =>  {
   },[]);
 
 
-  const handleCreateEntry = async()=>{
-    // await createCustomers(formData);
-    // setSelectedCustomer(null)
-    console.log("Creating entry with data:", formData);
 
+
+  const handleCreateEntry = async()=>{
+    try {
+      const res = await addDueToCustomer(formData.customer._id, {amount: Number(formData.dueAmount), lastDuePaymentDate: formData.dueDate});
+      if(res.success){
+
+        setFormData({ dueAmount: "", dueDate: "", customer: "", customer: null});
+        setSelectedCustomer(null);
+        toast.success("successfully created");
+      }
+      } catch (error) {
+        toast.error("error while creating");
+    }
+    
   }
 
   return (
@@ -56,11 +69,12 @@ const CustomerDetailsMap  = (name) =>  {
         {/* Customer Picker */}
         <CustomerPicker
           items={customers} // passing entire customers
+          selected={formData.customer}
           onSelect={(value) => {
             if (value === "add-new") navigate("../customer-creation");
             else{
-               setSelectedCustomer(value);
-               setFormData(prev=>({...prev, customerId: value}));
+               setSelectedCustomer(value.name);
+               setFormData(prev=>({...prev, customer: value}));
             }
           }}
         />

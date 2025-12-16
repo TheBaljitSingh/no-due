@@ -1,12 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { ChevronDown, Plus, UserRound } from "lucide-react";
 
-function CustomerPicker({ items = [], onSelect }) {
-  
+function CustomerPicker({ items = [], onSelect, selected }) {
+  //selected here use for label naming
+
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("Choose Customer");
   const btnRef = useRef(null);
   const popRef = useRef(null);
+  const [searchText, setSearchText] = useState("");
 
   // close on outside click or Escape
   useEffect(() => {
@@ -39,6 +41,31 @@ function CustomerPicker({ items = [], onSelect }) {
     onSelect?.(value);
   };
 
+  useEffect(()=>{
+    if(!selected){
+      setLabel("Choose customer");
+    }else{
+      setLabel(selected?.name);
+    }
+  },[selected]);
+  
+
+
+  const filteredCustomer = useMemo(()=>{
+
+    if(!searchText) return items;
+
+    return items.filter(it=>it.name.toLowerCase().includes(searchText.toLowerCase()));
+
+  },[items, searchText]);
+
+
+  useEffect(()=>{
+    filteredCustomer
+    console.log("filtered customer", filteredCustomer);
+  },[searchText]);
+
+
   return (
     <div className="relative inline-block text-left">
       {/* Button */}
@@ -46,10 +73,14 @@ function CustomerPicker({ items = [], onSelect }) {
         ref={btnRef}
         type="button"
         onClick={() => setOpen((s) => !s)}
-        className="inline-flex justify-between items-center min-w-[240px] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700
-                   hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-sm"
+        className="inline-flex justify-between items-center min-w-[240px] rounded-lg border bg-white px-4 py-2.5 text-sm font-medium text-gray-700
+                   hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none shadow-sm"
         aria-haspopup="true"
         aria-expanded={open}
+        w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         
       >
         <span className="truncate">{label}</span>
         <ChevronDown className={`ml-2 h-4 w-4 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
@@ -76,11 +107,26 @@ function CustomerPicker({ items = [], onSelect }) {
             </div>
             ) : (
               <ul className="max-h-64 overflow-y-auto py-1" role="none">
-              {items.map((it, idx) => (
+              
+              <li className="sticky top-0 bg-white border-b border-gray-200 p-2 z-10">
+                <input
+                  type="text"
+                  value={searchText}
+                  placeholder="Search customers..."
+                  className="inline-flex justify-between items-center min-w-[240px] rounded-lg border bg-white px-4 py-2.5 text-sm font-medium text-gray-700
+                   hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none shadow-sm"
+                  onChange={(e) => {
+                    setSearchText(e.target.value);
+                  }}
+                />
+              </li>
+              {filteredCustomer.slice(0,10).map((it, idx) => (
                 <li key={idx} role="none">
                   <button
                     type="button"
-                    onClick={() => choose(it._id, it.name)}
+                    onClick={() => choose(it, it.name)} // {customer, name}
                     className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     role="menuitem"
                   >
@@ -102,8 +148,8 @@ function CustomerPicker({ items = [], onSelect }) {
           <button
             type="button"
             onClick={() => choose("add-new", "Add new customer")}
-            className="flex w-full items-center gap-2 rounded-b-lg border-t border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-blue-600
-                       hover:bg-blue-50 hover:text-blue-700 transition-colors"
+            className="flex w-full items-center gap-2 rounded-b-lg border-t border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-green-600
+                       hover:bg-green-50 hover:text-green-700 transition-colors"
             role="menuitem"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />

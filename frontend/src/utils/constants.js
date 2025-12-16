@@ -95,7 +95,7 @@ export const SidebarFeatures = [
         path: "customer-master"
     },
     {
-        name: "Upload Center",
+        name: "Upload or Add Customer ",
         icon : "UploadIcon",
         path: "upload-center"
     },

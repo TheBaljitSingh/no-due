@@ -35,6 +35,10 @@ const CustomerTable = () => {
   const editRef = useRef();
   const transactionRef = useRef();
 
+  useEffect(()=>{
+    console.log(customers);
+  },[])
+
 
     useEffect(()=>{
       const handleMouseClick = (e)=>{

@@ -20,7 +20,7 @@ const reminderSchema = new Schema(
 
     reminderType: {
       type: String,
-      enum: ["before_due", "due_today", "after_due"],
+      enum: ["before_due", "due_today", "after_due"], // added another col source for filteration
       required: true
     },
 
@@ -62,6 +62,11 @@ const reminderSchema = new Schema(
 
     lastError: {
       type: String
+    },
+    source:{
+      type:String,
+      enum:['auto','manual'],
+      default: "manual"
     }
   },
   {

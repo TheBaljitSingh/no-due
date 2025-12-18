@@ -29,7 +29,7 @@ const TransactionSchema = new Schema({
      required: true ,
       min: [0, "New due amount cannot be negative"],
     },
-    lastDuePaymentDate: {
+    lastDuePaymentDate: { // due date
       type: Date
     },
   metadata: {

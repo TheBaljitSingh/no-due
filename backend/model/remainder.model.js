@@ -20,7 +20,7 @@ const reminderSchema = new Schema(
 
     reminderType: {
       type: String,
-      enum: ["BEFORE_DUE", "DUE_TODAY", "AFTER_DUE"],
+      enum: ["before_due", "due_today", "after_due"],
       required: true
     },
 
@@ -28,6 +28,15 @@ const reminderSchema = new Schema(
       type: String,
       required: true
     },
+
+    whatsappTemplate: {
+      name: { type: String, required: true },
+      language: { type: String, default: 'en' }
+    },
+
+    templateVariables: [{
+      type: String
+    },],
 
     scheduledFor: {
       type: Date,
@@ -41,8 +50,8 @@ const reminderSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["PENDING", "SENT", "FAILED"],
-      default: "PENDING",
+      enum: ["pending", "sent", "failed"],
+      default: "pending",
       index: true
     },
 

@@ -72,7 +72,12 @@ const customerSchema = new Schema({
         type: Types.ObjectId,
         ref: 'User',
         required: true,
-    }
+    },
+    paymentTerm: {
+        type: Types.ObjectId,
+        ref: 'PaymentTerm',
+        default: null,
+    },
 }, { timestamps: true });
 
 

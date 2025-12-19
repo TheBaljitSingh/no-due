@@ -22,6 +22,13 @@ const startServer = async () => {
             console.log(`Server is running on port ${PORT} in ${process.env.NODE_ENV} mode.`);
         });
 
+        // Initialize Reminder Scheduler
+        // const { default: reminderService } = await import('./services/remainder.service.js');
+        // console.log("Starting Reminder Scheduler...");
+        // setInterval(() => {
+            // reminderService.processScheduledReminders().catch(console.error);
+        // }, 60000); // Check every minute
+
         app.get('/', (req, res) => {
             res.send('API is running...');
         });

@@ -50,7 +50,7 @@ export const sendWhatsappRemainder = async (req, res) => {
   try {
 
     const { transactionId } = req.body;
-    const { templateName = "payment_due_today", variables = [] } = req.body;
+    const { templateName = "nodue_remainder_1", variables = [] } = req.body;
 
     // console.log("remainder tempalte name", templateName );
 
@@ -73,7 +73,10 @@ export const sendWhatsappRemainder = async (req, res) => {
 
 export const scheduleWhatsappRemainder = async (req, res) => {
   try {
-    const { transactionId, scheduledFor, templateName = "payment_due_today", variables = [] } = req.body;
+    //make sure scheduleFor data is valid
+    const { transactionId, scheduledFor,  variables = [] } = req.body;
+    // templateName = "payment_due_today": i'm not taking templateName it will be be calculated on scheduleFor
+
 
     console.log("remainder tempalte name", templateName );
 
@@ -84,7 +87,6 @@ export const scheduleWhatsappRemainder = async (req, res) => {
     const reminder = await remainderService.schedule({
       transactionId,
       scheduledFor,
-      templateName,
       variables
     });
 

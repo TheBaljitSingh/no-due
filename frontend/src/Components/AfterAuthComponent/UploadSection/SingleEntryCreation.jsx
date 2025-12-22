@@ -5,7 +5,7 @@ import PageHeaders from '../../../utils/AfterAuthUtils/PageHeaders';
 import { useNavigate } from 'react-router-dom';
 import { addDueToCustomer, createCustomers, getCustomers } from '../../../utils/service/customerService';
 import { toast } from 'react-toastify';
-import CustomerCreation from '../CustomerCreation/CustomerCreation';
+import CustomerCreation from '../../../Pages/AfterAuthPages/CustomerCreationPage';
 //in future we can delete this part as it is handled on teh main page now
 const SingleEntryCreation = () => {
 

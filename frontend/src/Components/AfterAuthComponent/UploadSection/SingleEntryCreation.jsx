@@ -11,10 +11,8 @@ const SingleEntryCreation = () => {
 
     const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
-    const [selectedCustomer , setSelectedCustomer] = useState(null);
-    const [formData, setFormData] = useState({ dueAmount: "", dueDate: "", customer: "",});
-    
-
+    const [selectedCustomer , setSelectedCustomer] = useState(null); //it will store name only
+    const [formData, setFormData] = useState({ dueAmount: "", dueDate: "", customerId: "",});
     
 
 const CustomerNames = customers.map(customer => ({
@@ -39,21 +37,11 @@ const CustomerDetailsMap  = (name) =>  {
   },[]);
 
 
-
-
   const handleCreateEntry = async()=>{
-    try {
-      const res = await addDueToCustomer(formData.customer._id, {amount: Number(formData.dueAmount), lastDuePaymentDate: formData.dueDate});
-      if(res.success){
+    // await createCustomers(formData);
+    // setSelectedCustomer(null)
+    console.log("Creating entry with data:", formData);
 
-        setFormData({ dueAmount: "", dueDate: "", customer: "", customer: null});
-        setSelectedCustomer(null);
-        toast.success("successfully created");
-      }
-      } catch (error) {
-        toast.error("error while creating");
-    }
-    
   }
 
   return (

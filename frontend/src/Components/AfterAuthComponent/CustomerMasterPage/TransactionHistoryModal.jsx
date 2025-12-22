@@ -103,7 +103,7 @@ export default function TransactionHistoryModal({
             <tbody>
               {transactions.map((tx) => (
                 <tr key={tx._id} className="border-b hover:bg-gray-50 transition">
-                  <td className="p-2 w-24 justify-start items-center ">{getActionBadge(tx.type)}</td>
+                  <td className="p-2 ">{getActionBadge(tx.type)}</td>
                   <td className="p-2 text-right font-medium">₹{tx.amount}</td>
                   <td className="p-2 text-right">₹{tx.previousDue}</td>
                   <td className="p-2 text-right font-semibold">₹{tx.newDue}</td>
@@ -279,7 +279,7 @@ export default function TransactionHistoryModal({
                 activeTab === "PAY" ? "bg-green-600 text-white" : "bg-green-100"
               }`}
             >
-              Receive Payment
+              Add Payment
             </button>
           </div>
         </div>

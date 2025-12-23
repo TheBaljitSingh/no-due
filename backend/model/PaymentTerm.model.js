@@ -66,22 +66,13 @@ function getDefaultOffsets(creditDays) {
   return [0];
 }
 
-paymentTermSchema.pre("save", function (next) {
+paymentTermSchema.pre("save", function () {
   if (!this.reminderOffsets || this.reminderOffsets.length === 0) {
     this.reminderOffsets = getDefaultOffsets(this.creditDays);
   }
   this.reminderOffsets.sort((a, b) => b - a);
-  next();
 });
 
 const PaymentTerm = connection.model("PaymentTerm", paymentTermSchema);
 
 export default PaymentTerm;
-
-// Transaction.find({
-//   type: "DUE_ADDED",
-//   paymentStatus: { $ne: "PAID" },
-//   dueDate: { $lte: today }
-// });
-
-// reminderDate = dueDate - offsetDays

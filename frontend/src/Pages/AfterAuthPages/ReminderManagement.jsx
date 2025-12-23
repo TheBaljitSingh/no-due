@@ -5,6 +5,7 @@ import { currency2, IconBtn, statusChip, TabButton } from "../../utils/AfterAuth
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
 import NewReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/NewReminderModal";
 import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/EditDrawer";
+import { useEffect } from "react";
 
 export default function ReminderManagement() {
   const [tab, setTab] = useState("upcoming");
@@ -12,28 +13,20 @@ export default function ReminderManagement() {
   const [bulk, setBulk] = useState(new Set());
   const [openNew, setOpenNew] = useState(false);
   const [drawer, setDrawer] = useState(null);
-
-  // const data = MOCK_REMINDERS;
-
-
+  const [data, setData] = useState([]);
 
   useEffect(() => {
-
     async function fetchData() {
       try {
         const res = await getAllRemainders();
         setData(res.data.data || []);
-        console.log(res.data.data);
-
       } catch (error) {
         console.log(error);
         console.log("error while loading remainder data");
       }
-
     }
-
+    
     fetchData();
-
   }, []);
 
   const normalizeData = useMemo(() => {

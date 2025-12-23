@@ -49,7 +49,7 @@ class ReminderService {
 
       if (exists) continue;
 
-      await Reminder.create({
+     const reminder = await Reminder.create({
         customerId: customer._id,
         transactionId: transaction._id,
         reminderType,

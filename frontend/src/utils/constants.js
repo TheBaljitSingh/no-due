@@ -115,7 +115,7 @@ export const SidebarFeatures = [
       ] 
     },
     {
-      name:"Payment Reminder",
+      name:"Payment Term",
       icon:"ClipboardClock",
       path:"payment-reminder"
     },{

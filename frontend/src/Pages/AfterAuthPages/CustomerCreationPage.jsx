@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { createCustomers } from "../../utils/service/customerService";
 
-const CustomerCreationPage = () => {
+const CustomerCreationPage = ({ paymentTerms }) => {
+
 
   const formConfig = [
     {
@@ -42,6 +43,15 @@ const CustomerCreationPage = () => {
       ],
       required: true,
     },
+    {
+      name: "paymentTerm", label: "Payment Term", type: "select", options: [
+        { label: "Select payment term", value: "" },
+        ...paymentTerms.map(pt => ({ label: `${pt.name} - ${pt.creditDays} days`, value: pt._id }))
+
+      ], 
+      placeholder: "Enter payment terms",
+      required: true,
+    }
   ];
 
   const initialFormData = formConfig.reduce((acc, field) => {
@@ -74,7 +84,7 @@ const CustomerCreationPage = () => {
       setFormData(initialFormData); // reset form
     } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message ||  error?.message || "Failed to create customer");
+      toast.error(error?.response?.data?.message || error?.message || "Failed to create customer");
     } finally {
       setLoading(false);
     }

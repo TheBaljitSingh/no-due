@@ -33,7 +33,7 @@ const TransactionSchema = new Schema(
     // Status of a DUE (not payment)
     paymentStatus: {
       type: String,
-      enum: ["PENDING", "PARTIAL", "PAID"],
+      enum: ["PENDING", "PARTIAL", "PAID","OVERDUE"],
       default: function () {
         return this.type === "DUE_ADDED" ? "PENDING" : undefined;
       },
@@ -57,11 +57,14 @@ const TransactionSchema = new Schema(
       operatorId: { type: Schema.Types.ObjectId, ref: "User" },
     },
   },
-  { timestamps: true }
+  { timestamps: true,
+    toJSON: { virtuals: true },  
+    toObject: { virtuals: true }, 
+   }
 );
 
 
-TransactionSchema.pre("save", function (next) {
+TransactionSchema.pre("save", function () {
   if (this.type === "PAYMENT" && !this.linkedDueTransaction) {
     return next(new Error("PAYMENT must reference a due transaction"));
   }
@@ -72,7 +75,6 @@ TransactionSchema.pre("save", function (next) {
     this.dueDate = undefined;
   }
 
-  next();
 });
 
 TransactionSchema.virtual("remainingDue").get(function () {

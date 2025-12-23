@@ -4,6 +4,8 @@ import NotificationPop from "../../../utils/AfterAuthUtils/SideBarUtils/Notifica
 import MobileOpenButton from "../../../utils/AfterAuthUtils/SideBarUtils/MobileOpenButton";
 import { BadgeQuestionMark, BookOpen, Calculator, ChevronDown, CircleUserRound, ClipboardClock, Clock, Contact, LayoutDashboard,  PanelLeft,  Upload, X } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+import { GrTransaction } from "react-icons/gr";
+
 import { Link, useNavigate } from "react-router-dom";
 
 const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
@@ -61,6 +63,10 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
         return (
           <FaWhatsapp className={`w-4 h-4 ${isActive === 0 ? 'text-green-600' : 'text-gray-600'}`} />
         )
+      case "GrTransaction":
+        return (
+          <GrTransaction className={`w-4 h-4 ${isActive === 0 ? 'text-green-600' : 'text-gray-600'}`} />
+        )
     }
   }
 
@@ -81,6 +87,11 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
     });
   }, [ActivePage]);
 
+
+
+  useEffect(()=>{
+    console.log(isCollapsed);
+  },[]);
 
 
 
@@ -162,10 +173,10 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
                   <div
               onClick={()=>{
 
-                if(isCollapsed){
+                if(isCollapsed && features.children){
                   navigate(features.children[0].path)
                 }
-                if(features.children){
+                if(features.children ){
                         toggleMenu(features.name);
                         return;
                       }

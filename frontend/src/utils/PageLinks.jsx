@@ -25,6 +25,7 @@ import { useAuth } from "../context/AuthContext";
 import CustomerDetail from "../Pages/CustomerDetail";
 import PaymentReminder from "../Pages/PaymentReminder/PaymentReminder"
 import WhatsappChats from "../Pages/WhatsappChats/WhatsappChats"
+import AllTransaction from "../Pages/AfterAuthPages/AllTransaction"
 
 const PageLinks = () => {
   const location = useLocation();
@@ -79,7 +80,8 @@ const PageLinks = () => {
         {/* <Route path='customer-creation' element={<CustomerCreationPage/>}/> */}
         <Route path="payment-reminder" element={<PaymentReminder />} />
         <Route path="whatsapp-chat" element={<WhatsappChats/>} />
-        
+        <Route path="all-transactions" element={<AllTransaction/>} />
+         
 
       </Route>
 

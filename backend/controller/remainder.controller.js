@@ -2,17 +2,17 @@ import Customer from "../model/customer.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import whatsappService from "../services/whatsapp.service.js";
-import remainderService from "../services/remainder.service.js";
+import remainderService from "../services/reminder.service.js";
 import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/remainder.model.js";
 
 export const getAllRemainders = async (req, res) => {
   try {
 
-    const {status} = req.query;
+    const { status } = req.query;
 
     const filters = {};
-    if(status){
+    if (status) {
       filters.status = status.toLowerCase();
     }
 
@@ -74,7 +74,7 @@ export const sendWhatsappRemainder = async (req, res) => {
 export const scheduleWhatsappRemainder = async (req, res) => {
   try {
     //make sure scheduleFor data is valid
-    const { transactionId, scheduledFor,  variables = [] } = req.body;
+    const { transactionId, scheduledFor, variables = [] } = req.body;
     // templateName = "payment_due_today": i'm not taking templateName it will be be calculated on scheduleFor
 
 

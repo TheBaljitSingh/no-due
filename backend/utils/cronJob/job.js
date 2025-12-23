@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import reminderService from '../../services/remainder.service.js';
+import reminderService from '../../services/reminder.service.js';
 
 
 const jobForRemainder=()=>{

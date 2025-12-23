@@ -25,9 +25,9 @@ const reminderSchema = new Schema(
     },
 
     message: {
-      type: String,
-      required: true
-    },
+  type: String,
+  default: ""
+},
 
     whatsappTemplate: {
       name: { type: String, required: true },
@@ -50,7 +50,7 @@ const reminderSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["pending", "sent", "failed"],
+      enum: ["pending", "sent", "failed","cancelled"],
       default: "pending",
       index: true
     },
@@ -73,6 +73,12 @@ const reminderSchema = new Schema(
     timestamps: true
   }
 );
+
+reminderSchema.index(
+  { transactionId: 1, reminderType: 1 ,scheduledFor:1},
+  { unique: true }
+);
+
 
 const Reminder = connection.model("Reminder", reminderSchema);
 export default Reminder;

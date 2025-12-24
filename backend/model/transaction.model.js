@@ -23,7 +23,7 @@ const TransactionSchema = new Schema(
       min: [0, "Transaction amount cannot be negative"],
     },
 
-    // ONLY for DUE_ADDED
+    // ONLY for DUE_ADDED ?? it is for the payment right?
     paidAmount: {
       type: Number,
       default: 0,

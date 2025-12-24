@@ -30,6 +30,7 @@ const CustomerCreationPage = ({ paymentTerms }) => {
       name: "currentDue",
       label: "Current Due Amount",
       type: "number",
+      disabled: true,
       placeholder: "₹ 0.00",
     },
     {
@@ -75,7 +76,7 @@ const CustomerCreationPage = ({ paymentTerms }) => {
 
       await createCustomers({
         ...formData,
-        currentDue: Number(formData.currentDue),
+        currentDue: Number(formData.currentDue) || 0,
       });
 
       console.log("Submitting:", formData);
@@ -139,6 +140,7 @@ const CustomerCreationPage = ({ paymentTerms }) => {
                     value={formData[field.name]}
                     onChange={handleChange}
                     placeholder={field.placeholder}
+                    disabled={field.name==='currentDue'}
                     className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
                          focus:border-gray-300 focus:bg-gray-100 border-transparent 

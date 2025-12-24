@@ -1,6 +1,7 @@
 import Customer from "../model/customer.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
+import Transaction from "../model/transaction.model.js"
 
 export const createCustomer = async (req, res) => {
   try {
@@ -31,6 +32,7 @@ export const createCustomer = async (req, res) => {
 
     customerData.CustomerOfComapny =  req.user._id;
 
+    //creating customer if due then i have to create  with the traansaction
     const newCustomer = new Customer(customerData);
     await newCustomer.save();
 

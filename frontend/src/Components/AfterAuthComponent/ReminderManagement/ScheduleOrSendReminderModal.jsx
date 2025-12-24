@@ -1,236 +1,351 @@
-  import React, { useMemo, useState, useEffect } from "react";
-  import { X, Search, Calendar, Send } from "lucide-react";
-  import {getAllcustomers, getCustomers, getCustomerTransactions} from "../../../utils/service/customerService"
-  import { formatDate } from '../../../utils/AfterAuthUtils/Helpers'
+import React, { useMemo, useState, useEffect } from "react";
+import { X, Search, Calendar, Send, User, CreditCard, MessageSquare } from "lucide-react";
+import { getCustomers, getCustomerTransactions } from "../../../utils/service/customerService";
+import { formatDate } from '../../../utils/AfterAuthUtils/Helpers';
 
-  export default function ScheduleOrSendReminderModal({
-    open,
-    onClose,
-    onSubmit,
-  }) {
-    if (!open) return null;
+export default function ScheduleOrSendReminderModal({
+  open,
+  onClose,
+  onSubmit,
+}) {
+  // ----------------------------------
+  // STATE: Data & Selection
+  // ----------------------------------
+  const [customers, setCustomers] = useState([]);
+  const [query, setQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
 
+  const [transactions, setTransactions] = useState([]);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
-      useEffect(()=>{
+  // ----------------------------------
+  // STATE: Form / Actions
+  // ----------------------------------
+  const [mode, setMode] = useState("schedule"); // 'schedule' | 'now'
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [template, setTemplate] = useState("nodue_remainder_1"); // Default template if desired
 
-      async function fetchCus(){
-        const res = await getCustomers();
-        console.log(res?.data?.customers);
-        setCustomers(res?.data?.customers);
+  // ----------------------------------
+  // CONSTANTS
+  // ----------------------------------
+  const TEMPLATE_PREVIEWS = {
+    nodue_remainder_1:
+      "Remainder! \n Hi {{customer_first_name}} 👋, \n Just a reminder that your payment of ₹{{amount}} is due on ({{due_date}}). \nKindly make the payment at your convenience.\n Thank you!",
+    // nodue_remainder_2: "..."
+  };
+
+  // ----------------------------------
+  // EFFECTS: Fetch Data
+  // ----------------------------------
+  useEffect(() => {
+    if (open) {
+      // Reset states when opening
+      setQuery("");
+      setSelectedUser(null);
+      setTransactions([]);
+      setSelectedTransaction(null);
+      setMode("schedule");
+      setScheduleDate("");
+
+      async function fetchCus() {
+        try {
+          const res = await getCustomers();
+          setCustomers(res?.data?.customers || []);
+        } catch (err) {
+          console.error("Failed to fetch customers", err);
+        }
       }
-
       fetchCus();
-
-    },[]);
-
-
-    const [query, setQuery] = useState("");
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [mode, setMode] = useState("schedule"); // schedule | now
-    const [scheduleDate, setScheduleDate] = useState("");
-    const [template, setTemplate] = useState("");
-    const [customers, setCustomers] = useState([]);
-
-    const TEMPLATE_PREVIEWS = {
-      nodue_remainder_1: // this is for the today template
-        "Remainder! \n Hi {{customer_first_name}} 👋, \n Just a reminder that your payment of ₹{{amount}} is due today ({{due_date}}). \nKindly make the payment at your convenience.\n Thank you!",
-      nodue_remainder_2:
-        "Hello {{name}}, your outstanding balance of ₹{{amount}} is overdue. Kindly clear it to avoid inconvenience.",
-    };
-
-    
-    useEffect(()=>{
-      console.log(template);
-    },[template])
-
-
-    const filteredCustomers = useMemo(() => {
-      if (!query) return [];
-      return customers.filter((u) =>
-        `${u.name} ${u.mobile}`.toLowerCase().includes(query.toLowerCase())
-      );
-    }, [query, customers]);
-
-    const previewMessage = useMemo(() => {
-      if (!template || !selectedUser) return "";
-
-      return TEMPLATE_PREVIEWS[template]
-        ?.replace("{{customer_first_name}}", selectedUser.name)
-        ?.replace("{{amount}}", selectedUser.currentDue)
-        ?.replace("{{due_date}}", selectedUser.lastDuePaymentDate)
-    }, [template, selectedUser]);
-
-    const handleSubmit = () => {
-      if (!selectedUser || !template) return;
-
-      onSubmit?.({
-        userId: selectedUser._id,
-        transactionId: selectedUser.lastTransaction,
-        templateName: template,
-        mode,
-        variables:[selectedUser.name,selectedUser.currentDue, selectedUser.lastDuePaymentDate],
-        scheduleDate: mode === "schedule" ? scheduleDate : null,
-      });
-
-    };
-
-
-
-    const handleSelectUser = async (u)=>{
-
-      //have to set current user with thair transactoin details
-      // console.log(u);
-
-
-      //have to fetch user tsx and append in user
-      const response = await getCustomerTransactions(u._id);
-      // console.log(response.data.transactions[0]);
-      setSelectedUser({
-        ...u,
-        lastDuePaymentDate: formatDate(response?.data?.transactions[0].lastDuePaymentDate),
-      });
-
-
     }
+  }, [open]);
+
+  // ----------------------------------
+  // HANDLERS
+  // ----------------------------------
+  const handleSelectUser = async (u) => {
+    setSelectedUser(u);
+    setSelectedTransaction(null); // Reset transaction when user changes
+    setTransactions([]); // Clear old txns while loading
+
+    try {
+      const res = await getCustomerTransactions(u._id);
+      // Assuming backend returns object with { dues: [...] }
+      setTransactions(res.data.dues || []);
+    } catch (err) {
+      console.error("Failed to fetch transactions", err);
+    }
+  };
+
+  const handleSelectTransaction = (tx) => {
+    setSelectedTransaction(tx);
+  }
+
+  const handleSubmit = () => {
+    if (!selectedTransaction) return;
+
+    onSubmit?.({
+      transactionId: selectedTransaction._id,
+      mode,
+      scheduleDate: mode === "schedule" ? scheduleDate : null,
+    });
+  };
+
+  // ----------------------------------
+  // COMPUTED
+  // ----------------------------------
+  const filteredCustomers = useMemo(() => {
+    if (!query) return customers;
+    return customers.filter((u) =>
+      `${u.name} ${u.mobile}`.toLowerCase().includes(query.toLowerCase())
+    );
+  }, [query, customers]);
+
+  const previewMessage = useMemo(() => {
+    if (!template || !selectedTransaction || !selectedUser) return "";
+
+    return TEMPLATE_PREVIEWS[template]
+      ?.replace("{{customer_first_name}}", selectedUser.name)
+      ?.replace("{{amount}}", selectedTransaction.amount)
+      ?.replace("{{due_date}}", formatDate(selectedTransaction.dueDate));
+  }, [template, selectedTransaction, selectedUser]);
 
 
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="w-full max-w-4xl rounded-2xl bg-white shadow-xl">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b px-5 py-4">
-            <h2 className="text-lg font-semibold">Send / Schedule Reminder</h2>
-            <button onClick={onClose} className="rounded-lg p-1 hover:bg-gray-100">
-              <X size={18} />
-            </button>
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {/* Main Modal Container - Wider for 3 columns */}
+      <div className="flex h-[90vh] w-full max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl md:max-w-7xl">
+
+        {/* Header */}
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">Reminder Management</h2>
+            <p className="text-xs text-gray-500">Select a customer, choose a transaction, and schedule a reminder.</p>
           </div>
+          <button onClick={onClose} className="rounded-lg p-2 hover:bg-gray-100 transition-colors">
+            <X size={20} className="text-gray-600" />
+          </button>
+        </div>
 
-          {/* Body */}
-          <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
-            {/* Left: User Search */}
-            <div className="rounded-xl border">
-              <div className="flex items-center gap-2 border-b px-3 py-2">
-                <Search size={16} className="text-gray-400" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search customer"
-                  className="w-full text-sm outline-none"
-                />
+        {/* Body: 3-Column Layout */}
+        <div className="flex-1 overflow-hidden">
+          <div className="grid h-full grid-cols-1 md:grid-cols-12 divide-x divide-gray-200">
+
+            {/* -------------------------------------------------------------
+                COLUMN 1: Customer List (Span 3)
+               ------------------------------------------------------------- */}
+            <div className="col-span-1 md:col-span-3 flex flex-col bg-gray-50/50">
+              <div className="p-4 border-b bg-white">
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search name or mobile..."
+                    className="w-full rounded-lg border bg-gray-50 pl-9 pr-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
+                    autoFocus
+                  />
+                </div>
               </div>
 
-              <div className="max-h-64 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {filteredCustomers.map((u) => (
                   <button
                     key={u._id}
-                    onClick={()=>handleSelectUser(u)}
-                    
-                    className={`w-full border-b px-3 py-4 text-left text-sm hover:bg-gray-50  ${
-                      selectedUser?._id === u._id ? "bg-green-50" : ""
-                    }`}
+                    onClick={() => handleSelectUser(u)}
+                    className={`group w-full rounded-lg border px-4 py-3 text-left transition-all hover:border-green-200 hover:bg-white hover:shadow-sm
+                      ${selectedUser?._id === u._id
+                        ? "border-green-500 bg-green-50 ring-1 ring-green-500"
+                        : "border-transparent"}
+                    `}
                   >
-                    <div className="flex justify-between">
-                      <span className="font-medium">{u.name}</span>
-                      <span className="text-red-600">₹{u.currentDue}</span>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className={`font-semibold ${selectedUser?._id === u._id ? 'text-green-800' : 'text-gray-700'}`}>
+                        {u.name}
+                      </span>
+                      {u.currentDue > 0 && (
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                          ₹{u.currentDue}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      mobile: {u.mobile || "—"}
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <User size={12} />
+                      {u.mobile || "No mobile"}
                     </div>
                   </button>
                 ))}
+
+                {filteredCustomers.length === 0 && (
+                  <div className="py-10 text-center text-sm text-gray-400">
+                    No customers found.
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Right: Actions */}
-            <div className="space-y-4 rounded-xl border p-4">
-              {selectedUser ? (
-                <div className="rounded-lg bg-gray-50 p-3 text-sm">
-                  <div className="font-medium">{selectedUser.name}</div>
-                  <div className="text-gray-600">Mobile: {selectedUser.mobile}</div>
-                  <div className="text-gray-600">Due: ₹{selectedUser.currentDue}</div>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-400">Select a customer</div>
-              )}
 
-              {/* Mode toggle */}
-              <div className="flex overflow-hidden rounded-lg border text-sm">
-                <button
-                  onClick={() => setMode("schedule")}
-                  className={`flex-1 py-2 ${mode === "schedule" ? "bg-green-600 text-white" : ""}`}
-                >
-                  Schedule
-                </button>
-                <button
-                  onClick={() => setMode("now")}
-                  className={`flex-1 py-2 ${mode === "now" ? "bg-green-600 text-white" : ""}`}
-                >
-                  Send Now
-                </button>
+            {/* -------------------------------------------------------------
+                COLUMN 2: Transaction List (Span 4)
+               ------------------------------------------------------------- */}
+            <div className="col-span-1 md:col-span-4 flex flex-col bg-white">
+              <div className="border-b px-6 py-4 flex items-center gap-2">
+                <CreditCard size={18} className="text-gray-400" />
+                <h3 className="font-semibold text-gray-700">Transactions</h3>
               </div>
 
-              {/* Schedule date */}
-              {mode === "schedule" && (
-                <div>
-                  <label className="text-xs text-gray-500">Schedule Date</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Calendar size={16} className="text-gray-400" />
-                    <input
-                      type="date"
-                      value={scheduleDate}
-                      onChange={(e) => setScheduleDate(e.target.value)}
-                      className="rounded-lg border px-3 py-2 text-sm"
-                    />
+              <div className="flex-1 overflow-y-auto p-4">
+                {!selectedUser ? (
+                  <div className="flex h-full flex-col items-center justify-center text-gray-400 gap-2">
+                    <User size={48} className="opacity-20" />
+                    <p className="text-sm">Select a customer to view transactions</p>
                   </div>
-                </div>
-              )}
+                ) : transactions.length === 0 ? (
+                  <div className="flex h-full flex-col items-center justify-center text-gray-400 gap-2">
+                    <div className="rounded-full bg-green-50 p-3">
+                      <CreditCard size={24} className="text-green-600 opacity-50" />
+                    </div>
+                    <p className="text-sm">No pending transactions found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {transactions.map((tx) => (
+                      <div
+                        key={tx._id}
+                        onClick={() => handleSelectTransaction(tx)}
+                        className={`cursor-pointer rounded-xl border p-4 transition-all hover:shadow-md 
+                                      ${selectedTransaction?._id === tx._id
+                            ? "border-green-500 bg-green-50 ring-1 ring-green-500"
+                            : "border-gray-200 hover:border-green-200"
+                          }
+                                  `}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <span className="text-lg font-bold text-gray-800">₹{tx.amount}</span>
+                            {/* You can add more badges here if tx logic requires it */}
+                          </div>
+                          <div className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            {formatDate(tx.createdAt)}
+                          </div>
+                        </div>
 
-              {/* Template */}
-              <div>
-                <label className="text-xs text-gray-500">Template</label>
-                <select
-                  value={template}
-                  onChange={(e) => setTemplate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
-                >
-                  <option value="">Select template</option>
-                  <option value="nodue_remainder_1">Due Reminder 1</option>
-                  <option value="nodue_remainder_2">Due Reminder 2</option>
-                </select>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar size={14} />
+                          <span>Due: {formatDate(tx.dueDate)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-
-              {/* PREVIEW PANEL */}
-              {previewMessage && (
-                <div className="rounded-lg border bg-gray-50 p-3 text-sm">
-                  <div className="mb-1 text-xs font-medium text-gray-500">
-                    Message Preview
-                  </div>
-                  <div className="text-gray-700 whitespace-pre-line">
-                    {previewMessage}
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-2 border-t px-5 py-4">
-            <button
-              onClick={onClose}
-              className="rounded-lg border px-4 py-2 text-sm"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!selectedUser || !template}
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm text-white disabled:opacity-50"
-            >
-              <Send size={14} />
-              {mode === "now" ? "Send Now" : "Schedule"}
-            </button>
+
+            {/* -------------------------------------------------------------
+                COLUMN 3: Actions & Preview (Span 5)
+               ------------------------------------------------------------- */}
+            <div className="col-span-1 md:col-span-5 flex flex-col bg-gray-50/30 overflow-y-scroll">
+              <div className="border-b px-6 py-4 flex items-center gap-2">
+                <h3 className="font-semibold text-gray-700">Preview & Send</h3>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6">
+                {!selectedTransaction ? (
+                  <div className="flex h-full flex-col items-center justify-center text-gray-400 gap-3">
+                    <Send size={48} className="opacity-20" />
+                    <p className="text-sm">Select a transaction to proceed</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+
+                    {/* Mode Selection */}
+                    <div className="rounded-xl border bg-white p-1 shadow-sm">
+                      <div className="grid grid-cols-2 gap-1">
+                        <button
+                          onClick={() => setMode("schedule")}
+                          className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all
+                                          ${mode === "schedule" ? "bg-green-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}
+                                      `}
+                        >
+                          <Calendar size={16} /> Schedule
+                        </button>
+                        <button
+                          onClick={() => setMode("now")}
+                          className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all
+                                          ${mode === "now" ? "bg-green-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}
+                                      `}
+                        >
+                          <Send size={16} /> Send Now
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Date Picker (if Schedule) */}
+                    {mode === 'schedule' && (
+                      <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule Date</label>
+                        <input
+                          type="datetime-local"
+                          value={scheduleDate}
+                          onChange={(e) => setScheduleDate(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                        />
+                      </div>
+                    )}
+
+                    {/* Template Selection */}
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">Template</label>
+                      <select
+                        value={template}
+                        onChange={(e) => setTemplate(e.target.value)}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                      >
+                        <option value="nodue_remainder_1">Standard Due Reminder</option>
+                        {/* Add more options as needed */}
+                      </select>
+                    </div>
+
+                    {/* Preview Box */}
+                    <div>
+                      <label className="mb-2 block text-xs font-medium text-gray-500 uppercase tracking-wider">Message Preview</label>
+                      <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white">
+                        <div className="absolute top-0 left-0 h-1 w-full bg-green-500"></div>
+                        <div className="p-4">
+                          <div className="whitespace-pre-line text-sm text-gray-700 leading-relaxed">
+                            {previewMessage}
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 p-2 text-center text-[10px] text-gray-400 uppercase tracking-widest border-t">
+                          WhatsApp Preview
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="border-t bg-white p-4">
+                <button
+                  onClick={handleSubmit}
+                  disabled={!selectedTransaction || (mode === 'schedule' && !scheduleDate)}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white shadow-lg shadow-green-200 transition-all hover:scale-[1.02] hover:bg-green-700 disabled:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                >
+                  <Send size={18} />
+                  {mode === 'now' ? 'Send Reminder Now' : 'Schedule Reminder'}
+                </button>
+              </div>
+
+            </div>
+
           </div>
         </div>
+
       </div>
-    );
-  }
+    </div>
+  );
+}

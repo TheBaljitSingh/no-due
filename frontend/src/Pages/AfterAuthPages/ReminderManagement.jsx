@@ -17,7 +17,6 @@ export default function ReminderManagement() {
   const [drawer, setDrawer] = useState(null);
   const [data, setData] = useState([]);
 
-  // const data = MOCK_REMINDERS;
 
 
 

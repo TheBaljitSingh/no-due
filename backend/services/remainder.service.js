@@ -2,6 +2,7 @@ import Reminder from "../model/remainder.model.js";
 import Transaction from "../model/transaction.model.js";
 import Customer from "../model/customer.model.js";
 import whatsappService from "./whatsapp.service.js";
+import mongoose from "mongoose";
 
 const REMINDER_TYPES = {
   BEFORE_DUE: "before_due",
@@ -13,9 +14,10 @@ class ReminderService {
   /* CREATE REMINDER FOR DUE*/
 
   async createForDue({ transactionId }) {
+  try {
     const transaction = await Transaction
       .findById(transactionId)
-      .populate("customerId");
+      .populate("customerId")
 
     if (!transaction) throw new Error("Transaction not found");
     if (transaction.type !== "DUE_ADDED") {
@@ -32,7 +34,7 @@ class ReminderService {
     for (const offset of customer.paymentTerm.reminderOffsets) {
       const scheduledFor = new Date(transaction.dueDate);
       scheduledFor.setDate(scheduledFor.getDate() - offset);
-      scheduledFor.setHours(9, 0, 0, 0); // send at 9am
+      scheduledFor.setHours(9, 0, 0, 0);
 
       if (scheduledFor < new Date()) continue;
 
@@ -45,32 +47,41 @@ class ReminderService {
         transactionId: transaction._id,
         reminderType,
         scheduledFor,
-      });
+      })
 
       if (exists) continue;
 
-     const reminder = await Reminder.create({
-        customerId: customer._id,
-        transactionId: transaction._id,
-        reminderType,
-        whatsappTemplate: {
-          name:
-            reminderType === REMINDER_TYPES.DUE_TODAY
-              ? "payment_due_today"
-              : "payment_due_before",
-          language: "en",
-        },
-        templateVariables: [
-          customer.name,
-          transaction.amount.toString(),
-          transaction.dueDate.toDateString(),
-        ],
-        scheduledFor,
-        status: "pending",
-        source: "auto",
-      });
+      await Reminder.create(
+        [{
+          customerId: customer._id,
+          transactionId: transaction._id,
+          reminderType,
+          whatsappTemplate: {
+            name:
+              reminderType === REMINDER_TYPES.DUE_TODAY
+                ? "payment_due_today"
+                : "payment_due_before",
+            language: "en",
+          },
+          templateVariables: [
+            customer.name,
+            transaction.amount.toString(),
+            transaction.dueDate.toDateString(),
+          ],
+          scheduledFor,
+          status: "pending",
+          source: "auto",
+        }],
+      
+      );
     }
+
+
+  } catch (err) {
+    throw err; // let controller handle response
   }
+}
+
 
   /*MANUAL SEND NOW REMINDER*/
   async sendNow({ transactionId, templateName, variables }) {
@@ -118,7 +129,7 @@ class ReminderService {
   };
 
   /* USER SCHEDULED REMINDER */
-  async scheduleByUser({ transactionId, scheduledFor, variables }) {
+  async scheduleByUser({ transactionId, scheduledFor }) {
     const transaction = await Transaction
       .findById(transactionId)
       .populate("customerId");
@@ -144,13 +155,13 @@ class ReminderService {
 
     if (scheduleDate > dueDate) {
       reminderType = "after_due";
-      templateName = "payment_overdue";
+      templateName = "nodue_overdue_1";
     } else if (scheduleDate.getTime() === dueDate.getTime()) {
       reminderType = "due_today";
-      templateName = "payment_due_today";
+      templateName = "nodue_due_today_1";
     } else {
       reminderType = "before_due";
-      templateName = "payment_due_before";
+      templateName = "nodue_before_due_1";
     }
 
     const exists = await Reminder.findOne({
@@ -170,10 +181,10 @@ class ReminderService {
         name: templateName,
         language: "en",
       },
-      templateVariables: variables || [
+      templateVariables: [
         transaction.customerId.name,
-        transaction.amount.toString(),
-        transaction.dueDate.toDateString(),
+        transaction.customerId.currentDue.toString(),
+       reminderType==='due_today'?'': transaction.dueDate.toDateString(),
       ],
       scheduledFor: new Date(scheduledFor),
       status: "pending",
@@ -194,7 +205,10 @@ class ReminderService {
       populate: { path: "customerId" },
     });
 
+    
+
     for (const reminder of reminders) {
+      console.log(reminder);
       try {
         const tx = reminder.transactionId;
 
@@ -210,8 +224,8 @@ class ReminderService {
           transactionId: tx._id,
           reminderType: reminder.reminderType,
           status: "sent",
-          source: "auto",
-          sentAt: { $gte: last24h },
+          // source: "auto",
+          sentAt: { $gte: 1000*60*60*24 },
         });
 
 
@@ -262,13 +276,13 @@ class ReminderService {
         transactionId: tx._id,
         reminderType: REMINDER_TYPES.AFTER_DUE,
         whatsappTemplate: {
-          name: "payment_overdue",
+          name: "nodue_overdue_1",
           language: "en",
         },
         templateVariables: [
           tx.customerId.name,
           tx.amount.toString(),
-          tx.dueDate.toDateString(),
+          // tx.dueDate.toDateString(),
         ],
         scheduledFor: new Date(),
         status: "pending",

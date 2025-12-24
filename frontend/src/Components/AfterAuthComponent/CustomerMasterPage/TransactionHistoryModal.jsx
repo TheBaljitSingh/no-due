@@ -64,7 +64,7 @@ export default function TransactionHistoryModal({
           d._id === selectedDue._id
             ? {
               ...d,
-              remainingDue: data.data?.due?.remainingDue || data.due.remainingDue,
+              remainingDue: data.data.due.remainingDue,
               payments: [
                 data.data?.payment || data.payment,
                 ...(Array.isArray(d.payments) ? d.payments : [])

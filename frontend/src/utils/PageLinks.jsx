@@ -15,7 +15,6 @@ import SubcriptionPage from "../Pages/AfterAuthCTCPages/SubcriptionPage";
 import Documentation from "../Pages/AfterAuthCTCPages/Documentation";
 import HelpPage from "../Pages/AfterAuthCTCPages/HelpPage";
 import Error404Page from "../Pages/Error404Page";
-import CustomerCreationPage from "../Components/AfterAuthComponent/CustomerCreation/CustomerCreation";
 import { checkAuth } from "./service/authService";
 import LoadingPage from "../Components/AfterAuthComponent/ReminderHistoryPage/LoadingPage";
 import Hero from "../Pages/Hero";
@@ -76,7 +75,6 @@ const PageLinks = () => {
         <Route path="subscriptions" element={<SubcriptionPage />} />
         <Route path="documentaion" element={<Documentation />} />
         <Route path="help" element={<HelpPage />} />
-        {/* <Route path='customer-creation' element={<CustomerCreationPage/>}/> */}
         <Route path="payment-reminder" element={<PaymentReminder />} />
         <Route path="whatsapp-chat" element={<WhatsappChats/>} />
         <Route path="all-transactions" element={<AllTransaction/>} />

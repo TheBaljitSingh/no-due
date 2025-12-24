@@ -45,6 +45,7 @@ async function recalculateDue(dueTransactionId) {
 export async function addDue(req, res) {
   const { id: customerId } = req.params;
   let { amount, note, invoiceId } = req.body;
+  console.log(customerId, amount, note, invoiceId);
 
   try {
     amount = Number(amount);
@@ -61,6 +62,7 @@ export async function addDue(req, res) {
     }
 
     const creditDays = customer.paymentTerm?.creditDays ?? 0;
+    console.log("creditDays",creditDays);
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + creditDays);
 
@@ -74,6 +76,8 @@ export async function addDue(req, res) {
       dueDate,
       metadata: { note, invoiceId, operatorId: req.user?.id }
     }], { });
+
+  
 
     const reminders= await reminderService.createForDue({ transactionId: tx[0]._id });
 

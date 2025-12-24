@@ -7,8 +7,7 @@ const jobForRemainder=()=>{
     cron.schedule('*/1 * * * *', async () => {
         console.log('running a task every minute');
         try {
-            const res = await reminderService.processScheduledReminders();
-            console.log('cron job response',res);
+            await reminderService.processScheduledReminders();
         } catch (error) {
             console.log(error);
             

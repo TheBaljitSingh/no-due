@@ -5,6 +5,17 @@ import whatsappService from "../services/whatsapp.service.js";
 import remainderService from "../services/remainder.service.js";
 import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/remainder.model.js";
+import {formatDate} from "../utils/Helper.js"
+import PaymentTerm from "../model/PaymentTerm.model.js";
+
+
+
+const TEMPLATE_MAP = {due_before:"nodue_remainder_1"};
+
+
+function getReminderType(dueDate, scheduleFor){
+  return 'due_before';
+}
 
 export const getAllRemainders = async (req, res) => {
   try {
@@ -48,46 +59,89 @@ export const createReminder = async (req, res) => {
 
 export const sendWhatsappRemainder = async (req, res) => {
   try {
-
     const { transactionId } = req.body;
-    const { templateName = "nodue_remainder_1", variables = [] } = req.body;
-
-    // console.log("remainder tempalte name", templateName );
 
     if (!transactionId) {
-      return new APIError(400, ["transactionId is required"], "Validation Error").send(res);
+      return new APIError(
+        400,
+        ["transactionId is required"],
+        "Validation Error"
+      ).send(res);
     }
 
+ 
+    const tx = await Transaction
+      .findById(transactionId)
+      .populate({
+        path: "customerId",
+        populate: { path: "paymentTerm" } 
+      });
+
+    if (!tx) {
+      return new APIError(404, ["Transaction not found"]).send(res);
+    }
+
+    const customer = tx.customerId;
+    const paymentTerm = customer?.paymentTerm;
+
+    if (!paymentTerm) {
+      return new APIError(400, ["Payment term not found for customer"]).send(res);
+    }
+
+    const dueDate = new Date(tx.createdAt);
+    dueDate.setDate(dueDate.getDate() + paymentTerm.creditDays);
+
+    const reminderType = getReminderType(dueDate, new Date());
+
+    const templateName = TEMPLATE_MAP[reminderType];
+
+    if (!templateName) {
+      return new APIError(
+        400,
+        ["No WhatsApp template mapped for reminder type"]
+      ).send(res);
+    }
+
+    const variables = [
+      customer.name,
+      tx.amount.toString(),
+      formatDate(dueDate)
+    ];
+
     const result = await remainderService.sendNow({
-      transactionId,
+      transactionId: tx._id,
       templateName,
       variables
     });
 
-    return new APIResponse(200, result, "Reminder sent successfully").send(res);
+    return new APIResponse(
+      200,
+      result,
+      "Reminder sent successfully"
+    ).send(res);
+
   } catch (error) {
     console.error(error);
-    return new APIError(500, [error.message], "Failed to send reminder").send(res);
+    return new APIError(
+      500,
+      [error.message],
+      "Failed to send reminder"
+    ).send(res);
   }
-}
+};
 
 export const scheduleWhatsappRemainder = async (req, res) => {
   try {
     //make sure scheduleFor data is valid
-    const { transactionId, scheduledFor,  variables = [] } = req.body;
-    // templateName = "payment_due_today": i'm not taking templateName it will be be calculated on scheduleFor
-
-
-    // console.log("remainder tempalte name", templateName );
+    const { transactionId, scheduledFor} = req.body;
 
     if (!transactionId || !scheduledFor) {
       return new APIError(400, ["transactionId and scheduledFor are required"], "Validation Error").send(res);
     }
 
-    const reminder = await remainderService.schedule({
+    const reminder = await remainderService.scheduleByUser({
       transactionId,
-      scheduledFor,
-      variables
+      scheduledFor
     });
 
     return new APIResponse(201, reminder, "Reminder scheduled successfully").send(res);

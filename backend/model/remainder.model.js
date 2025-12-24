@@ -24,10 +24,10 @@ const reminderSchema = new Schema(
       required: true
     },
 
-    message: {
-      type: String,
-      required: true
-    },
+    // message: {
+    //   type: String,
+    //   required: true
+    // },
 
     whatsappTemplate: {
       name: { type: String, required: true },

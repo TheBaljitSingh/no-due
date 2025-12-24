@@ -1,6 +1,6 @@
 import express from 'express';
 import { createCustomer, deleteCustomers, getCustomers, getCustomersById, updateCustomer } from '../controller/customer.controller.js';
-import { addDue, getTransactions, makePayment,editDue } from "../controller/customerTransaction.controller.js";
+import { addDue, getTransactions, makePayment } from "../controller/customerTransaction.controller.js";
 
 const router = express.Router();
 
@@ -13,7 +13,6 @@ router.put("/:customerId", updateCustomer);
 
 router.post("/:id/add-due", addDue);
 router.post("/:id/add-payment",  makePayment);
-router.post("/:id/edit-due", editDue);
 router.get("/:id/transactions", getTransactions);
 
 export default router;

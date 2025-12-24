@@ -1,26 +1,25 @@
 import { X } from "lucide-react";
-import React, { useEffect, useLayoutEffect, useState } from "react";
-import { addDueToCustomer, addPaymentForCustomer, editCustomerDue, getCustomerById, getCustomerTransactions } from "../../../utils/service/customerService";
-
+import React, { useState, useEffect } from "react";
+import {
+  addDueToCustomer,
+  addPaymentForCustomer,
+} from "../../../utils/service/customerService";
 
 export default function TransactionHistoryModal({
   customer,
-  setCurrentCustomer, //setter for customers
+  setCurrentCustomer,
+   transactions,
+  setTransactions,
   handleClose,
-  transactions, setTransactions
- 
 }) {
   if (!customer) return null;
 
-  console.log(transactions);
-
   const [activeTab, setActiveTab] = useState("VIEW");
-  const [form, setForm] = useState({ amount: "", note: "" , lastDuePaymentDate : ""});
+  const [form, setForm] = useState({ amount: "", note: "", lastDuePaymentDate: "" });
+  const [selectedDue, setSelectedDue] = useState(null); // selected due for PAY tab
 
-  // Badge style function
   const getActionBadge = (type) => {
     const base = "px-2 py-0.5 rounded-full text-xs font-medium";
-
     switch (type) {
       case "DUE_ADDED":
         return <span className={`${base} bg-blue-100 text-blue-700`}>Due Added</span>;
@@ -33,97 +32,155 @@ export default function TransactionHistoryModal({
     }
   };
 
+  // ADD_DUE handler
+  const handleAddDue = async () => {
+    try {
+      const data = await addDueToCustomer(customer._id, {
+        amount: Number(form.amount),
+        note: form.note,
+      });
+      setTransactions((prev) => [data.data.transaction, ...prev]);
+      setCurrentCustomer((c) => ({ ...c, currentDue: c.currentDue + Number(form.amount) }));
+      setForm({ amount: "", note: "", lastDuePaymentDate: "" });
+      setActiveTab("VIEW");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-  //this will be the function that handle requirement or call apis
-    const handleAddBill = async () => {
-      
-      try {
-        const data = await addDueToCustomer(customer._id, { amount: Number(form.amount), note: form.note,lastDuePaymentDate : form.lastDuePaymentDate });
-        setCurrentCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
-        setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
-        // setShowAddBill(false);
-        setForm({ amount: "", note: "" });
-        setActiveTab("VIEW");
+  // PAY handler
+  const handlePayment = async () => {
+    if (!selectedDue) return alert("Select a due to pay.");
+    try {
+      const data = await addPaymentForCustomer(customer._id, {
+        amount: Number(form.amount),
+        note: form.note,
+        dueTransactionId: selectedDue._id,
+      });
 
-      } catch (err) {
-        console.log(err.message || "Error");
-      }
-    };
-  
-    const handlePayment = async () => {
-      
-      try {
-        const data = await addPaymentForCustomer(customer._id, { amount: Number(form.amount), note: form.note });
-        setCurrentCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
-        setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
-        // setShowPay(false);
-        setForm({ amount: "", note: "" });
-        setActiveTab("VIEW");
-      } catch (err) {
-        console.log(err.message || "Error");
-      }
-    };
-  
-    const handleEditDue = async () => {
-      
-      try {
-        const data = await editCustomerDue(customer._id, { correctedDue: Number(form.amount), note: form.note });
-        setCurrentCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
-        setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
-        // setShowEdit(false);
-        setForm({ amount: "", note: "" });
-        setActiveTab("VIEW");
-      } catch (err) {
-        console.log(err.message || "Error");
-      }
-    };
+      // Update due in state
+      setTransactions((prev) =>
+        prev.map((d) =>
+          d._id === selectedDue._id
+            ? {
+              ...d,
+              remainingDue: data.data?.due?.remainingDue || data.due.remainingDue,
+              payments: [
+                data.data?.payment || data.payment,
+                ...(Array.isArray(d.payments) ? d.payments : [])
+              ]
+            }
+            : d
+        )
+      );
 
-  // Render dynamic content based on tab
+      // Update customer's total due
+      setCurrentCustomer((c) => ({
+        ...c,
+        currentDue: c.currentDue - Number(form.amount),
+      }));
+
+      setForm({ amount: "", note: "", lastDuePaymentDate: "" });
+      setActiveTab("VIEW");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Render content for each tab
   const renderTabContent = () => {
     switch (activeTab) {
-
       case "VIEW":
+        if (transactions.length === 0)
+          return <p className="text-center py-6 text-gray-500">No dues found.</p>;
+
         return (
-          <div className="max-h-90 overflow-y-auto scroll-smooth">   {/* <-- add height */}
-          {/* <table className="w-full rounded-lg text-sm outline-none"> */}
-          <table className="w-full rounded-lg text-sm outline-none">
+          <div className="max-h-90 overflow-y-auto scroll-smooth space-y-4">
+            {transactions.map((due) => {
+              let runningRemaining = due.amount;
 
-            <thead className="bg-gray-50 text-gray-600 text-xs uppercase  sticky top-0 z-10">
-              <tr>
-                <th className="p-2 text-left">Type</th>
-                <th className="p-2 text-right">Amount</th>
-                <th className="p-2 text-right">Prev Due</th>
-                <th className="p-2 text-right">New Due</th>
-                 <th className="p-2 text-left">Last Payment Date</th>
-                <th className="p-2 text-left">Created At</th>
-                <th className="p-2 text-left">Note</th>
-              </tr>
-            </thead>
+              return (
+                <div key={due._id} className="border rounded-lg p-4">
+                  {/* Due Summary */}
+                  <div className="mb-3">
+                    <p className="font-semibold">Due Amount: ₹{due.amount}</p>
+                    <p className="text-sm text-gray-600">
+                      Remaining: ₹{due.remainingDue}
+                    </p>
+                    <p className="text-sm">
+                      Due Date: {new Date(due.dueDate).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm">Status: {due.paymentStatus}</p>
+                  </div>
 
-            <tbody>
-              {transactions.map((tx) => (
-                <tr key={tx._id} className="border-b hover:bg-gray-50 transition">
-                  <td className="p-2 ">{getActionBadge(tx.type)}</td>
-                  <td className="p-2 text-right font-medium">₹{tx.amount}</td>
-                  <td className="p-2 text-right">₹{tx.previousDue}</td>
-                  <td className="p-2 text-right font-semibold">₹{tx.newDue}</td>
-                   <td className="p-2 whitespace-nowrap">
-                    {tx.lastDuePaymentDate ? new Date(tx.lastDuePaymentDate).toLocaleDateString() : "-"}
-                  </td>
-                  <td className="p-2 whitespace-nowrap">
-                    {new Date(tx.createdAt).toLocaleString()}
-                  </td>
-                  <td className="p-2">{tx?.metadata?.note || "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  {/* Ledger Table */}
+                  {due.payments?.length > 0 && (
+                    <table className="w-full text-sm mt-2 border-t">
+                      <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                        <tr>
+                          <th className="p-2 text-left">Type</th>
+                          <th className="p-2 text-right">Due Before</th>
+                          <th className="p-2 text-right">Paid</th>
+                          <th className="p-2 text-right">Remaining</th>
+                          <th className="p-2 text-left">Note</th>
+                          <th className="p-2 text-left">Date</th>
+                        </tr>
+                      </thead>
 
-  {transactions.length === 0 && (
-    <p className="text-center py-6 text-gray-500">No transactions found.</p>
-  )}
-</div>
+                      <tbody>
+                        {(() => {
+                          let runningRemaining = due.amount;
 
+                          // Step 1: build ledger rows in correct order
+                          const rows = due.payments.map((tx) => {
+                            const dueBeforePayment = runningRemaining;
+                            runningRemaining -= tx.amount;
+
+                            return {
+                              tx,
+                              dueBeforePayment,
+                              remainingAfter: runningRemaining,
+                            };
+                          });
+
+                          // Step 2: reverse for UI (latest on top)
+                          return rows.reverse().map(({ tx, dueBeforePayment, remainingAfter }) => (
+                            <tr
+                              key={tx._id}
+                              className="border-b hover:bg-gray-50 transition"
+                            >
+                              <td className="p-2">{getActionBadge(tx.type)}</td>
+
+                              <td className="p-2 text-right font-medium">
+                                ₹{dueBeforePayment}
+                              </td>
+
+                              <td className="p-2 text-right text-green-700 font-semibold">
+                                ₹{tx.amount}
+                              </td>
+
+                              <td className="p-2 text-right font-semibold">
+                                ₹{remainingAfter}
+                              </td>
+
+                              <td className="p-2">
+                                {tx?.metadata?.note || "-"}
+                              </td>
+
+                              <td className="p-2">
+                                {new Date(tx.createdAt).toLocaleString()}
+                              </td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              );
+            })}
+
+          </div>
         );
 
       case "ADD_DUE":
@@ -131,110 +188,82 @@ export default function TransactionHistoryModal({
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleAddBill(form);
-              setForm({ amount: "", note: "" });
+              handleAddDue();
             }}
             className="space-y-3"
           >
             <input
               type="number"
               placeholder="Amount"
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
-                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
-                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
+              className="w-full border px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
               value={form.amount}
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
             />
 
             <textarea
               placeholder="Note"
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
-                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
-                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
+              className="w-full border px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
             />
-
-            <input
-              type="date"
-              placeholder="Last Due Payment Date"
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl
-                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2
-                          focus:border-gray-300 focus:bg-gray-100 border-transparent
-                          transition-all duration-200 outline-none"
-              value={form.lastDuePaymentDate}
-              onChange={(e) => setForm({ ...form, lastDuePaymentDate: e.target.value })}
-            />
-
-            <button className="bg-green-600 text-white px-4 py-2 rounded-lg w-full border-none">
-              Add Due
-            </button>
+            <button className="bg-green-600 text-white px-4 py-2 rounded-lg w-full">Add Due</button>
           </form>
         );
-
 
       case "PAY":
         return (
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handlePayment(form);
-              setForm({ amount: "", note: "" });
+              handlePayment();
             }}
             className="space-y-3"
           >
+            <select
+              className="w-full border px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
+              value={selectedDue?._id || ""}
+              onChange={(e) => setSelectedDue(transactions.find((d) => d._id === e.target.value))}
+            >
+              <option value="">Select a due</option>
+              {transactions
+                .filter((d) => d.remainingDue > 0)
+                .map((due) => (
+                  <option key={due._id} value={due._id}>
+                    ₹{due.remainingDue} - Due on {new Date(due.dueDate).toLocaleDateString()}
+                  </option>
+                ))}
+            </select>
+
             <input
               type="number"
               placeholder="Payment Amount"
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
-                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
-                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
+              className="w-full border px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
               value={form.amount}
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
             />
 
             <textarea
               placeholder="Note"
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
-                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
-                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
+              className="w-full border px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
             />
 
-            <button  className="bg-green-600 text-white px-4 py-2 rounded-lg w-full border-none">
-              Record Payment
-            </button>
+            <button className="bg-green-600 text-white px-4 py-2 rounded-lg w-full">Pay Due</button>
           </form>
         );
 
       default:
         return null;
     }
-
   };
-
-
-  // if(loading) return <div>Loading...</div>
-
-  // return;
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-start py-12 z-50">
-      
       <div className="w-11/12 md:w-3/4 lg:w-1/2 bg-white rounded-xl shadow-xl relative animate-fadeIn max-h-[80vh] overflow-hidden">
-
         {/* Close */}
         <button
-          onClick={()=>{
-            //before closing i want to set the customerData for particular id
-              
-            handleClose()
-          }}
+          onClick={handleClose}
           className="absolute top-4 right-4 bg-white rounded-full p-2 shadow hover:shadow-md transition"
         >
           <X size={20} />
@@ -242,53 +271,39 @@ export default function TransactionHistoryModal({
 
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b">
-          <h2 className="text-xl font-semibold">
-            Transaction History • {customer.name}
-          </h2>
-
-          {/* CURRENT DUE */}
+          <h2 className="text-xl font-semibold">Transaction History • {customer.name}</h2>
           <p className="text-lg font-bold text-gray-700 mt-1">
             Current Due: ₹{customer.currentDue || 0}
           </p>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 mt-4 ">
+          {/* Tabs */}
+          <div className="flex gap-2 mt-4">
             <button
               onClick={() => setActiveTab("VIEW")}
-              className={`px-3 py-1 rounded-lg border-none hover:cursor-pointer ${
-                activeTab === "VIEW" ? "bg-gray-600 text-white" : "bg-gray-100"
-              }`}
+              className={`px-3 py-1 rounded-lg ${activeTab === "VIEW" ? "bg-gray-600 text-white" : "bg-gray-100"
+                }`}
             >
               View
             </button>
-
             <button
               onClick={() => setActiveTab("ADD_DUE")}
-              className={`px-3 py-1 rounded-lg border-none hover:cursor-pointer ${
-                activeTab === "ADD_DUE" ? "bg-green-600 text-white" : "bg-green-100"
-              }`}
+              className={`px-3 py-1 rounded-lg ${activeTab === "ADD_DUE" ? "bg-green-600 text-white" : "bg-green-100"
+                }`}
             >
               Add Due
             </button>
-
-            
-
             <button
               onClick={() => setActiveTab("PAY")}
-              className={`px-3 py-1 rounded-lg border-none  ml-auto mr-4 hover:cursor-pointer ${
-                activeTab === "PAY" ? "bg-green-600 text-white" : "bg-green-100"
-              }`}
+              className={`px-3 py-1 rounded-lg ml-auto ${activeTab === "PAY" ? "bg-green-600 text-white" : "bg-green-100"
+                }`}
             >
-              Add Payment
+              Pay
             </button>
           </div>
         </div>
 
-        {/* CONTENT AREA */}
-        <div className="overflow-y-auto max-h-[60vh] px-6 py-4">
-          {renderTabContent()}
-        </div>
-
+        {/* Content */}
+        <div className="overflow-y-auto max-h-[60vh] px-6 py-4">{renderTabContent()}</div>
       </div>
     </div>
   );

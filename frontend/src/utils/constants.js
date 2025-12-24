@@ -84,31 +84,45 @@ export const features = [
 
 
 export const SidebarFeatures = [
-    // {
-    //     name : "Dashboard",
-    //     icon : 'DashboardIcon',
-    //     path: "dashboard"
-    // },
+   
     {
         name : "Customer Master",
         icon : "CustomerIcon",
-        path: "customer-master"
+        // path: "customer-master"
+        children:[{
+          name:"All Customer",
+          icon:"CustomerIcon",
+          path:'customer-master'},
+          {
+            name:"Upload or Add Customer",
+            icon:"UploadIcon",
+            path:"upload-center"
+          }
+        ]
     },
     {
-        name: "Upload Center",
-        icon : "UploadIcon",
-        path: "upload-center"
+        name: "Reminder",
+        icon : "ReminderIcon", 
+        children:[{
+          name:"Reminder Management",
+          icon:'ReminderIcon',
+          path:"reminder-management"
+        },{
+          name:"Reminder History",
+          icon:"HistoryIcon",
+          path:"reminder-history"
+        }
+      ] 
     },
     {
-        name: "Reminder Management",
-        icon : "ReminderIcon",
-        path: "reminder-management"
-    },
-    {
-        name: "Reminder History",
-        icon : "HistoryIcon",
-        path: "reminder-history"
-    },
+      name:"Payment Term",
+      icon:"ClipboardClock",
+      path:"payment-reminder"
+    },{
+      name:"whatsapp chats",
+      icon:"FaWhatsapp",
+      path:"whatsapp-chat"
+    }
    
   ]
 

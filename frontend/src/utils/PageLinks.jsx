@@ -23,32 +23,33 @@ import AuthSuccess from "../Components/auth/AuthSuccess";
 import AuthRoute from "../Layouts/AuthRoutes";
 import { useAuth } from "../context/AuthContext";
 import CustomerDetail from "../Pages/CustomerDetail";
-
+import PaymentReminder from "../Pages/PaymentReminder/PaymentReminder"
+import WhatsappChats from "../Pages/WhatsappChats/WhatsappChats"
 
 const PageLinks = () => {
   const location = useLocation();
   const keyId = location.pathname;
 
-  const {loading} = useAuth();
+  const { loading } = useAuth();
 
 
-  if(loading){
-    return(
+  if (loading) {
+    return (
       <>
-      <LoadingPage />
+        <LoadingPage />
       </>
     )
   };
 
   return (
-    <Routes location={location} key={keyId}>
+    <Routes location={location}>
       {/* PUBLIC AREA */}
-      <Route element={<BeforeAuthLayout/>}>
-        <Route path ='/' element = {<Hero/>} />
+      <Route element={<BeforeAuthLayout />}>
+        <Route path='/' element={<Hero />} />
         <Route path="/contact" element={<PageShell keyId={keyId}><Contact /></PageShell>} />
-        <Route path="/login" element={<Navigate to="/" state={{openLogin: true}} replace />} />
+        <Route path="/login" element={<Navigate to="/" state={{ openLogin: true }} replace />} />
       </Route>
-      
+
       <Route path='/google-success' element={<AuthSuccess />} />
 
 
@@ -57,10 +58,10 @@ const PageLinks = () => {
         path="/nodue"
         element={
           //authRoute works as privateRoute
-          <AuthRoute> 
-        <AfterAuthLayout />
-        </AuthRoute>
-      }
+          <AuthRoute>
+            <AfterAuthLayout />
+          </AuthRoute>
+        }
       >
         {/* If user hits /nodue, land on first active page */}
         <Route index element={<Navigate to="customer-master" replace />} />
@@ -75,7 +76,11 @@ const PageLinks = () => {
         <Route path="subscriptions" element={<SubcriptionPage />} />
         <Route path="documentaion" element={<Documentation />} />
         <Route path="help" element={<HelpPage />} />
-        <Route path='customer-creation' element={<CustomerCreationPage/>}/>
+        {/* <Route path='customer-creation' element={<CustomerCreationPage/>}/> */}
+        <Route path="payment-reminder" element={<PaymentReminder />} />
+        <Route path="whatsapp-chat" element={<WhatsappChats/>} />
+        
+
       </Route>
 
       <Route path="*" element={<Error404Page />} />

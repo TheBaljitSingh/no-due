@@ -5,6 +5,7 @@ import { currency2, IconBtn, statusChip, TabButton } from "../../utils/AfterAuth
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
 import NewReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/NewReminderModal";
 import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/EditDrawer";
+import { useEffect } from "react";
 
 export default function ReminderManagement() {
   const [tab, setTab] = useState("upcoming");
@@ -12,8 +13,44 @@ export default function ReminderManagement() {
   const [bulk, setBulk] = useState(new Set());
   const [openNew, setOpenNew] = useState(false);
   const [drawer, setDrawer] = useState(null);
+  const [data, setData] = useState([]);
 
-  const data = MOCK_REMINDERS;
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await getAllRemainders();
+        setData(res.data.data || []);
+      } catch (error) {
+        console.log(error);
+        console.log("error while loading remainder data");
+      }
+    }
+    
+    fetchData();
+  }, []);
+
+  const normalizeData = useMemo(() => {
+    return data.map((r) => ({
+      id: r._id,
+      customer: {
+        name: r.customerId?.name || "-",
+        mobile: r.customerId?.mobile || "-",
+        company: "-", // not present yet
+      },
+
+      dueAmount: r.customerId.currentDue || 0,
+
+      sendAt: r.scheduledFor,
+
+      status: r.status === "pending" ? "scheduled" : r.status,
+
+      template: r.whatsappTemplate?.name,
+
+      channel: ["whatsapp"],
+
+      raw: r,
+    }));
+  }, [data]);
 
   const filtered = useMemo(() => {
     return data.filter((r) => {

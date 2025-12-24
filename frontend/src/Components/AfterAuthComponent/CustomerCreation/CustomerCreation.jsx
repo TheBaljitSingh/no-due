@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { createCustomers } from "../../utils/service/customerService";
+import { createCustomers } from "../../../utils/service/customerService";
 
-const CustomerCreationPage = ({ paymentTerms }) => {
-
+const CustomerCreation = () => {
 
   const formConfig = [
     {
@@ -43,15 +42,6 @@ const CustomerCreationPage = ({ paymentTerms }) => {
       ],
       required: true,
     },
-    {
-      name: "paymentTerm", label: "Payment Term", type: "select", options: [
-        { label: "Select payment term", value: "" },
-        ...paymentTerms.map(pt => ({ label: `${pt.name} - ${pt.creditDays} days`, value: pt._id }))
-
-      ], 
-      placeholder: "Enter payment terms",
-      required: true,
-    }
   ];
 
   const initialFormData = formConfig.reduce((acc, field) => {
@@ -84,7 +74,7 @@ const CustomerCreationPage = ({ paymentTerms }) => {
       setFormData(initialFormData); // reset form
     } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message || error?.message || "Failed to create customer");
+      toast.error(error?.response?.data?.message ||  error?.message || "Failed to create customer");
     } finally {
       setLoading(false);
     }
@@ -94,14 +84,7 @@ const CustomerCreationPage = ({ paymentTerms }) => {
   return (
     <div className="min-w-0 w-full">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Create Customer
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Add a new customer to manage dues and payments
-        </p>
-      </div>
+
 
       {/* Form Card */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -175,4 +158,4 @@ const CustomerCreationPage = ({ paymentTerms }) => {
   );
 };
 
-export default CustomerCreationPage;
+export default CustomerCreation;

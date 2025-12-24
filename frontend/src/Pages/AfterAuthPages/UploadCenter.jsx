@@ -1,20 +1,36 @@
 import React, { useState } from 'react'
 import { ArrowDownUp, ArrowUpDown} from 'lucide-react'
-import { CustomerNames } from '../../utils/constants';
 import BulkEntrySection from '../../Components/AfterAuthComponent/UploadSection/BulkEntrySection';
-import SingleEntryCreation from '../../Components/AfterAuthComponent/UploadSection/SingleEntryCreation';
+import { useEffect } from 'react';
+import { getUserPaymentTerms } from '../../utils/service/paymentTermService';
+import CustomerCreationPage from './CustomerCreationPage';
 
 const UploadCenter = () => {
   const [inverted , setInverted] = useState(false);
+  const [paymentTerms, setPaymentTerms] = useState([]);
 
+  useEffect(() => {
+    async function fetchUserTemplate(){
+      try {
+        //api should be protected by auth middleware that only user can fetch thair template and default provided by nodue
+          const res = await getUserPaymentTerms();
+            let templates = res.data.paymentTerms;
+          setPaymentTerms(templates);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchUserTemplate();
+  },[]);
+console.log("paymentTerms in upload center",paymentTerms);
 
   return (
   <div className="max-w-7xl mx-auto md:px-4 px-6 lg:px-8 py-6">
     {
       inverted ? (
-        <SingleEntryCreation />
+        <CustomerCreationPage paymentTerms={paymentTerms}/>
       ) : (
-        <BulkEntrySection />
+        <BulkEntrySection  paymentTerms={paymentTerms} />
       )
     }
 
@@ -35,9 +51,9 @@ const UploadCenter = () => {
 
     {
       inverted ? (
-        <BulkEntrySection />
+        <BulkEntrySection  paymentTerms={paymentTerms} />
       ) : (
-        <SingleEntryCreation />
+        <CustomerCreationPage paymentTerms={paymentTerms} />
       )
     }
     

@@ -69,7 +69,6 @@ const PageLinks = () => {
 
         <Route path="dashboard" element={<AfterAuthLanding />} />
         <Route path="customer-master" element={<CustomerMaster />} />
-        <Route path="customers/:id" element={<CustomerDetail />} />
         <Route path="upload-center" element={<UploadCenter />} />
         <Route path="reminder-management" element={<ReminderManagement />} />
         <Route path="reminder-history" element={<ReminderHistory />} />

@@ -8,14 +8,14 @@ import { useNavigate } from 'react-router-dom'
 
 
 
-const BulkEntrySection = () => {
+const BulkEntrySection = ({paymentTerms}) => {
 
   const [showPreview, setShowPreview] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewData, setPreviewData] = useState({});
   const previewRef = useRef();
   const naviage = useNavigate();
-
+  const [continueFile, setContinueFile] = useState(false);
 
   useEffect(()=>{
     const handleMouseClick = (e)=>{
@@ -161,8 +161,82 @@ const csvFileToJson = (file) => {
         </div>
 
       {showPreview && <div ref={previewRef}> 
-        <PreviewCustomerModel data={previewData} setData={setPreviewData} handleClose={()=>setShowPreview(false)} handleSubmit={handleSubmitEntry} /> </div>}
-      {/* i have to send the dummy data here */}
+        <PreviewCustomerModel data={previewData} setData={setPreviewData} handleClose={()=>setShowPreview(false)} setContinueFile={setContinueFile} /> </div>}
+      
+     {continueFile && (
+  <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm py-12">
+    <div className="w-[92%] max-w-3xl bg-white rounded-xl shadow-xl overflow-hidden animate-fadeIn">
+
+      {/* Header */}
+      <div className="px-6 py-4 border-b flex justify-between items-center">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">
+            Confirm Payment Terms
+          </h2>
+          <p className="text-sm text-gray-500">
+            Select a payment term to apply to all uploaded entries
+          </p>
+        </div>
+
+        <button
+          onClick={() => setContinueFile(false)}
+          className="text-gray-400 hover:text-gray-600 transition"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="px-6 py-6 space-y-4">
+        <label className="block text-sm font-medium text-gray-700">
+          Payment Term
+        </label>
+
+        <select
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          defaultValue=""
+          onChange={(e) => {
+            const updatedData = previewData.map(item => ({
+              ...item,
+              paymentTerm: e.target.value
+            }));
+            setPreviewData(updatedData);
+          }}
+        >
+          <option value="" disabled>
+            Select Payment Term
+          </option>
+          {paymentTerms.map(term => (
+            <option key={term._id} value={term._id}>
+              {term.name} — {term.creditDays} days
+            </option>
+          ))}
+        </select>
+
+        <p className="text-xs text-gray-500">
+          This payment term will be applied to all selected customers.
+        </p>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t flex justify-end gap-3 bg-gray-50">
+        <button
+          onClick={() => setContinueFile(false)}
+          className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleSubmitEntry}
+          className="px-6 py-2 text-sm font-medium text-white rounded-lg component-button-green shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          Submit Entries
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
     </div>
   )

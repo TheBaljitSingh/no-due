@@ -5,6 +5,7 @@ import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 export const createCustomer = async (req, res) => {
   try {
     const customerData = req.body;
+    console.log(req.body.customerData);
 
     if (!customerData) {
       return new APIResponse(400, null, "Data is required").send(res);
@@ -17,7 +18,7 @@ export const createCustomer = async (req, res) => {
         CustomerOfComapny: req.user._id
       }));
 
-      // console.log("Formatted Data:", formattedData);
+      console.log("Formatted Data:", formattedData);
 
       const inserted = await Customer.insertMany(formattedData ); // if any error it roll back, use boolean if required
 

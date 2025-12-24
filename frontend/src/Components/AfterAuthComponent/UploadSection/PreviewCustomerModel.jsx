@@ -1,8 +1,13 @@
 import React from "react";
 import { X } from "lucide-react";
+import { useState } from "react";
 
-export default function PreviewCustomerModal({ data, setData, handleClose, handleSubmit }) {
-  
+export default function PreviewCustomerModal({ data, setData, handleClose, setContinueFile }) {
+
+const handleContinue = () => {
+  setContinueFile(true);
+  handleClose();
+};
   // Extract dynamic table headers from first row
   const headers = data.length > 0 ? Object.keys(data[0]) : [];
 
@@ -14,9 +19,9 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
   };
 
   const dropdownFields = {
-  gender: ["male", "female", "other"],
-  status: ["Paid", "Due", "Overdue", "Pending"]
-};
+    gender: ["male", "female", "other"],
+    status: ["Paid", "Due", "Overdue", "Pending"]
+  };
 
 
   return (
@@ -25,9 +30,9 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
       <div className="bg-white w-[90%] max-w-4xl rounded-lg shadow-lg p-6 relative">
 
         {/* Close Button */}
-      <button onClick={handleClose} className="absolute top-3 right-3 bg-white rounded-2xl shadow-[0_8px_10px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_12px_rgba(0,0,0,0.4)] text-gray-600 hover:text-gray-800 flex items-center justify-center cursor-pointer">
-  <X size={22} />
-</button>
+        <button onClick={handleClose} className="absolute top-3 right-3 bg-white rounded-2xl shadow-[0_8px_10px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_12px_rgba(0,0,0,0.4)] text-gray-600 hover:text-gray-800 flex items-center justify-center cursor-pointer">
+          <X size={22} />
+        </button>
 
 
 
@@ -43,7 +48,7 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
         {/* Dynamic Editable Table */}
         <div className="overflow-x-auto border rounded-lg">
           <table className="w-full text-left text-sm">
-            
+
             {/* Table Header */}
             <thead className="bg-gray-50 border-b">
               <tr>
@@ -65,27 +70,27 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
                   {headers.map((key, colIndex) => (
                     <td key={colIndex} className="px-4 py-2">
 
-  {dropdownFields[key.toLowerCase()] ? (
-    <select
-      value={row[key] || ""}
-      onChange={(e) => handleCellChange(rowIndex, key, e.target.value)}
-      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-    >
-      <option value="">Select</option>
-      {dropdownFields[key.toLowerCase()].map((opt, idx) => (
-        <option key={idx} value={opt}>{opt}</option>
-      ))}
-    </select>
-  ) : (
-    <input
-      type="text"
-      value={row[key] || ""}
-      onChange={(e) => handleCellChange(rowIndex, key, e.target.value)}
-      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-    />
-  )}
+                      {dropdownFields[key.toLowerCase()] ? (
+                        <select
+                          value={row[key] || ""}
+                          onChange={(e) => handleCellChange(rowIndex, key, e.target.value)}
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        >
+                          <option value="">Select</option>
+                          {dropdownFields[key.toLowerCase()].map((opt, idx) => (
+                            <option key={idx} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={row[key] || ""}
+                          onChange={(e) => handleCellChange(rowIndex, key, e.target.value)}
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      )}
 
-</td>
+                    </td>
 
                   ))}
                 </tr>
@@ -97,7 +102,7 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
 
         {/* Footer */}
         <div className="mt-5 flex justify-end gap-3">
-          
+
           {/* Cancel */}
           <button
             onClick={handleClose}
@@ -108,10 +113,10 @@ export default function PreviewCustomerModal({ data, setData, handleClose, handl
 
           {/* Submit */}
           <button
-            onClick={handleSubmit}
+            onClick={handleContinue}
             className="px-4 py-2 text-white component-button-green rounded-lg shadow-sm hover:opacity-90 transition"
           >
-            Submit Entry
+            Seelect & Continue
           </button>
         </div>
 

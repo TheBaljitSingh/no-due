@@ -19,7 +19,7 @@ function ChatMessages({ messages, loading }) {
         <div
           key={msg.id}
           className={`max-w-[70%] px-3 py-2 rounded-xl text-sm ${
-            msg.direction === "outgoing"
+            msg.direction === "OUTBOUND"
               ? "ml-auto bg-green-600/90 text-white"
               : "mr-auto bg-white border"
           }`}

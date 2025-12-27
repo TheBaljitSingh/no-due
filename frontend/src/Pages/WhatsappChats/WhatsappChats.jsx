@@ -67,7 +67,7 @@ export default function WhatsappChats() {
 
     const newMsg = {
       customerId: currentCustomer.mobile,
-      direction: "outgoing",
+      direction: "OUTBOUND",
       from: "owner",
       text,
       timestamp: new Date(),

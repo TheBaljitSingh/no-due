@@ -208,7 +208,7 @@ class ReminderService {
     
 
     for (const reminder of reminders) {
-      console.log(reminder);
+      // console.log(reminder);
       try {
         const tx = reminder.transactionId;
 
@@ -229,7 +229,10 @@ class ReminderService {
         });
 
 
-        if (recent) continue;
+        if (recent) {
+          console.log("skipping, recently sended within 24 hr");
+          continue
+        };
 
         await whatsappService.sendTemplateMessage({
           to: `91${tx.customerId.mobile}`,

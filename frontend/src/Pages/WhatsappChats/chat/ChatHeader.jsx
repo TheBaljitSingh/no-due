@@ -1,6 +1,7 @@
 function ChatHeader({ customer }) {
+  console.log(customer);
   return (
-    <div className="border-b px-4 py-3 flex items-center gap-3">
+    <div className=" px-4 py-3 flex items-center gap-3">
       <div className="h-10 w-10 rounded-full bg-green-600 text-white flex items-center justify-center">
         {customer.name?.[0] || "C"}
       </div>

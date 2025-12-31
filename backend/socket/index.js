@@ -21,10 +21,9 @@ export function initSocket(server){
             // direction:"incomming",
 
         });
-        registerSocketHandlers(io, socket);
+        registerSocketHandlers(io, socket);//you have to write other events there
 
-        console.log("socket rooms:",socket.rooms);
-
+        // console.log("socket rooms:",socket.rooms);
 
 
         //for disconnect
@@ -32,6 +31,7 @@ export function initSocket(server){
             console.log("user socket disconnected");
         })
     });
+
 
     return io;
 

@@ -52,7 +52,7 @@ export const updateUser = async (req, res) => {
         return new APIResponse(200, { profile: updatedProfile }, 'Profile updated successfully').send(res);
     } catch (error) {
         console.error("Profile update error:", error);
-        return new APIError(500, [error.message]).send(res);        
-        };
+        return new APIError(500, [error.message]).send(res);
+    }
 };
 

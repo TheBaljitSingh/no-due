@@ -21,7 +21,7 @@ function ChatMessages({ messages, loading }) {
           className={`max-w-[70%] px-3 py-2 rounded-xl text-sm ${
             msg.direction === "OUTBOUND"
               ? "ml-auto bg-green-600/90 text-white"
-              : "mr-auto bg-white border"
+              : "mr-auto bg-white "
           }`}
         >
           <div>{msg.text}</div>

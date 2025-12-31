@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import CustomerPicker from "./CustomerPicker";
 import { getAllcustomers } from "../../utils/service/customerService";
+import {getAllconversations} from "../../utils/service/whatsappService.js"
 import ChatHeader from "./chat/ChatHeader";
 import ChatInput from "./chat/ChatInput"
 import ChatMessages from "./chat/ChatMessage"
 import EmptyChatState from "./chat/EmplyChatState"
 import { io } from "socket.io-client";
 import {whatsappReply, getChatHistory} from "../../utils/service/whatsappService.js"
+import {useAuth} from ".././../context/AuthContext.jsx"
 
 export default function WhatsappChats() {
   const socketRef = useRef(null); //one time
@@ -16,16 +18,19 @@ export default function WhatsappChats() {
   const [loading, setLoading] = useState(false);
   const CHAT_UI = {  OPEN: "open", MINIMIZED: "minimized", CLOSED: "closed",};
   const [chatUI, setChatUI] = useState(CHAT_UI.CLOSED);
-
-
+  const {user} = useAuth();
 
   useEffect(() => {
     async function loadCustomers() {
       try {
-        const data = await getAllcustomers();
+        const data = await getAllconversations();
+        console.log(data);
 
-        const customerList = data?.data?.customers || [];
+        const customerList = data?.data || [];
+        console.log(customerList);
         setCustomers(customerList);
+        
+        
       } catch (error) {
         console.error("Failed to load customers", error);
         setCustomers([]);
@@ -34,6 +39,11 @@ export default function WhatsappChats() {
     loadCustomers();
   }, []);
 
+
+  useEffect(()=>{
+    console.log(customers);
+    
+  },[]);
 
 
   // Fetch chat history when customer changes
@@ -45,14 +55,14 @@ export default function WhatsappChats() {
     };
 
     socket.emit("join_customer_chat", { //one time
-      customerId: `91${currentCustomer.mobile}`
+      customerId: currentCustomer.mobile
     });
 
-    fetchChatHistory(`91${currentCustomer.mobile}`);
+    fetchChatHistory(`${currentCustomer.mobile}`);
 
     return () => {
       socket.emit("leave_customer_chat", {
-        customerId: `91${currentCustomer.mobile}`
+        customerId: currentCustomer.mobile
       });
     }
 
@@ -75,12 +85,12 @@ export default function WhatsappChats() {
     try {
       //api later
       const payload = {};
-      payload.to=`91${currentCustomer.mobile}`;
+      payload.to=currentCustomer.mobile;
       //later add context reply
       payload.text=text;
       console.log(payload);
       const replyRes = await whatsappReply(payload);
-      console.log(replyRes);
+      console.log("replyRes",replyRes);
 
     } catch (err) {
       console.error(err);
@@ -88,14 +98,15 @@ export default function WhatsappChats() {
   };
 
 
-  async function fetchChatHistory(customerId) {
+
+  async function fetchChatHistory(mobile) {
     //customerId:918709548015
     console.log("fetching history");
     setLoading(true);
     try {
       //api later
 
-      const res = await getChatHistory(customerId);
+      const res = await getChatHistory(mobile);
       console.log(res.data);
 
       // Mock history for now
@@ -126,10 +137,40 @@ export default function WhatsappChats() {
       console.log("Welcome:", d);
     })
 
+    socket.emit("join_user", {userId:user?._id}) // it will join global user room
+
     socket.on("new_message", (msg) => {
-      console.log(msg);
+      // console.log("new_message",msg);
       setMessages((prev) => [...prev, {id:msg.messageId, text:msg.text, timestamp: msg.timestamp}]);
     });
+
+    socket.on("new_message_preview",(data)=>{
+      //handing preview messages
+      // console.log("new_message_preview", data)
+      console.log(currentCustomer, data);
+
+
+   setCustomers(prev =>
+    prev.map(c =>
+      c.mobile === data.mobile && (
+        !currentCustomer || currentCustomer.mobile !== c.mobile
+      )
+        ? {
+            ...c,
+            lastMessage: data.text,
+            unreadCount: (c.unreadCount || 0) + 1,
+            updatedAt: new Date().toISOString()
+          }
+        : c
+    )
+  );
+
+
+
+  
+    })
+
+    
 
     return () => {
       socket.disconnect();
@@ -138,18 +179,33 @@ export default function WhatsappChats() {
   }, []);
 
 
+function markAsRead(mobile){
+  //._id
+  //here customerId is mobile
+  const socket = socketRef.current;
+
+  socket.emit("mark_read", mobile);
+
+  console.log("marked read")
+
+  setCustomers(prev=> prev && prev.map(c=>c.mobile===mobile?{...c, unreadCount:0}:c));
+}
 
   const handleOnCustomerSelect = (customer) => {
   if (currentCustomer && customer._id === currentCustomer._id && chatUI==='open') return;
   setCurrentCustomer(customer);
+  console.log(customer)
   setMessages([]);
+  
   setChatUI(CHAT_UI.OPEN);
+  console.log("printing customer", customer)
+  markAsRead(customer?.mobile);
 };
 
 
 
   return (
-    <div className="h-[calc(100vh-64px)] grid grid-cols-12 bg-gray-300/40 rounded-2xl gap-4 sticky ">
+    <div className="h-[calc(100vh-64px)] grid grid-cols-12 bg-gray-300/40 rounded-2xl gap-9 fixed">
       {/* LEFT: Customer Picker */}
       <div className="col-span-4 bg-white rounded-xl shadow-sm p-4 m-2">
         <CustomerPicker items={customers} onSelect={handleOnCustomerSelect} selected={currentCustomer} />

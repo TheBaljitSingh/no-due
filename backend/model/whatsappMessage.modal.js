@@ -1,9 +1,8 @@
 import { Schema } from "mongoose";
-import { connection2 } from "../database/databaseConfig.js";
+import { connection } from "../database/databaseConfig.js";
 
 
-const whatsappMessageSchema = new Schema(
-  {
+const whatsappMessageSchema = new Schema({
     // WhatsApp provided message id (wamid.xxx)
     whatsappMessageId: {
       type: String,
@@ -19,7 +18,7 @@ const whatsappMessageSchema = new Schema(
       index: true,
     },
 
-    phone: {
+    mobile: {
       type: String,
       required: true,
       index: true,
@@ -75,4 +74,7 @@ const whatsappMessageSchema = new Schema(
   { timestamps: true }
 );
 
-export default connection2.model("WhatsappMessage", whatsappMessageSchema);
+console.log("conn",connection)
+const whatsappMessage =  connection.model("WhatsappMessage", whatsappMessageSchema);
+
+export default whatsappMessage;

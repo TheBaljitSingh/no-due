@@ -4,7 +4,12 @@ export const whatsappReply = async(payload)=>{
     return response.data;
 }
 
-export const getChatHistory = async (customerId)=>{
-    const response = await api.get(`/v1/whatsapp/history?customerId=${customerId}`);
+export const getChatHistory = async (mobile)=>{
+    const response = await api.get(`/v1/whatsapp/history?mobile=${mobile}`);
+    return response.data;
+}
+
+export const getAllconversations = async ()=>{
+    const response = await api.get(`/v1/whatsapp/conversations`);
     return response.data;
 }

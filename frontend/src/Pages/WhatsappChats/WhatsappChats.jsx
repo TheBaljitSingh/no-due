@@ -12,7 +12,7 @@ import {useAuth} from ".././../context/AuthContext.jsx"
 
 export default function WhatsappChats() {
   const socketRef = useRef(null); //one time
-  const [currentCustomer, setCurrentCustomer] = useState(null);
+  const currentCustomerRef = useRef(null);
   const [customers, setCustomers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -49,30 +49,31 @@ export default function WhatsappChats() {
   // Fetch chat history when customer changes
   useEffect(() => {
     const socket = socketRef.current;
-    if (!socket || !currentCustomer?.mobile || !currentCustomer._id) {
+    if (!socket || !currentCustomerRef.current?.mobile || !currentCustomerRef.current._id) {
       console.log("returing");
       return;
     };
 
     socket.emit("join_customer_chat", { //one time
-      customerId: currentCustomer.mobile
+      customerId: currentCustomerRef.current.mobile
     });
+    console.log("fetch history of ", currentCustomerRef.current.mobile)
 
-    fetchChatHistory(`${currentCustomer.mobile}`);
+    fetchChatHistory(`${currentCustomerRef.current.mobile}`);
 
     return () => {
       socket.emit("leave_customer_chat", {
-        customerId: currentCustomer.mobile
+        customerId: currentCustomerRef.current.mobile
       });
     }
 
-  }, [currentCustomer]);
+  }, [currentCustomerRef.current]);
 
   const handleSendMessage = async (text) => {
-    if (!text.trim() || !currentCustomer) return;
+    if (!text.trim() || !currentCustomerRef.current) return;
 
     const newMsg = {
-      customerId: currentCustomer.mobile,
+      customerId: currentCustomerRef.current.mobile,
       direction: "OUTBOUND",
       from: "owner",
       text,
@@ -85,7 +86,7 @@ export default function WhatsappChats() {
     try {
       //api later
       const payload = {};
-      payload.to=currentCustomer.mobile;
+      payload.to=currentCustomerRef.current.mobile;
       //later add context reply
       payload.text=text;
       console.log(payload);
@@ -112,7 +113,7 @@ export default function WhatsappChats() {
       // Mock history for now
       // Mock history for now
       // Simulate delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       setMessages(res.data);
     } catch (err) {
@@ -124,8 +125,33 @@ export default function WhatsappChats() {
 
 
 
+
+
+
+function markAsRead(mobile){
+  //._id
+  //here customerId is mobile
+  const socket = socketRef.current;
+
+  socket.emit("mark_read", mobile);
+
+  setCustomers(prev=> prev && prev.map(c=>c.mobile===mobile?{...c, unreadCount:0}:c));
+}
+
+  const handleOnCustomerSelect = (customer) => {
+    console.log("customer",customer)
+  if (currentCustomerRef.current && customer._id === currentCustomerRef.current._id && chatUI==='open') return;
+  currentCustomerRef.current = customer;
+  console.log(currentCustomerRef.current)
+  setMessages([]);
+  
+  setChatUI(CHAT_UI.OPEN);
+  markAsRead(customer?.mobile);
+};
+
+
   useEffect(() => {
-    socketRef.current = io("http://localhost:3000", { withCredentials: true }); //will not change on refresh
+    socketRef.current = io(import.meta.env.VITE_BACKEND_URL, { withCredentials: true }); //will not change on refresh
     const socket = socketRef.current;
     //make sure only connect if it is authenticated
 
@@ -140,35 +166,34 @@ export default function WhatsappChats() {
     socket.emit("join_user", {userId:user?._id}) // it will join global user room
 
     socket.on("new_message", (msg) => {
-      // console.log("new_message",msg);
+      console.log("new_message",msg);
       setMessages((prev) => [...prev, {id:msg.messageId, text:msg.text, timestamp: msg.timestamp}]);
+      //mark that read
+      markAsRead(msg.mobile)
     });
 
-    socket.on("new_message_preview",(data)=>{
-      //handing preview messages
-      // console.log("new_message_preview", data)
-      console.log(currentCustomer, data);
+   socket.on("new_message_preview", (data) => {
+     setCustomers(prev =>
+      prev.map(c => {
+        //if not matching the customer from comming data then return as it is
+        if (c.mobile !== data.mobile) return c;
 
+        const isActive =
+          currentCustomerRef.current &&
+          currentCustomerRef.current.mobile === data.mobile;
+        //now matching customer with comming data then update only count if it is Active
+        return {
+          ...c,
+          lastMessage: data.text,
+          updatedAt: new Date().toISOString(),
+          unreadCount: isActive
+            ? c.unreadCount
+            : (c.unreadCount || 0) + 1,
+        };
+      })
+    );
+});
 
-   setCustomers(prev =>
-    prev.map(c =>
-      c.mobile === data.mobile && (
-        !currentCustomer || currentCustomer.mobile !== c.mobile
-      )
-        ? {
-            ...c,
-            lastMessage: data.text,
-            unreadCount: (c.unreadCount || 0) + 1,
-            updatedAt: new Date().toISOString()
-          }
-        : c
-    )
-  );
-
-
-
-  
-    })
 
     
 
@@ -179,36 +204,11 @@ export default function WhatsappChats() {
   }, []);
 
 
-function markAsRead(mobile){
-  //._id
-  //here customerId is mobile
-  const socket = socketRef.current;
-
-  socket.emit("mark_read", mobile);
-
-  console.log("marked read")
-
-  setCustomers(prev=> prev && prev.map(c=>c.mobile===mobile?{...c, unreadCount:0}:c));
-}
-
-  const handleOnCustomerSelect = (customer) => {
-  if (currentCustomer && customer._id === currentCustomer._id && chatUI==='open') return;
-  setCurrentCustomer(customer);
-  console.log(customer)
-  setMessages([]);
-  
-  setChatUI(CHAT_UI.OPEN);
-  console.log("printing customer", customer)
-  markAsRead(customer?.mobile);
-};
-
-
-
   return (
     <div className="h-[calc(100vh-64px)] grid grid-cols-12 bg-gray-300/40 rounded-2xl gap-9 fixed">
       {/* LEFT: Customer Picker */}
       <div className="col-span-4 bg-white rounded-xl shadow-sm p-4 m-2">
-        <CustomerPicker items={customers} onSelect={handleOnCustomerSelect} selected={currentCustomer} />
+        <CustomerPicker items={customers} onSelect={handleOnCustomerSelect} selected={currentCustomerRef} />
       </div>
 
  {/* RIGHT: Chat Area */}
@@ -223,7 +223,7 @@ function markAsRead(mobile){
         `}
       >
         <ChatHeader
-          customer={currentCustomer}
+          customer={currentCustomerRef.current}
           onClose={() => setChatUI(CHAT_UI.CLOSED)}
           onMinimize={() => setChatUI(CHAT_UI.MINIMIZED)}
           onExpand={()=>setChatUI(CHAT_UI.OPEN)}

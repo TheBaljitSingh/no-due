@@ -1,8 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 function ChatMessages({ messages, loading }) {
 
 
+
+  const bottomRef = useRef();
+
+
+  useEffect(()=>{
+    bottomRef.current.scrollIntoView({
+      behavior: "auto", //smooth, instant, auto
+      
+    })
+  },[messages]);
 
   
   if (loading) {
@@ -30,6 +40,9 @@ function ChatMessages({ messages, loading }) {
           </div>
         </div>
       ))}
+      <div ref={bottomRef}>
+
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import Customer from "../model/customer.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import whatsappService from "../services/whatsapp.service.js";
-import remainderService from "../services/remainder.service.js";
+import remainderService from "../services/reminder.service.js";
 import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/remainder.model.js";
 import {formatDate} from "../utils/Helper.js"
@@ -20,10 +20,10 @@ function getReminderType(dueDate, scheduleFor){
 export const getAllRemainders = async (req, res) => {
   try {
 
-    const {status} = req.query;
+    const { status } = req.query;
 
     const filters = {};
-    if(status){
+    if (status) {
       filters.status = status.toLowerCase();
     }
 

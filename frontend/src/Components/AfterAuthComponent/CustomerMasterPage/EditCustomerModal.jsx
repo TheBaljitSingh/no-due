@@ -111,7 +111,7 @@ export default function EditCustomerModal({  customer,  setEditCustomer,  handle
             <label className="text-sm text-gray-700 after:content-['*'] after:ml-1 after:text-red-500">Due</label>
             <input
               name="due"
-              value={customer.currentDue || ""}
+              value={customer.due || ""}
               onChange={handleChange}
               className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 

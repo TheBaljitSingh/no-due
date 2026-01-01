@@ -5,26 +5,6 @@ import {createPaymentTerms, deletePaymentTerms, getUserPaymentTerms, updatePayme
 import { toast } from "react-toastify";
 import {useAuth} from "../../context/AuthContext"
 
-// mock data (replace with API later)
-const MOCK_TERMS = [
-  {
-    _id: "1",
-    name: "Template 1",
-    creditDays: 30,
-    reminderOffsets: [5, 2, 0],
-    owner: null,
-    isDefault: true,
-  },
-  {
-    _id: "2",
-    name: "Template 2",
-    creditDays: 15,
-    reminderOffsets: [3, 1, 0],
-    owner: null,
-    isDefault: false,
-  },
-];
-
 export default function PaymentReminder() {
   const [globalTerms, setGlobalTerms] = useState([]);
   const [customTerms, setCustomTerms] = useState([]);
@@ -37,10 +17,7 @@ export default function PaymentReminder() {
 
 
   useEffect(() => {
-    // later replace with API response
 
-    let isMounted = true;
-    let globals, customs;
 
     async function fetchUserTemplate(){
       try {

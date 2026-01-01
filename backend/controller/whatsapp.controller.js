@@ -1,7 +1,8 @@
 import axios from "axios";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import {APIError} from "../utils/ResponseAndError/ApiError.utils.js"
-import whatsappMessage from "../model/whatsapp.modal.js"
+import whatsappMessage from "../model/whatsappMessage.modal.js"
+import whatsappConversation from "../model/whatsappConversation.js";
 
 export const sendReply = async (req, res) => {
   try {
@@ -47,7 +48,6 @@ export const sendReply = async (req, res) => {
         "Content-Type": "application/json",
       },
     });
-    console.log("meta response",response.data.messages[0].id);
 
     // also have to save it in the db
    try {
@@ -79,9 +79,10 @@ export const sendReply = async (req, res) => {
 
 export const getChatHistory = async (req, res)=>{
   try {
-    const {customerId} = req.query;
+    const {mobile} = req.query;
   
-    const response = await whatsappMessage.find(customerId);
+    const response = await whatsappMessage.find({mobile});
+    // console.log(response);
   
     return new APIResponse(200, response, "fetched", true).send(res);
     
@@ -94,3 +95,18 @@ export const getChatHistory = async (req, res)=>{
 
 
 }
+
+export const getAllConversations = async (req, res)=>{
+  //will return ongoing conversations
+  try {
+    const conversations = await whatsappConversation.find({}).sort({createdAt:-1}).populate({path:"customerId", select: "name mobile gender"}).limit(50);
+    console.log(conversations);
+
+    return new APIResponse(200, conversations, "fetched successfully", true).send(res);
+
+  } catch (error) {
+    console.log(error);
+    return new APIError(500, error, "Failed to fetch conversations", false).send(res);
+  }
+}
+

@@ -72,8 +72,6 @@ export const getCustomers = async(req, res)=>{
 
         
         const total = await Customer.countDocuments(query);
-
-
         return new APIResponse(200, {customers, total, page, limit, totalPages: Math.ceil(total/limit)}, "Fetched all customers", ).send(res); // have to check response 
         
     } catch (error) {

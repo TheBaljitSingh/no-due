@@ -3,7 +3,7 @@ import Transaction from "../model/transaction.model.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import Reminder from "../model/remainder.model.js";
-import reminderService from "../services/remainder.service.js";
+import reminderService from "../services/reminder.service.js";
 
 async function recalculateDue(dueTransactionId) {
   const payments = await Transaction.find({

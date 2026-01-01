@@ -1,16 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, Copy, AlertCircle, Filter } from "lucide-react";
 import { MOCK_REMINDERS, TEMPLATES } from "../../utils/constants";
 import { currency2, IconBtn, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
+import NewReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/NewReminderModal";
 import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/EditDrawer";
-import { getAllRemainders, scheduleReminder, sendReminderNow } from "../../utils/service/remainderService.js"
-import ScheduleOrSendReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/ScheduleOrSendReminderModal.jsx";
-import { toast } from "react-toastify";
-
+import { useEffect } from "react";
 
 export default function ReminderManagement() {
-  const [tab, setTab] = useState("pending");
+  const [tab, setTab] = useState("upcoming");
   const [q, setQ] = useState("");
   const [bulk, setBulk] = useState(new Set());
   const [openNew, setOpenNew] = useState(false);
@@ -21,22 +19,17 @@ export default function ReminderManagement() {
 
 
   useEffect(() => {
-
     async function fetchData() {
       try {
         const res = await getAllRemainders();
         setData(res.data.data || []);
-        console.log(res.data.data);
-
       } catch (error) {
         console.log(error);
         console.log("error while loading remainder data");
       }
-
     }
-
+    
     fetchData();
-
   }, []);
 
   const normalizeData = useMemo(() => {
@@ -63,19 +56,19 @@ export default function ReminderManagement() {
   }, [data]);
 
   const filtered = useMemo(() => {
-    return normalizeData.filter((r) => {
-      if (tab === "pending" && r.status !== "scheduled") return false;
+    return data.filter((r) => {
+      if (tab === "upcoming" && r.status !== "scheduled") return false;
       if (tab === "sent" && r.status !== "sent") return false;
       if (tab === "failed" && r.status !== "failed") return false;
       const s = q.trim().toLowerCase();
       if (!s) return true;
       return (
         r.id.toLowerCase().includes(s) ||
-        r.customer.name.toLowerCase().includes(s)
-        // r.customer.company.toLowerCase().includes(s)
+        r.customer.name.toLowerCase().includes(s) ||
+        r.customer.company.toLowerCase().includes(s)
       );
     });
-  }, [normalizeData, tab, q]);
+  }, [data, tab, q]);
 
   const toggleBulk = (id) => {
     setBulk((prev) => {
@@ -85,58 +78,12 @@ export default function ReminderManagement() {
     });
   };
 
-  const stats = useMemo(() => ({
-    scheduled: normalizeData.filter(r => r.status === "scheduled").length,
-    sent: normalizeData.filter(r => r.status === "sent").length,
-    failed: normalizeData.filter(r => r.status === "failed").length,
+  const stats = {
+    scheduled: data.filter(r => r.status === "scheduled").length,
+    sent: data.filter(r => r.status === "sent").length,
+    failed: data.filter(r => r.status === "failed").length,
     responseRate: "41%"
-
-  }), []);
-
-  const handleSubmit = async(data)=>{
-    console.log("submitted",data);
-    const {userId, templateName, mode, scheduleDate, transactionId, variables } = data;
-
-    if(mode==='schedule'){
-      //call to schedule api
-      const apiData = {};
-      apiData.transactionId = transactionId;
-      apiData.scheduledFor= scheduleDate;
-      apiData.templateName = templateName;
-      apiData.variables = variables;
-
-      try {  
-        const response = await scheduleReminder(apiData);
-        toast.success("remainder scheduled ");
-        setOpenNew(false);
-
-      } catch (error) {
-        console.log(error);
-        toast.error(error.response.data.errors[0] || error.message ||"error while scheduling");
-        
-      }
-      
-    }else{
-      //send now
-      const apiData = {};
-      apiData.transactionId = transactionId;
-      apiData.templateName = templateName;
-      apiData.variables = variables
-      try {
-        const response =  await sendReminderNow(apiData);
-        console.log(response);
-        toast.success("remainder sent!");
-        setOpenNew(false);
-        
-      } catch (error) {
-        console.log(error);
-        toast.error(error.response.data.errors[0] || error.message ||"error while sending");
-      }    
-    }
-
-}
-
-
+  };
 
   return (
     <div className="min-h-screen ">
@@ -148,11 +95,11 @@ export default function ReminderManagement() {
               <h1 className="text-2xl font-semibold text-gray-900">Reminders</h1>
               <p className="text-sm text-gray-600 mt-1">Automate payment reminders across multiple channels</p>
             </div>
-            <button
-              onClick={() => setOpenNew(true)}
+            <button 
+              onClick={() => setOpenNew(true)} 
               className="inline-flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
             >
-              <Plus className="w-4 h-4" /> Create Reminder
+              <Plus className="w-4 h-4"/> Create Reminder
             </button>
           </div>
         </div>
@@ -161,10 +108,10 @@ export default function ReminderManagement() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard title="Scheduled" value={stats.scheduled} icon={<Clock className="w-5 h-5 text-green-600" />} color="green" />
-          <StatCard title="Sent Today" value={stats.sent} icon={<Send className="w-5 h-5 text-green-600" />} color="green" />
-          <StatCard title="Failed" value={stats.failed} icon={<XCircle className="w-5 h-5 text-red-600" />} color="red" />
-          <StatCard title="Response Rate" value={stats.responseRate} icon={<MessageCircle className="w-5 h-5 text-purple-600" />} color="purple" />
+          <StatCard title="Scheduled" value={stats.scheduled} icon={<Clock className="w-5 h-5 text-green-600"/>} color="green" />
+          <StatCard title="Sent Today" value={stats.sent} icon={<Send className="w-5 h-5 text-green-600"/>} color="green" />
+          <StatCard title="Failed" value={stats.failed} icon={<XCircle className="w-5 h-5 text-red-600"/>} color="red" />
+          <StatCard title="Response Rate" value={stats.responseRate} icon={<MessageCircle className="w-5 h-5 text-purple-600"/>} color="purple" />
         </div>
 
         {/* Main Content Card */}
@@ -172,19 +119,19 @@ export default function ReminderManagement() {
           {/* Tabs */}
           <div className="border-b border-gray-200 px-6 py-2 pt-4">
             <div className="flex items-center gap-1 -mb-px">
-              <TabButton active={tab === "pending"} onClick={() => setTab("pending")} icon={<Clock className="w-4 h-4" />}>
-                pending
+              <TabButton active={tab === "upcoming"} onClick={() => setTab("upcoming")} icon={<Clock className="w-4 h-4"/>}>
+                Upcoming
                 <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                  {data.filter(r => r.status === "pending").length}
+                  {data.filter(r => r.status === "scheduled").length}
                 </span>
               </TabButton>
-              <TabButton active={tab === "sent"} onClick={() => setTab("sent")} icon={<CheckCircle2 className="w-4 h-4" />}>
+              <TabButton active={tab === "sent"} onClick={() => setTab("sent")} icon={<CheckCircle2 className="w-4 h-4"/>}>
                 Sent
                 <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
                   {data.filter(r => r.status === "sent").length}
                 </span>
               </TabButton>
-              <TabButton active={tab === "failed"} onClick={() => setTab("failed")} icon={<XCircle className="w-4 h-4" />}>
+              <TabButton active={tab === "failed"} onClick={() => setTab("failed")} icon={<XCircle className="w-4 h-4"/>}>
                 Failed
                 <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
                   {data.filter(r => r.status === "failed").length}
@@ -198,7 +145,7 @@ export default function ReminderManagement() {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
                   <input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
@@ -208,7 +155,7 @@ export default function ReminderManagement() {
                 </div>
               </div>
               <button className="inline-flex items-center justify-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                <Filter className="w-4 h-4" /> Filters
+                <Filter className="w-4 h-4"/> Filters
               </button>
             </div>
 
@@ -218,13 +165,13 @@ export default function ReminderManagement() {
                 <span className="text-sm font-medium text-green-900">{bulk.size} selected</span>
                 <div className="flex flex-wrap items-center gap-2 ml-auto">
                   <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
-                    <Send className="w-3.5 h-3.5" /> Send Now
+                    <Send className="w-3.5 h-3.5"/> Send Now
                   </button>
                   <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
-                    <Pause className="w-3.5 h-3.5" /> Pause
+                    <Pause className="w-3.5 h-3.5"/> Pause
                   </button>
                   <button className="inline-flex items-center gap-1.5 bg-white border border-red-300 px-3 py-1.5 rounded-lg hover:bg-red-50 text-sm font-medium text-red-600">
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                    <Trash2 className="w-3.5 h-3.5"/> Delete
                   </button>
                 </div>
               </div>
@@ -237,8 +184,8 @@ export default function ReminderManagement() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 w-12">
-                    <input
-                      type="checkbox"
+                    <input 
+                      type="checkbox" 
                       className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                       onChange={(e) => {
                         if (e.target.checked) setBulk(new Set(filtered.map((r) => r.id)));
@@ -259,15 +206,15 @@ export default function ReminderManagement() {
                 {filtered.map((r) => (
                   <tr key={r.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
+                      <input 
+                        type="checkbox" 
                         className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                        checked={bulk.has(r.id)}
-                        onChange={() => toggleBulk(r.id)}
+                        checked={bulk.has(r.id)} 
+                        onChange={() => toggleBulk(r.id)} 
                       />
                     </td>
                     <td className="px-6 py-4">
-                      {/* <div className="font-medium text-gray-900 text-sm">{r.id}</div> */}
+                      <div className="font-medium text-gray-900 text-sm">{r.id}</div>
                       <div className="text-xs text-gray-500 mt-0.5">{TEMPLATES[r.template]?.label || r.template}</div>
                     </td>
                     <td className="px-6 py-4">
@@ -278,12 +225,12 @@ export default function ReminderManagement() {
                       <div className="flex flex-wrap gap-1.5">
                         {r.channel.includes("whatsapp") && (
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
-                            <MessageCircle className="w-3 h-3" /> WhatsApp
+                            <MessageCircle className="w-3 h-3"/> WhatsApp
                           </span>
                         )}
                         {r.channel.includes("voice") && (
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
-                            <Phone className="w-3 h-3" /> Voice
+                            <Phone className="w-3 h-3"/> Voice
                           </span>
                         )}
                       </div>
@@ -291,7 +238,7 @@ export default function ReminderManagement() {
                     <td className="px-6 py-4 text-gray-900 font-semibold text-sm">{currency2(r.dueAmount)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-gray-700 text-sm">
-                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        <Calendar className="w-3.5 h-3.5 text-gray-400"/>
                         <span className="text-xs">{new Date(r.sendAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
                       </div>
                     </td>
@@ -302,10 +249,10 @@ export default function ReminderManagement() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-0.5">
-                        <IconBtn title="Send now"><Send className="w-4 h-4" /></IconBtn>
-                        <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-4 h-4" /></IconBtn>
-                        <IconBtn title="Duplicate"><Copy className="w-4 h-4" /></IconBtn>
-                        <IconBtn title="Delete" danger><Trash2 className="w-4 h-4" /></IconBtn>
+                        <IconBtn title="Send now"><Send className="w-4 h-4"/></IconBtn>
+                        <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-4 h-4"/></IconBtn>
+                        <IconBtn title="Duplicate"><Copy className="w-4 h-4"/></IconBtn>
+                        <IconBtn title="Delete" danger><Trash2 className="w-4 h-4"/></IconBtn>
                       </div>
                     </td>
                   </tr>
@@ -346,7 +293,7 @@ export default function ReminderManagement() {
         </div>
       </div>
 
-      {openNew && <ScheduleOrSendReminderModal open={openNew} onClose={() => setOpenNew(false)} onSubmit={handleSubmit} />}
+      {openNew && <NewReminderModal onClose={() => setOpenNew(false)} />}
       {drawer && <EditDrawer reminder={drawer} onClose={() => setDrawer(null)} />}
     </div>
   );

@@ -8,7 +8,7 @@ function ChatInput({ onSend }) {
   };
 
   return (
-    <div className=" p-3 flex gap-2">
+    <div className=" p-3 flex gap-2 bg-white rounded-b-xl">
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}

@@ -30,7 +30,7 @@ export const addDueToCustomer = async (customerId, data) => {
     return response.data;
 };
 
-export const addPaymentForCustomer = async (customerId, data) => {
+export const addPaymentForCustomer = async (customerId,data) => {
     const response = await api.post(`/v1/customers/${customerId}/add-payment`, data);
     return response.data;
 };

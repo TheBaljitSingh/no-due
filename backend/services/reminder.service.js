@@ -59,8 +59,8 @@ class ReminderService {
           whatsappTemplate: {
             name:
               reminderType === REMINDER_TYPES.DUE_TODAY
-                ? "payment_due_today"
-                : "payment_due_before",
+                ? "nodue_due_today_1"
+                : "nodue_before_due_1",
             language: "en",
           },
           templateVariables: [
@@ -111,7 +111,7 @@ class ReminderService {
 
     try {
       await whatsappService.sendTemplateMessage({
-        to: `91${transaction.customerId.mobile}`,
+        to: `${transaction.customerId.mobile}`,
         templateName,
         variables,
       });
@@ -197,6 +197,7 @@ class ReminderService {
   async processScheduledReminders() {
     const now = new Date();
 
+
     const reminders = await Reminder.find({
       status: "pending",
       scheduledFor: { $lte: now },
@@ -235,7 +236,7 @@ class ReminderService {
         };
 
         await whatsappService.sendTemplateMessage({
-          to: `91${tx.customerId.mobile}`,
+          to: `${tx.customerId.mobile}`,
           templateName: reminder.whatsappTemplate.name,
           variables: reminder.templateVariables,
         });

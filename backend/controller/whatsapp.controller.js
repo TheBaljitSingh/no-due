@@ -118,7 +118,6 @@ export const getAllConversations = async (req, res)=>{
   //will return ongoing conversations
   try {
     const conversations = await whatsappConversation.find({}).sort({createdAt:-1}).populate({path:"customerId", select: "name mobile gender"}).limit(50);
-    console.log(conversations);
 
     return new APIResponse(200, conversations, "fetched successfully", true).send(res);
 

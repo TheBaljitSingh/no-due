@@ -27,12 +27,8 @@ const startServer = async () => {
         const server = http.createServer(app);
         initSocket(server); //confirm await will work here or not?
 
-
-
-
-
-        // const { default: jobForRemainder } = await import("./utils/cronJob/job.js");
-        // // await jobForRemainder();
+        const { default: jobForRemainder } = await import("./utils/cronJob/job.js");
+        await jobForRemainder();
 
         app.get('/status', (req, res) => {
             res.send('API is running...');
@@ -68,12 +64,24 @@ const startServer = async () => {
             const entry = body.entry?.[0];
             const changes = entry?.changes?.[0];
             const value = changes?.value;
+            const statuses = changes?.value?.statuses;
 
             const {handleIncomingMessage} = await import("./utils/whatsappmessage.js");
 
             if (value?.messages) {
                 await handleIncomingMessage(value.messages[0]); // sending all the messages with context
             }
+
+            for(const status of statuses){
+                if(status.status==='failed' && status.errors[0]?.code===131047){
+                    console.log('failed due to the whatsapp')
+                    
+                    const { handleErrorMessage }  = await import('./utils/whatsappmessage.js');
+                    await handleErrorMessage(status);
+                }
+
+            }
+
             }
 
             res.status(200).end();

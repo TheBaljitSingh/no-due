@@ -9,6 +9,7 @@ import EmptyChatState from "./chat/EmplyChatState"
 import { io } from "socket.io-client";
 import {whatsappReply, getChatHistory} from "../../utils/service/whatsappService.js"
 import {useAuth} from ".././../context/AuthContext.jsx"
+import { toast } from "react-toastify";
 
 export default function WhatsappChats() {
   const socketRef = useRef(null); //one time
@@ -26,7 +27,7 @@ export default function WhatsappChats() {
         const data = await getAllconversations();
         console.log(data);
 
-        const customerList = data?.data || [];
+        const customerList = data?.data;
         console.log(customerList);
         setCustomers(customerList);
         
@@ -40,10 +41,6 @@ export default function WhatsappChats() {
   }, []);
 
 
-  useEffect(()=>{
-    console.log(customers);
-    
-  },[]);
 
 
   // Fetch chat history when customer changes
@@ -124,10 +121,6 @@ export default function WhatsappChats() {
   }
 
 
-
-
-
-
 function markAsRead(mobile){
   //._id
   //here customerId is mobile
@@ -138,8 +131,14 @@ function markAsRead(mobile){
   setCustomers(prev=> prev && prev.map(c=>c.mobile===mobile?{...c, unreadCount:0}:c));
 }
 
-  const handleOnCustomerSelect = (customer) => {
-    console.log("customer",customer)
+const handleOnCustomerSelect = (customer) => {
+  console.log("customer",customer)
+
+    //on customer change client should leave current customer room
+  if(currentCustomerRef.current){
+    socketRef.current.emit("leave_customer_chat", currentCustomerRef.current._id);
+  }
+
   if (currentCustomerRef.current && customer._id === currentCustomerRef.current._id && chatUI==='open') return;
   currentCustomerRef.current = customer;
   console.log(currentCustomerRef.current)
@@ -193,6 +192,11 @@ function markAsRead(mobile){
       })
     );
 });
+
+  socket.on("message_failed", data=>{
+    console.log("message failed comming");
+    toast.error(data?.message);
+  })
 
 
     

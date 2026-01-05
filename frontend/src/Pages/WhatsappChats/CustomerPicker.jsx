@@ -20,31 +20,32 @@ function CustomerPicker({ items = [], onSelect, selected }) {
   const [searchText, setSearchText] = useState("");
 
 
-
   const filteredCustomer = useMemo(() => {
     if (!searchText) return items;
     return items.filter(it =>
-      it.name.toLowerCase().includes(searchText.toLowerCase())
+      it?.customerId?.name.toLowerCase().includes(searchText.toLowerCase())
     );
   }, [items, searchText]);
+
+
 
   return (
     <div className="w-72 h-full flex flex-col overflow-scroll">
 
      <div className="sticky top-0 z-10 p-2">
-  <div className="relative flex items-center">
-    <Search className="absolute left-3 text-gray-400 w-4 h-4" />
+    <div className="relative flex items-center">
+      <Search className="absolute left-3 text-gray-400 w-4 h-4" />
 
-    <input
-      type="text"
-      value={searchText}
-      placeholder="Search customers..."
-      className="w-full rounded-lg pl-10 pr-4 py-2.5 text-sm shadow-sm
-        focus:outline-none focus:ring-2 focus:ring-gray-300"
-      onChange={(e) => setSearchText(e.target.value)}
-    />
+      <input
+        type="text"
+        value={searchText}
+        placeholder="Search customers..."
+        className="w-full rounded-lg pl-10 pr-4 py-2.5 text-sm shadow-sm
+          focus:outline-none focus:ring-2 focus:ring-gray-300"
+        onChange={(e) => setSearchText(e.target.value)}
+      />
+    </div>
   </div>
-</div>
 
 
       <div className="flex-1 overflow-y-auto">
@@ -66,7 +67,7 @@ function CustomerPicker({ items = [], onSelect, selected }) {
               <img
                 className="h-10 w-10 rounded-full shrink-0"
                 src={
-                  it.customerId.gender === "male"
+                  it?.customerId?.gender === "male"
                     ? "https://img.freepik.com/free-vector/smiling-man-with-glasses_1308-174409.jpg"
                     : "https://img.freepik.com/free-vector/smiling-woman-with-long-brown-hair_1308-175662.jpg"
                 }
@@ -76,7 +77,7 @@ function CustomerPicker({ items = [], onSelect, selected }) {
               {/* Name + Preview */}
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium truncate">{it.customerId.name}</span>
+                  <span className="font-medium truncate">{it?.customerId?.name || it?.mobile} </span>
 
                   <span className="text-xs text-gray-400">
                     {formatAMPM(new Date(it.lastMessageAt || Date.now()))}

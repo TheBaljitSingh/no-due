@@ -12,13 +12,13 @@ export default function ChatHeader({
       <div className="flex items-center gap-3">
         <img
           src={
-            customer.customerId.gender === "male"
+            customer?.customerId?.gender === "male"
               ? "https://img.freepik.com/free-vector/smiling-man-with-glasses_1308-174409.jpg"
               : "https://img.freepik.com/free-vector/smiling-woman-with-long-brown-hair_1308-175662.jpg"
           }
           className="h-8 w-8 rounded-full"
         />
-        <span className="font-medium truncate">{customer.customerId.name}</span>
+        <span className="font-medium truncate">{customer?.customerId?.name}</span>
       </div>
 
       <div className="flex items-center gap-2">

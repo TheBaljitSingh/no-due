@@ -7,6 +7,7 @@ import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/remainder.model.js";
 import {formatDate} from "../utils/Helper.js"
 import PaymentTerm from "../model/PaymentTerm.model.js";
+import mongoose from "mongoose";
 
 
 
@@ -151,3 +152,63 @@ export const scheduleWhatsappRemainder = async (req, res) => {
     return new APIError(500, [error.message], "Failed to schedule reminder").send(res);
   }
 }
+
+export const getCustomerReminderHistory = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    if (!customerId) {
+      return new APIResponse(400, [], "customerId is required").send(res);
+    }
+
+    const customerObjectId = new mongoose.Types.ObjectId(customerId);
+
+    const data = await Reminder.aggregate([
+      {
+        $match: { customerId: customerObjectId }
+      },
+
+      {
+        $facet: {
+          summary: [
+            {
+              $group: {
+                _id:null,
+                totalReminders: { $sum: 1 },
+                totalPending:{
+                  $sum: {$cond: [{$eq: ["$status", "pending"]}, 1, 0]}
+                },
+                totalSent: {
+                  $sum: { $cond: [{ $eq: ["$status", "sent"] }, 1, 0] }
+                },
+                totalFailed: {
+                  $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] }
+                }
+              }
+            }
+          ],
+
+          history: [
+            {
+              $project: {
+                _id: 1,
+                channel: 1,
+                status: 1,
+                templateName: 1,
+                sentAt: 1,
+                createdAt: 1
+              }
+            },
+            { $sort: { createdAt: -1 } }
+          ]
+        }
+      }
+    ]);
+
+    return new APIResponse(200, data[0], "Customer reminder history fetched", true).send(res);
+
+  } catch (error) {
+    console.error(error);
+    return new APIResponse(500, [], "Internal server error").send(res);
+  }
+};

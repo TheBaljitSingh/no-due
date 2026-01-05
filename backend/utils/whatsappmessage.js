@@ -29,7 +29,7 @@ export async function handleIncomingMessage(msg) {
         lastMessageAt: messageTime
       },
       $inc: {
-        unreadCount: 1
+        unreadCount:1
       }
     },
     { upsert: true }
@@ -70,5 +70,13 @@ export async function handleIncomingMessage(msg) {
       });
     }
   }
+}
+
+export async function handleErrorMessage(status){
+      const to = status.recipient_id;
+      io.to(`customer:${to}`).emit("message_failed",{
+        type: "WINDOW_EXPIRED",
+        message:  "24-hour window expired. Please use an approved template to continue the conversation."
+      });
 }
 

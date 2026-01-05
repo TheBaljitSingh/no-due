@@ -19,12 +19,12 @@ const customerSchema = new Schema({
         trim: true,
         validate: {
             validator: function (v) {
-                return /^(\+\d{1,3}[- ]?)?\d{10}$/.test(v); // +91-9876543210 or 9876543210
+                return /^91\d{10}$/.test(v); // only this format 918709548015
             },
             message: "Please enter a valid mobile number!!"
         },
-        maxlength: 15,
-        minlength: 10
+        maxlength: 12,
+        minlength: 12
     },
     email: {
         type: String,

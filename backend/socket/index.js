@@ -32,7 +32,6 @@ export function initSocket(server){
         })
     });
 
-
     return io;
 
 }

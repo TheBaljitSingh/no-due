@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, Copy, AlertCircle, Filter } from "lucide-react";
 import { MOCK_REMINDERS, TEMPLATES } from "../../utils/constants";
 import { currency2, IconBtn, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
 import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/EditDrawer";
-import { getAllRemainders, scheduleReminder, sendReminderNow } from "../../utils/service/remainderService.js"
+import { deleteReminder, getAllRemainders, scheduleReminder, sendReminderNow } from "../../utils/service/remainderService.js"
 import ScheduleOrSendReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/ScheduleOrSendReminderModal.jsx";
 import { toast } from "react-toastify";
 
@@ -16,28 +16,36 @@ export default function ReminderManagement() {
   const [openNew, setOpenNew] = useState(false);
   const [drawer, setDrawer] = useState(null);
   const [data, setData] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1
+  });
+  const fetchReminders = useCallback(async () => {
+    try {
+      const filters = {
+        page: pagination.page,
+        limit: pagination.limit
+      };
 
-
-
-
-  useEffect(() => {
-
-    async function fetchData() {
-      try {
-        const res = await getAllRemainders();
-        setData(res.data.data || []);
-        console.log(res.data.data);
-
-      } catch (error) {
-        console.log(error);
-        console.log("error while loading remainder data");
+      if (tab !== 'all') {
+        filters.status = tab;
       }
 
+      const res = await getAllRemainders(filters);
+      setData(res.data.data.data || []);
+      setPagination(prev => ({ ...prev, ...res.data.data.meta }));
+
+    } catch (error) {
+      console.log(error);
+      console.log("error while loading remainder data");
     }
+  }, [pagination.page, pagination.limit, tab]);
 
-    fetchData();
-
-  }, []);
+  useEffect(() => {
+    fetchReminders();
+  }, [fetchReminders]);
 
   const normalizeData = useMemo(() => {
     return data.map((r) => ({
@@ -64,18 +72,15 @@ export default function ReminderManagement() {
 
   const filtered = useMemo(() => {
     return normalizeData.filter((r) => {
-      if (tab === "pending" && r.status !== "scheduled") return false;
-      if (tab === "sent" && r.status !== "sent") return false;
-      if (tab === "failed" && r.status !== "failed") return false;
+      
       const s = q.trim().toLowerCase();
       if (!s) return true;
       return (
         r.id.toLowerCase().includes(s) ||
         r.customer.name.toLowerCase().includes(s)
-        // r.customer.company.toLowerCase().includes(s)
       );
     });
-  }, [normalizeData, tab, q]);
+  }, [normalizeData, q]);
 
   const toggleBulk = (id) => {
     setBulk((prev) => {
@@ -93,49 +98,89 @@ export default function ReminderManagement() {
 
   }), []);
 
-  const handleSubmit = async(data)=>{
-    console.log("submitted",data);
-    const {userId, templateName, mode, scheduleDate, transactionId, variables } = data;
+  const handleSubmit = async (data) => {
+    console.log("submitted", data);
+    const { userId, templateName, mode, scheduleDate, transactionId, variables } = data;
 
-    if(mode==='schedule'){
+    if (mode === 'schedule') {
       //call to schedule api
       const apiData = {};
       apiData.transactionId = transactionId;
-      apiData.scheduledFor= scheduleDate;
+      apiData.scheduledFor = scheduleDate;
       apiData.templateName = templateName;
       apiData.variables = variables;
 
-      try {  
+      try {
         const response = await scheduleReminder(apiData);
         toast.success("remainder scheduled ");
         setOpenNew(false);
 
       } catch (error) {
         console.log(error);
-        toast.error(error.response.data.errors[0] || error.message ||"error while scheduling");
-        
+        toast.error(error.response.data.errors[0] || error.message || "error while scheduling");
+
       }
-      
-    }else{
+
+    } else {
       //send now
       const apiData = {};
       apiData.transactionId = transactionId;
       apiData.templateName = templateName;
       apiData.variables = variables
       try {
-        const response =  await sendReminderNow(apiData);
+        const response = await sendReminderNow(apiData);
         console.log(response);
         toast.success("remainder sent!");
         setOpenNew(false);
-        
+
       } catch (error) {
         console.log(error);
-        toast.error(error.response.data.errors[0] || error.message ||"error while sending");
-      }    
+        toast.error(error.response.data.errors[0] || error.message || "error while sending");
+      }
     }
 
-}
+  }
 
+  const handleDeleteReminder = async (rem) => {
+    console.log("clicking the delete", rem)
+    try {
+      if (!rem?.id) {
+        toast.error("Invalid reminder");
+        return;
+      }
+
+      const res = await deleteReminder(rem.id);
+
+      console.log(res);
+
+      if (res?.success) {
+        toast.success("Reminder deleted successfully");
+
+        // OPTIONAL: update UI immediately
+        setData(prev =>
+          prev.filter(r => r._id !== rem.id)
+        );
+      } else {
+        toast.error(res?.message || "Failed to delete reminder");
+      }
+    } catch (error) {
+      console.error("Delete reminder error:", error);
+
+      toast.error(
+        error?.response?.data?.message || "Something went wrong"
+      );
+    }
+  };
+
+  const handleDrawerDeleteSuccess = (id) => {
+    setData(prev => prev.filter(r => r._id !== id));
+    setDrawer(null);
+  };
+
+  const handleDrawerRescheduleSuccess = () => {
+    fetchReminders(); //instade of fetcing can i insert normally data here as i have to clicnet side, will work later
+    setDrawer(null);
+  };
 
 
   return (
@@ -223,7 +268,17 @@ export default function ReminderManagement() {
                   <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
                     <Pause className="w-3.5 h-3.5" /> Pause
                   </button>
-                  <button className="inline-flex items-center gap-1.5 bg-white border border-red-300 px-3 py-1.5 rounded-lg hover:bg-red-50 text-sm font-medium text-red-600">
+                  <button
+                    onClick={async () => {
+                      const confirm = window.confirm(`Delete ${bulk.size} reminders?`);
+                      if (!confirm) return;
+                      for (let id of bulk) {
+                        await deleteReminder(id);
+                      }
+                      setBulk(new Set());
+                      window.location.reload();
+                    }}
+                    className="inline-flex items-center gap-1.5 bg-white border border-red-300 px-3 py-1.5 rounded-lg hover:bg-red-50 text-sm font-medium text-red-600">
                     <Trash2 className="w-3.5 h-3.5" /> Delete
                   </button>
                 </div>
@@ -302,10 +357,8 @@ export default function ReminderManagement() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-0.5">
-                        <IconBtn title="Send now"><Send className="w-4 h-4" /></IconBtn>
                         <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-4 h-4" /></IconBtn>
-                        <IconBtn title="Duplicate"><Copy className="w-4 h-4" /></IconBtn>
-                        <IconBtn title="Delete" danger><Trash2 className="w-4 h-4" /></IconBtn>
+                        <IconBtn title="Delete" danger onClick={() => handleDeleteReminder(r)} ><Trash2 className="w-4 h-4" /></IconBtn>
                       </div>
                     </td>
                   </tr>
@@ -331,13 +384,19 @@ export default function ReminderManagement() {
           {filtered.length > 0 && (
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing <span className="font-medium">{filtered.length}</span> of <span className="font-medium">{data.length}</span> reminders
+                Showing <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="font-medium">{pagination.total}</span> reminders
               </div>
               <div className="flex gap-2">
-                <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <button
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                  disabled={pagination.page === 1}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                   Previous
                 </button>
-                <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <button
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                  disabled={pagination.page >= pagination.totalPages}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                   Next
                 </button>
               </div>
@@ -347,7 +406,7 @@ export default function ReminderManagement() {
       </div>
 
       {openNew && <ScheduleOrSendReminderModal open={openNew} onClose={() => setOpenNew(false)} onSubmit={handleSubmit} />}
-      {drawer && <EditDrawer reminder={drawer} onClose={() => setDrawer(null)} />}
+      {drawer && <EditDrawer reminder={drawer} onClose={() => setDrawer(null)} onDeleteSuccess={handleDrawerDeleteSuccess} onRescheduleSuccess={handleDrawerRescheduleSuccess} />}
     </div>
   );
 }

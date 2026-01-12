@@ -1,5 +1,5 @@
-import { Schema, Types } from "mongoose";
-import { connection } from "../database/databaseConfig.js";
+import mongoose, { Schema, Types } from "mongoose";
+// import { connection } from "../database/databaseConfig.js";
 
 const customerSchema = new Schema({
     name: {
@@ -82,7 +82,6 @@ const customerSchema = new Schema({
 
 
 
-const Customer = connection.model('Customer', customerSchema);
-
+const Customer = mongoose.model('Customer', customerSchema);
 
 export default Customer;

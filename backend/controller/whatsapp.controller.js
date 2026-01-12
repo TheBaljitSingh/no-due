@@ -53,7 +53,7 @@ export const sendReply = async (req, res) => {
       timeout: 5000,
     });
 
-    console.log("meta respnse", response);
+    // console.log("meta respnse", response);
 
     if(response.status===200){
       

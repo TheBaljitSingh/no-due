@@ -1,5 +1,5 @@
-import { Schema, Types } from "mongoose";
-import { connection } from "../database/databaseConfig.js";
+import mongoose, { Schema, Types } from "mongoose";
+
 
 const paymentTermSchema = new Schema(
   {
@@ -73,6 +73,6 @@ paymentTermSchema.pre("save", function () {
   this.reminderOffsets.sort((a, b) => b - a);
 });
 
-const PaymentTerm = connection.model("PaymentTerm", paymentTermSchema);
+const PaymentTerm = mongoose.model("PaymentTerm", paymentTermSchema);
 
 export default PaymentTerm;

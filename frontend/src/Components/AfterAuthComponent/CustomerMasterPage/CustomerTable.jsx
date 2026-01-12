@@ -148,8 +148,10 @@ const CustomerTable = () => {
   const handleCloseTransaction = () => {
     //assuing it will only called when comming from transaction view modal
 
+    console.log("printing the customer txn: ", transactions[0]);
     //update the totalDUE in UI
-    setCustomers(prev => prev.map(c => c._id === currentCustomer._id ? { ...c, "currentDue": transactions[0]?.newDue } : c));
+    // if(transaction type is due added then add in current due, else it is payment then show the as it is )
+    setCustomers(prev => prev.map(c => c._id === currentCustomer._id ? { ...c, "currentDue": transactions[0]?.remainingDue} : c));
     setShowTransactionModal(false);
   }
 

@@ -6,7 +6,7 @@ import Transaction from "../model/transaction.model.js"
 export const createCustomer = async (req, res) => {
   try {
     const customerData = req.body;
-    console.log(req.body.customerData);
+    // console.log(req.body.customerData);
 
     if (!customerData) {
       return new APIResponse(400, null, "Data is required").send(res);
@@ -19,7 +19,7 @@ export const createCustomer = async (req, res) => {
         CustomerOfComapny: req.user._id
       }));
 
-      console.log("Formatted Data:", formattedData);
+      // console.log("Formatted Data:", formattedData);
 
       const inserted = await Customer.insertMany(formattedData ); // if any error it roll back, use boolean if required
 
@@ -31,6 +31,7 @@ export const createCustomer = async (req, res) => {
     }
 
     customerData.CustomerOfComapny =  req.user._id;
+    customerData.mobile=`91${customerData.mobile}`; // code here with respect to db for now
 
     //creating customer if due then i have to create  with the traansaction
     const newCustomer = new Customer(customerData);

@@ -65,11 +65,19 @@ const CustomerCreationPage = ({ paymentTerms }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if(name==='mobile'){
+      let mobile = value.replace('/\D/g', "").slice(0,10); // only allowing 10 digit number
+      
+      setFormData((prev)=>({...prev, [name]:mobile}));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]:value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("formData",formData);
 
     try {
       setLoading(true);
@@ -133,7 +141,30 @@ const CustomerCreationPage = ({ paymentTerms }) => {
                       </option>
                     ))}
                   </select>
-                ) : (
+                ): field.name==='mobile'?(
+                  <div className="flex">
+                     <span
+                      className=" border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent "
+                    >
+                      +91
+                    </span>
+                      <input
+                        type="tel"
+                        name="mobile"
+                        value={formData.mobile}
+                        onChange={handleChange}
+                        placeholder={field.placeholder}
+                        inputMode="numeric"
+                        className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+                      />
+
+                  </div>
+                ): (
                   <input
                     type={field.type}
                     name={field.name}

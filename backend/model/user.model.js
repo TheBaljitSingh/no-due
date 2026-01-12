@@ -1,7 +1,7 @@
-import { Schema, Types } from 'mongoose';
 import validator from 'validator';
-import { connection } from '../database/databaseConfig.js';
 import bcrypt from 'bcryptjs';
+import mongoose, { Schema, Types } from "mongoose";
+
 
 const addressSchema = new Schema({
     street: {
@@ -188,6 +188,6 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = connection.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
 
 export default User;

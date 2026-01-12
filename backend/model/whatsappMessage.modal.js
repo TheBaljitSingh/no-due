@@ -1,5 +1,5 @@
-import { Schema } from "mongoose";
-import { connection } from "../database/databaseConfig.js";
+import mongoose, { Schema, Types } from "mongoose";
+
 
 
 const whatsappMessageSchema = new Schema({
@@ -74,6 +74,6 @@ const whatsappMessageSchema = new Schema({
   { timestamps: true }
 );
 
-const whatsappMessage =  connection.model("WhatsappMessage", whatsappMessageSchema);
+const whatsappMessage =  mongoose.model("WhatsappMessage", whatsappMessageSchema);
 
 export default whatsappMessage;

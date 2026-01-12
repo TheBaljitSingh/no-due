@@ -123,11 +123,12 @@ export const SidebarFeatures = [
       name:"Payment Term",
       icon:"ClipboardClock",
       path:"payment-reminder"
-    },{
-      name:"whatsapp chats",
-      icon:"FaWhatsapp",
-      path:"whatsapp-chat"
-    }
+    },
+    // {
+    //   name:"whatsapp chats",
+    //   icon:"FaWhatsapp",
+    //   path:"whatsapp-chat"
+    // }
    
   ]
 

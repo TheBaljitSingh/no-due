@@ -1,5 +1,4 @@
-import { Schema } from "mongoose";
-import { connection } from "../database/databaseConfig.js";
+import mongoose, { Schema, Types } from "mongoose";
 
 const TransactionSchema = new Schema(
   {
@@ -84,7 +83,7 @@ TransactionSchema.virtual("remainingDue").get(function () {
 
 
 
-const Transaction = connection.model("Transaction", TransactionSchema);
+const Transaction = mongoose.model("Transaction", TransactionSchema);
 
 export default Transaction;
 

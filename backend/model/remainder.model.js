@@ -1,5 +1,4 @@
-import { Schema } from "mongoose";
-import { connection } from "../database/databaseConfig.js";
+import mongoose, { Schema, Types } from "mongoose";
 
 const reminderSchema = new Schema(
   {
@@ -80,5 +79,5 @@ reminderSchema.index(
 );
 
 
-const Reminder = connection.model("Reminder", reminderSchema);
+const Reminder = mongoose.model("Reminder", reminderSchema);
 export default Reminder;

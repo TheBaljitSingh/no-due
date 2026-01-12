@@ -5,39 +5,44 @@ import whatsappService from "../services/whatsapp.service.js";
 import remainderService from "../services/reminder.service.js";
 import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/remainder.model.js";
-import {formatDate} from "../utils/Helper.js"
+import { formatDate } from "../utils/Helper.js"
 import PaymentTerm from "../model/PaymentTerm.model.js";
 import mongoose from "mongoose";
 
 
 
-const TEMPLATE_MAP = {due_before:"nodue_remainder_1"};
+const TEMPLATE_MAP = { due_before: "nodue_remainder_1" };
 
 
-function getReminderType(dueDate, scheduleFor){
+function getReminderType(dueDate, scheduleFor) {
   return 'due_before';
 }
 
 export const getAllRemainders = async (req, res) => {
   try {
 
-    const { status } = req.query;
+    const { status, page = 1, limit = 10 } = req.query;
 
     const filters = {};
     if (status) {
       filters.status = status.toLowerCase();
     }
 
-    console.log(filters);
+    const skip = (page - 1) * limit;
+
     const reminders = await Reminder.find(filters)
       .populate("customerId", "name mobile currentDue")
       .populate({
         path: 'transactionId',
         select: 'amount dueDate'
       })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(Number(skip))
+      .limit(Number(limit));
 
-    return new APIResponse(200, reminders, "All reminders fetched successfully").send(res);
+    const total = await Reminder.countDocuments(filters);
+
+    return new APIResponse(200, { data: reminders, meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / limit) } }, "All reminders fetched successfully").send(res);
   } catch (error) {
     return new APIError(500, [error.message], "Failed to fetch reminders").send(res);
   }
@@ -70,12 +75,12 @@ export const sendWhatsappRemainder = async (req, res) => {
       ).send(res);
     }
 
- 
+
     const tx = await Transaction
       .findById(transactionId)
       .populate({
         path: "customerId",
-        populate: { path: "paymentTerm" } 
+        populate: { path: "paymentTerm" }
       });
 
     if (!tx) {
@@ -134,7 +139,7 @@ export const sendWhatsappRemainder = async (req, res) => {
 export const scheduleWhatsappRemainder = async (req, res) => {
   try {
     //make sure scheduleFor data is valid
-    const { transactionId, scheduledFor} = req.body;
+    const { transactionId, scheduledFor } = req.body;
 
     if (!transactionId || !scheduledFor) {
       return new APIError(400, ["transactionId and scheduledFor are required"], "Validation Error").send(res);
@@ -173,10 +178,10 @@ export const getCustomerReminderHistory = async (req, res) => {
           summary: [
             {
               $group: {
-                _id:null,
+                _id: null,
                 totalReminders: { $sum: 1 },
-                totalPending:{
-                  $sum: {$cond: [{$eq: ["$status", "pending"]}, 1, 0]}
+                totalPending: {
+                  $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] }
                 },
                 totalSent: {
                   $sum: { $cond: [{ $eq: ["$status", "sent"] }, 1, 0] }
@@ -210,5 +215,50 @@ export const getCustomerReminderHistory = async (req, res) => {
   } catch (error) {
     console.error(error);
     return new APIResponse(500, [], "Internal server error").send(res);
+  }
+};
+
+export const deleteReminder = async (req, res) => {
+  try {
+    const { remainderId } = req.params;
+
+    if (!remainderId) {
+      return new APIResponse(400, null, "Reminder ID is required", false).send(res);
+    }
+
+    const result = await Reminder.deleteOne({ _id: remainderId });
+
+    if (result.deletedCount === 0) {
+      return new APIResponse(404, null, "Reminder not found", false).send(res);
+    }
+
+    return new APIResponse(200, result, "Reminder deleted successfully", true).send(res);
+
+  } catch (error) {
+    console.error("Delete Reminder Error:", error);
+
+    return new APIError(500, null, "Internal server error", false).send(res);
+  }
+};
+
+export const rescheduleReminder = async (req, res) => {
+  try {
+    const { remainderId } = req.params;
+    const { scheduledFor } = req.body;
+
+    if (!remainderId || !scheduledFor) {
+      return new APIResponse(400, null, "Reminder ID and next date are required", false).send(res);
+    }
+
+    const result = await remainderService.rescheduleReminder({
+      reminderId: remainderId,
+      scheduledFor
+    });
+
+    return new APIResponse(200, result, "Reminder rescheduled successfully", true).send(res);
+
+  } catch (error) {
+    console.error("Reschedule Reminder Error:", error);
+    return new APIError(500, null, error.message || "Internal server error", false).send(res);
   }
 };

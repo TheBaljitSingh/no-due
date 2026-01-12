@@ -4,6 +4,7 @@ import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import Reminder from "../model/remainder.model.js";
 import reminderService from "../services/reminder.service.js";
+import mongoose from "mongoose";
 
 async function recalculateDue(dueTransactionId) {
   const payments = await Transaction.find({
@@ -86,7 +87,12 @@ export async function addDue(req, res) {
     customer.status = customer.status === "Overdue" ? "Overdue" : "Due";
   await customer.save();
 
-    return new APIResponse(201, { transaction: tx[0] }).send(res);
+
+
+  const remainingDue = customer.currentDue; // to show in client side UI
+
+    return new APIResponse(201,{ transaction: {  ...tx[0].toObject(), remainingDue  } }).send(res);
+
   } catch (err) {
     console.error("Error in addDue:", err);
     return new APIError(500, "Internal Server Error").send(res);
@@ -95,6 +101,7 @@ export async function addDue(req, res) {
 
 
 export async function makePayment(req, res) {
+  //i have to also update the reminder money?
   const { dueTransactionId } = req.body;
   let { amount, note } = req.body;
   try {
@@ -128,10 +135,23 @@ export async function makePayment(req, res) {
       metadata: { note, operatorId: req.user?.id }
     }], { });
 
+    if(paymentTx){
+      //if new payment is created then update the reminder accordingly with amount
+      await Reminder.updateOne(
+        {"transactionId": new mongoose.Types.ObjectId(dueTransactionId)},
+        {
+        $set:{
+          "templateVariables.1":paymentTx.amount,
+          transactionId: new mongoose.Types.ObjectId(paymentTx._id)
+        }
+      });
+
+    }
+
     // THEN recalculate
     const updatedDue = await recalculateDue(dueTx._id);
     
-  await Customer.findByIdAndUpdate(
+  const cus = await Customer.findByIdAndUpdate(
       dueTx.customerId,
       {
         $inc: { currentDue: -amount },
@@ -144,8 +164,8 @@ export async function makePayment(req, res) {
       payment: paymentTx[0],
       due: {
         ...updatedDue.toObject(),
-        // remainingDue: updatedDue.amount - updatedDue.paidAmount
-      }
+        //remaining due is alreadly there is updatedDue
+      },
     }).send(res);
 
   } catch (err) {

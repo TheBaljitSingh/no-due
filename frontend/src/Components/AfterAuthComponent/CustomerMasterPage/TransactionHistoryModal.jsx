@@ -14,6 +14,9 @@ export default function TransactionHistoryModal({
 }) {
   if (!customer) return null;
 
+  console.log("customer",customer,"\n");
+  console.log("transaction",transactions,"\n");
+  
   const [activeTab, setActiveTab] = useState("VIEW");
   const [form, setForm] = useState({ amount: "", note: "", lastDuePaymentDate: "" });
   const [selectedDue, setSelectedDue] = useState(null); // selected due for PAY tab
@@ -39,7 +42,9 @@ export default function TransactionHistoryModal({
         amount: Number(form.amount),
         note: form.note,
       });
+      console.log("data afte adding due", data);
       setTransactions((prev) => [data.data.transaction, ...prev]);
+      //i have to add remaining due after accumulating all dues amoung
       setCurrentCustomer((c) => ({ ...c, currentDue: c.currentDue + Number(form.amount) }));
       setForm({ amount: "", note: "", lastDuePaymentDate: "" });
       setActiveTab("VIEW");
@@ -64,7 +69,7 @@ export default function TransactionHistoryModal({
           d._id === selectedDue._id
             ? {
               ...d,
-              remainingDue: data.data.due.remainingDue,
+              remainingDue: data.data.due.remainingDue, // this is total remainingDue
               payments: [
                 data.data?.payment || data.payment,
                 ...(Array.isArray(d.payments) ? d.payments : [])

@@ -15,73 +15,73 @@ class ReminderService {
   /* CREATE REMINDER FOR DUE*/
 
   async createForDue({ transactionId }) {
-  try {
-    const transaction = await Transaction
-      .findById(transactionId)
-      .populate("customerId")
+    try {
+      const transaction = await Transaction
+        .findById(transactionId)
+        .populate("customerId")
 
-    if (!transaction) throw new Error("Transaction not found");
-    if (transaction.type !== "DUE_ADDED") {
-      throw new Error("Reminders only allowed for DUE_ADDED");
-    }
-    if (transaction.paymentStatus === "PAID") return;
+      if (!transaction) throw new Error("Transaction not found");
+      if (transaction.type !== "DUE_ADDED") {
+        throw new Error("Reminders only allowed for DUE_ADDED");
+      }
+      if (transaction.paymentStatus === "PAID") return;
 
-    const customer = await Customer
-      .findById(transaction.customerId._id)
-      .populate("paymentTerm");
+      const customer = await Customer
+        .findById(transaction.customerId._id)
+        .populate("paymentTerm");
 
-    if (!customer?.paymentTerm) return;
+      if (!customer?.paymentTerm) return;
 
-    for (const offset of customer.paymentTerm.reminderOffsets) {
-      const scheduledFor = new Date(transaction.dueDate);
-      scheduledFor.setDate(scheduledFor.getDate() - offset);
-      scheduledFor.setHours(9, 0, 0, 0);
+      for (const offset of customer.paymentTerm.reminderOffsets) {
+        const scheduledFor = new Date(transaction.dueDate);
+        scheduledFor.setDate(scheduledFor.getDate() - offset);
+        scheduledFor.setHours(9, 0, 0, 0);
 
-      if (scheduledFor < new Date()) continue;
+        if (scheduledFor < new Date()) continue;
 
-      const reminderType =
-        offset === 0
-          ? REMINDER_TYPES.DUE_TODAY
-          : REMINDER_TYPES.BEFORE_DUE;
+        const reminderType =
+          offset === 0
+            ? REMINDER_TYPES.DUE_TODAY
+            : REMINDER_TYPES.BEFORE_DUE;
 
-      const exists = await Reminder.findOne({
-        transactionId: transaction._id,
-        reminderType,
-        scheduledFor,
-      })
-
-      if (exists) continue;
-
-      await Reminder.create(
-        [{
-          customerId: customer._id,
+        const exists = await Reminder.findOne({
           transactionId: transaction._id,
           reminderType,
-          whatsappTemplate: {
-            name:
-              reminderType === REMINDER_TYPES.DUE_TODAY
-                ? "nodue_due_today_1"
-                : "nodue_before_due_1",
-            language: "en",
-          },
-          templateVariables: [
-            customer.name,
-            transaction.amount.toString(),
-            transaction.dueDate.toDateString(),
-          ],
           scheduledFor,
-          status: "pending",
-          source: "auto",
-        }],
-      
-      );
+        })
+
+        if (exists) continue;
+
+        await Reminder.create(
+          [{
+            customerId: customer._id,
+            transactionId: transaction._id,
+            reminderType,
+            whatsappTemplate: {
+              name:
+                reminderType === REMINDER_TYPES.DUE_TODAY
+                  ? "nodue_due_today_1"
+                  : "nodue_before_due_1",
+              language: "en",
+            },
+            templateVariables: [
+              customer.name,
+              transaction.amount.toString(),
+              transaction.dueDate.toDateString(),
+            ],
+            scheduledFor,
+            status: "pending",
+            source: "auto",
+          }],
+
+        );
+      }
+
+
+    } catch (err) {
+      throw err; // let controller handle response
     }
-
-
-  } catch (err) {
-    throw err; // let controller handle response
   }
-}
 
 
   /*MANUAL SEND NOW REMINDER*/
@@ -185,7 +185,7 @@ class ReminderService {
       templateVariables: [
         transaction.customerId.name,
         transaction.customerId.currentDue.toString(),
-       reminderType==='due_today'?'': transaction.dueDate.toDateString(),
+        reminderType === 'due_today' ? '' : transaction.dueDate.toDateString(),
       ],
       scheduledFor: new Date(scheduledFor),
       status: "pending",
@@ -207,7 +207,7 @@ class ReminderService {
       populate: { path: "customerId" },
     });
 
-    
+
 
     for (const reminder of reminders) {
       // console.log(reminder);
@@ -302,6 +302,36 @@ class ReminderService {
       });
     }
   }
+  /* RESCHEDULE REMINDER */
+ async rescheduleReminder({ reminderId, scheduledFor }) {
+  const reminder = await Reminder.findById(reminderId);
+
+  if (!reminder) {
+    throw new Error("Reminder not found");
+  }
+
+  if (reminder.status !== "pending") {
+    throw new Error("Only pending reminders can be rescheduled");
+  }
+
+  // Optional: prevent duplicate reminders at same time
+  const exists = await Reminder.findOne({
+    _id: { $ne: reminderId },
+    transactionId: reminder.transactionId,
+    scheduledFor: new Date(scheduledFor),
+  });
+
+  if (exists) {
+    throw new Error("Another reminder is already scheduled for this time");
+  }
+
+  reminder.scheduledFor = new Date(scheduledFor);
+
+  await reminder.save();
+
+  return reminder;
+}
+
 }
 
 export default new ReminderService();

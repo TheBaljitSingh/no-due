@@ -1,156 +1,157 @@
 export const siteAnalysis = [
-    { name: "Faster Payment Recovery", data: "90%" },
-    { name: "Return on Investment",    data: "10X" },
-    { name: "Happy Customers",         data: "500+" },
+  { name: "Faster Payment Recovery", data: "90%" },
+  { name: "Return on Investment", data: "10X" },
+  { name: "Happy Customers", data: "500+" },
 ];
 
 export const PricingModel = [
-    {
-        name: 'Free',
-        pricing: 0,
-        description: 'Get an experience on what we have to offer',
-        features: ["Up to 5 WhatsApp messages",  "Basic analytics" , "introduction"],
-        current: true
+  {
+    name: 'Free',
+    pricing: 0,
+    description: 'Get an experience on what we have to offer',
+    features: ["Up to 5 WhatsApp messages", "Basic analytics", "introduction"],
+    current: true
 
-    },
-    {
-        name: 'Starter',
-        pricing: 499,
-        description: 'Perfect for small businesses and freelancers',
-        features: ["Up to 100 WhatsApp messages", "Basic voice call automation", "5 custom templates", "Email support", "Basic analytics"],
-        current: false
-    },
-    {
-        name: 'Growth',
-        pricing: 999,
-        description: 'Most popular for growing businesses',
-        features: ["Up to 500 WhatsApp messages", "Advanced voice automation", "Unlimited custom templates","Priority support", "Advanced analytics","API integrations","Custom branding"],
-        current: false
-    },
-    {
-        name: 'Business',
-        pricing: 1999,
-        description: 'For established businesses with high volume',
-        features: ["Up to 2,000 WhatsApp messages", "AI-powered voice calls", "Unlimited everything", "24/7 phone support", "Enterprise analytics", "CRM integrations", "White-label solution", "Dedicated account manager"],
-        current: false
-    },
-    {
-        name: 'Enterprise',
-        description: 'Tailored solutions for large organizations',
-        features: ["Unlimited messages", "Custom AI training", "Multi-language support", "On-premise deployment", "SLA guarantees", "Custom integrations", "Enterprise security", "Training & onboarding"],
-        current: false
-    }
+  },
+  {
+    name: 'Starter',
+    pricing: 499,
+    description: 'Perfect for small businesses and freelancers',
+    features: ["Up to 100 WhatsApp messages", "Basic voice call automation", "5 custom templates", "Email support", "Basic analytics"],
+    current: false
+  },
+  {
+    name: 'Growth',
+    pricing: 999,
+    description: 'Most popular for growing businesses',
+    features: ["Up to 500 WhatsApp messages", "Advanced voice automation", "Unlimited custom templates", "Priority support", "Advanced analytics", "API integrations", "Custom branding"],
+    current: false
+  },
+  {
+    name: 'Business',
+    pricing: 1999,
+    description: 'For established businesses with high volume',
+    features: ["Up to 2,000 WhatsApp messages", "AI-powered voice calls", "Unlimited everything", "24/7 phone support", "Enterprise analytics", "CRM integrations", "White-label solution", "Dedicated account manager"],
+    current: false
+  },
+  {
+    name: 'Enterprise',
+    description: 'Tailored solutions for large organizations',
+    features: ["Unlimited messages", "Custom AI training", "Multi-language support", "On-premise deployment", "SLA guarantees", "Custom integrations", "Enterprise security", "Training & onboarding"],
+    current: false
+  }
 ]
 
 export const getCurrentPlan = PricingModel.find(price => price.current === true)
 
 export const reasons = [
-    {
-        reason: 'Manual follow-ups take hours',
-        description: 'Your team spends countless hours chasing payments instead of growing your business'
-    },
-    {
-        reason: 'Customers ignore reminders',
-        description: 'Traditional emails and calls are easily overlooked or forgotten'
-    },
-    {
-        reason: 'Staff costs increase',
-        description: 'Hiring more people to handle payment follow-ups drains your resources'
-    },
-    {
-        reason: 'Cash flow suffers',
-        description: 'Late payments create cash flow issues that impact your business growth'
-    }
+  {
+    reason: 'Manual follow-ups take hours',
+    description: 'Your team spends countless hours chasing payments instead of growing your business'
+  },
+  {
+    reason: 'Customers ignore reminders',
+    description: 'Traditional emails and calls are easily overlooked or forgotten'
+  },
+  {
+    reason: 'Staff costs increase',
+    description: 'Hiring more people to handle payment follow-ups drains your resources'
+  },
+  {
+    reason: 'Cash flow suffers',
+    description: 'Late payments create cash flow issues that impact your business growth'
+  }
 ]
 
 export const features = [
-    {
-        feature: 'WhatsApp Reminders',
-        description: 'Automated, personalized WhatsApp messages that customers actually read and respond to'
-    },
-    {
-        feature: 'Voice Call Automation',
-        description: 'AI-powered voice calls that follow up politely and professionally on your behalf'
-    },
-    {
-        feature: 'Custom Templates',
-        description: 'Pre-built message templates that you can customize for your business tone and style'
-    },
-    {
-        feature: 'Dashboard & Reports',
-        description: 'Real-time analytics showing payment recovery rates, customer responses, and ROI'
-    }
+  {
+    feature: 'WhatsApp Reminders',
+    description: 'Automated, personalized WhatsApp messages that customers actually read and respond to'
+  },
+  {
+    feature: 'Voice Call Automation',
+    description: 'AI-powered voice calls that follow up politely and professionally on your behalf'
+  },
+  {
+    feature: 'Custom Templates',
+    description: 'Pre-built message templates that you can customize for your business tone and style'
+  },
+  {
+    feature: 'Dashboard & Reports',
+    description: 'Real-time analytics showing payment recovery rates, customer responses, and ROI'
+  }
 ]
 
 
 export const SidebarFeatures = [
-   
-    {
-        name : "Customer Master",
-        icon : "CustomerIcon",
-        // path: "customer-master"
-        children:[{
-          name:"All Customer",
-          icon:"CustomerIcon",
-          path:'customer-master'},
-          {
-            name:"Upload or Add Customer",
-            icon:"UploadIcon",
-            path:"upload-center"
-          },
-          {
-            name:"All Transactions",
-            icon:"TransactionIcon",
-            path:"transactions"
-          }
-        ]
+
+  {
+    name: "Customer Master",
+    icon: "CustomerIcon",
+    // path: "customer-master"
+    children: [{
+      name: "All Customer",
+      icon: "CustomerIcon",
+      path: 'customer-master'
     },
     {
-        name: "Reminder",
-        icon : "ReminderIcon", 
-        children:[{
-          name:"Reminder Management",
-          icon:'ReminderIcon',
-          path:"reminder-management"
-        },{
-          name:"Reminder History",
-          icon:"HistoryIcon",
-          path:"reminder-history"
-        }
-      ] 
+      name: "Upload or Add Customer",
+      icon: "UploadIcon",
+      path: "upload-center"
     },
     {
-      name:"Payment Term",
-      icon:"ClipboardClock",
-      path:"payment-reminder"
-    },
-    // {
-    //   name:"whatsapp chats",
-    //   icon:"FaWhatsapp",
-    //   path:"whatsapp-chat"
-    // }
-   
-  ]
+      name: "All Transactions",
+      icon: "TransactionIcon",
+      path: "transactions"
+    }
+    ]
+  },
+  {
+    name: "Reminder",
+    icon: "ReminderIcon",
+    children: [{
+      name: "Reminder Management",
+      icon: 'ReminderIcon',
+      path: "reminder-management"
+    }, {
+      name: "Reminder History",
+      icon: "HistoryIcon",
+      path: "reminder-history"
+    }
+    ]
+  },
+  {
+    name: "Payment Term",
+    icon: "ClipboardClock",
+    path: "payment-reminder"
+  },
+  // {
+  //   name:"whatsapp chats",
+  //   icon:"FaWhatsapp",
+  //   path:"whatsapp-chat"
+  // }
+
+]
 
 export const SideBarCTC = [
-    {
-        name: "Subscription & Billing",
-        icon : "SubscriptionIcon",
-        path: "subscriptions"
-    },
-    // {
-    //     name: "Documentation",
-    //     icon : "BookIcon",
-    //     path: "documentaion"
-    // },
-    {
-        name: "Help",
-        icon : "HelpIcon",
-        path: "help"
-    },
-  ]
+  {
+    name: "Subscription & Billing",
+    icon: "SubscriptionIcon",
+    path: "subscriptions"
+  },
+  // {
+  //     name: "Documentation",
+  //     icon : "BookIcon",
+  //     path: "documentaion"
+  // },
+  {
+    name: "Help",
+    icon: "HelpIcon",
+    path: "help"
+  },
+]
 
-export const TableHeaders = ["Customer Id", "Customer Name", "Email" ,  "Phone Number" , "Due", "LastReminder", "Status", "Actions"]
+export const TableHeaders = ["Customer Id", "Customer Name", "Phone Number", "Due", "LastReminder", "Status", "Last Reaction", "Actions"]
 
 export const seedCustomers = [
   {
@@ -217,7 +218,7 @@ export const seedCustomers = [
     feedback: "Call back tomorrow",
     status: "Overdue",
     gender: "female"
-  }, 
+  },
 ];
 
 export const MOCK_REMINDERS = [
@@ -288,45 +289,44 @@ export const TEMPLATES = {
 
 
 export const CustomerNames = seedCustomers.map(customer => ({
-    id: customer.id,
-    name: customer.name,
-    gender: customer.gender
-  }));
-  
-export const CustomerDetailsMap  = (name) =>  {
-    return seedCustomers.find(customer => customer.name === name);
+  id: customer.id,
+  name: customer.name,
+  gender: customer.gender
+}));
+
+export const CustomerDetailsMap = (name) => {
+  return seedCustomers.find(customer => customer.name === name);
 }
 
 export const notificationData = [
-    {
-      name: "System Admin",
-      msg: "Your subscription has been successfully renewed.",
-      time: "a few moments ago",
-      img: "https://cdn-icons-png.flaticon.com/512/9131/9131529.png",
-    },
-    {
-      name: "Accounts Department",
-      msg: "New reminder added for invoice settlement due on Oct 25.",
-      time: "10 minutes ago",
-      img: "https://cdn-icons-png.flaticon.com/512/4359/4359963.png",
-    },
-    {
-      name: "Document Manager",
-      msg: "Uploaded file ‘Q3_Report.pdf’ verified successfully.",
-      time: "44 minutes ago",
-      img: "https://cdn-icons-png.flaticon.com/512/9131/9131546.png",
-    },
-    {
-      name: "System Admin",
-      msg: "Your password was changed successfully.",
-      time: "1 hour ago",
-      img: "https://cdn-icons-png.flaticon.com/512/9131/9131532.png",
-    },
-    {
-      name: "Reminder Service",
-      msg: "Upcoming reminder: Vendor Payment due tomorrow.",
-      time: "3 hours ago",
-      img: "https://cdn-icons-png.flaticon.com/512/4359/4359983.png",
-    },
-  ];
-  
+  {
+    name: "System Admin",
+    msg: "Your subscription has been successfully renewed.",
+    time: "a few moments ago",
+    img: "https://cdn-icons-png.flaticon.com/512/9131/9131529.png",
+  },
+  {
+    name: "Accounts Department",
+    msg: "New reminder added for invoice settlement due on Oct 25.",
+    time: "10 minutes ago",
+    img: "https://cdn-icons-png.flaticon.com/512/4359/4359963.png",
+  },
+  {
+    name: "Document Manager",
+    msg: "Uploaded file ‘Q3_Report.pdf’ verified successfully.",
+    time: "44 minutes ago",
+    img: "https://cdn-icons-png.flaticon.com/512/9131/9131546.png",
+  },
+  {
+    name: "System Admin",
+    msg: "Your password was changed successfully.",
+    time: "1 hour ago",
+    img: "https://cdn-icons-png.flaticon.com/512/9131/9131532.png",
+  },
+  {
+    name: "Reminder Service",
+    msg: "Upcoming reminder: Vendor Payment due tomorrow.",
+    time: "3 hours ago",
+    img: "https://cdn-icons-png.flaticon.com/512/4359/4359983.png",
+  },
+];

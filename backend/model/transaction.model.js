@@ -42,7 +42,22 @@ const TransactionSchema = new Schema(
     dueDate: {
       type: Date,
     },
-
+    expectedPaymentDate:{
+      type:Date,
+    },
+    commitmentStatus:{
+      type: String,
+      enum:[ "NONE","COMMITTED_TODAY","COMMITTED_THIS_WEEK","PAYING_SOON","PAID_AWAITING_CONFIRMATION","STATEMENT_REQUESTED"],
+      default:"NONE",
+      index:true
+    },
+    reminderPausedUntil:{
+      type: Date,
+      index:true
+    },
+    lastCustomerActionAt:{
+      type: Date
+    },
     // PAYMENT → which due it is paying
     linkedDueTransaction: {
       type: Schema.Types.ObjectId,

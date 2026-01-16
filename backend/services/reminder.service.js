@@ -4,6 +4,13 @@ import Customer from "../model/customer.model.js";
 import whatsappService from "./whatsapp.service.js";
 import mongoose from "mongoose";
 import { canSendReminder } from "../middleware/reminderLimitMiddleware.js";
+import {
+  REMINDER_TEMPLATE_NAMES,
+  getBeforeDueMessage,
+  getDueTodayMessage,
+  getOverdueMessage
+} from "../utils/reminder.templates.js";
+import User from "../model/user.model.js";
 
 const REMINDER_TYPES = {
   BEFORE_DUE: "before_due",
@@ -60,14 +67,14 @@ class ReminderService {
             whatsappTemplate: {
               name:
                 reminderType === REMINDER_TYPES.DUE_TODAY
-                  ? "nodue_due_today_1"
-                  : "nodue_before_due_1",
+                  ? REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY
+                  : REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE,
               language: "en",
             },
             templateVariables: [
               customer.name,
               transaction.amount.toString(),
-              transaction.dueDate.toDateString(),
+              transaction.dueDate, // Pass date object
             ],
             scheduledFor,
             status: "pending",
@@ -88,7 +95,8 @@ class ReminderService {
   async sendNow({ transactionId, templateName, variables }) {
     const transaction = await Transaction
       .findById(transactionId)
-      .populate("customerId");
+      .populate("customerId")
+      .populate({ path: "metadata.operatorId", select: "businessName companyName" });
 
     if (!transaction) throw new Error("Transaction not found");
     if (transaction.type !== "DUE_ADDED") {
@@ -102,7 +110,7 @@ class ReminderService {
     const reminder = await Reminder.create({
       customerId: transaction.customerId._id,
       transactionId,
-      reminderType: REMINDER_TYPES.DUE_TODAY,
+      reminderType: REMINDER_TYPES.DUE_TODAY, // Defaulting types might need adjustment based on date but caller usually decides templateName
       whatsappTemplate: { name: templateName, language: "en" },
       templateVariables: variables,
       scheduledFor: new Date(),
@@ -111,15 +119,45 @@ class ReminderService {
     });
 
     try {
-      await whatsappService.sendTemplateMessage({
-        to: `${transaction.customerId.mobile}`,
-        templateName,
-        variables,
-      });
+      const isInteractive = Object.values(REMINDER_TEMPLATE_NAMES).includes(templateName);
+
+      if (isInteractive) {
+        const companyName = transaction.metadata?.operatorId?.businessName || transaction.metadata?.operatorId?.companyName || "No Due";
+        let messagePayload;
+
+        // variables expected: [name, amount, dueDate]
+        const [name, amount, dueDate] = variables;
+
+        if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE) {
+          messagePayload = getBeforeDueMessage(name, amount, new Date(dueDate), companyName);
+        } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY) {
+          messagePayload = getDueTodayMessage(name, amount, new Date(dueDate), companyName);
+        } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE) {
+          messagePayload = getOverdueMessage(name, amount, new Date(dueDate), companyName);
+        }
+
+        if (messagePayload) {
+          await whatsappService.sendInteractiveMessage({
+            to: `${transaction.customerId.mobile}`,
+            ...messagePayload
+          });
+        }
+      } else {
+        await whatsappService.sendTemplateMessage({
+          to: `${transaction.customerId.mobile}`,
+          templateName,
+          variables,
+        });
+      }
 
       reminder.status = "sent";
       reminder.sentAt = new Date();
       await reminder.save();
+
+      //also updating in the customer table lastReminder sent
+      await Customer.findByIdAndUpdate(transaction.customerId._id, {
+        lastReminder: reminder.sentAt
+      });
       return reminder;
     } catch (err) {
       reminder.status = "failed";
@@ -156,13 +194,13 @@ class ReminderService {
 
     if (scheduleDate > dueDate) {
       reminderType = "after_due";
-      templateName = "nodue_overdue_1";
+      templateName = REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE;
     } else if (scheduleDate.getTime() === dueDate.getTime()) {
       reminderType = "due_today";
-      templateName = "nodue_due_today_1";
+      templateName = REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY;
     } else {
       reminderType = "before_due";
-      templateName = "nodue_before_due_1";
+      templateName = REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE;
     }
 
     const exists = await Reminder.findOne({
@@ -185,7 +223,7 @@ class ReminderService {
       templateVariables: [
         transaction.customerId.name,
         transaction.customerId.currentDue.toString(),
-        reminderType === 'due_today' ? '' : transaction.dueDate.toDateString(),
+        transaction.dueDate, // Store raw date
       ],
       scheduledFor: new Date(scheduledFor),
       status: "pending",
@@ -196,16 +234,24 @@ class ReminderService {
 
   /* CRON: PROCESS SCHEDULED */
   async processScheduledReminders() {
-    const now = new Date();
 
+
+    const now = new Date();
 
     const reminders = await Reminder.find({
       status: "pending",
       scheduledFor: { $lte: now },
-    }).populate({
-      path: "transactionId",
-      populate: { path: "customerId" },
-    });
+    })
+      .populate({
+        path: "transactionId",
+        populate: [
+          { path: "customerId" },
+          { path: "metadata.operatorId", select: "businessName companyName" }
+        ],
+      });
+
+
+    console.log("will process this reminder", reminders);
 
 
 
@@ -213,46 +259,65 @@ class ReminderService {
       // console.log(reminder);
       try {
         const tx = reminder.transactionId;
+        console.log("tx", tx);
 
-        if (!tx || tx.paymentStatus === "PAID") {
+        if (!tx || tx?.paymentStatus === "PAID") {
+          //if already paid then cancelling the rminder for future
           reminder.status = "cancelled";
           reminder.cancelledAt = new Date();
           await reminder.save();
           continue;
         }
 
+        // Check if reminders are paused for this transaction
+        if (tx.reminderPausedUntil && new Date(tx.reminderPausedUntil) > new Date()) {
+          console.log(`Reminder paused for transaction ${tx._id} until ${tx.reminderPausedUntil}. Rescheduling.`);
+          reminder.scheduledFor = tx.reminderPausedUntil;
+          reminder.status="rescheduled";
+          await reminder.save();
+          continue;
+        }
+
         // prevent sending same reminder type again within cooldown window
-    const canSend = await canSendReminder({
-      transactionId: tx._id,
-      reminderType: reminder.reminderType,
-    });
-
-    if (!canSend) continue;
-
-        // const recent = await Reminder.findOne({
-        //   transactionId: tx._id,
-        //   reminderType: reminder.reminderType,
-        //   status: "sent",
-        //   // source: "auto",
-        //   sentAt: { $gte: 1000*60*60*24 },
-        // });
-
-
-        // if (recent) {
-        //   console.log("skipping, recently sended within 24 hr");
-        //   continue
-        // };
-
-        await whatsappService.sendTemplateMessage({
-          to: `${tx.customerId.mobile}`,
-          templateName: reminder.whatsappTemplate.name,
-          variables: reminder.templateVariables,
+        const canSend = await canSendReminder({
+          transactionId: tx._id,
+          reminderType: reminder.reminderType,
         });
+
+        if (!canSend) continue;
+
+
+
+        const companyName = reminder.metadata?.operatorId?.companyName;
+        let messagePayload;
+        const [name, amount, dueDate] = reminder.templateVariables; // Ensure variables stored match this order
+        let templateName = reminder?.whatsappTemplate?.name;
+        if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE) {
+          messagePayload = getBeforeDueMessage(name, amount, new Date(dueDate), companyName);
+        } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY) {
+          messagePayload = getDueTodayMessage(name, amount, new Date(dueDate), companyName);
+        } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE) {
+          messagePayload = getOverdueMessage(name, amount, new Date(dueDate), companyName);
+        }
+
+        console.log("message payload: ", messagePayload, "\n");
+
+        if (messagePayload) {
+          await whatsappService.sendInteractiveMessage({
+            to: `${tx.customerId.mobile}`,
+            ...messagePayload
+          });
+        }
 
         reminder.status = "sent";
         reminder.sentAt = new Date();
         reminder.source = "auto";
         await reminder.save();
+
+        //same here updating lastReminder for this user
+        await Customer.findByIdAndUpdate(reminder.customerId._id, {
+          lastReminder: reminder.sentAt
+        });
 
       } catch (err) {
         reminder.attempts += 1;
@@ -263,74 +328,76 @@ class ReminderService {
   }
 
   /* AFTER DUE (CRON BASED)*/
-  async createAfterDueReminders() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // async createAfterDueReminders() {
+  //   //currently there is no user
+  
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
 
-    const overdueTxs = await Transaction.find({
-      type: "DUE_ADDED",
-      paymentStatus: { $ne: "PAID" },
-      dueDate: { $lt: today },
-    }).populate("customerId");
+  //   const overdueTxs = await Transaction.find({
+  //     type: "DUE_ADDED",
+  //     paymentStatus: { $ne: "PAID" },
+  //     dueDate: { $lt: today },
+  //   }).populate("customerId");
 
-    for (const tx of overdueTxs) {
-      const exists = await Reminder.findOne({
-        transactionId: tx._id,
-        reminderType: REMINDER_TYPES.AFTER_DUE,
-        status: { $in: ["pending", "sent"] },
-      });
+  //   for (const tx of overdueTxs) {
+  //     const exists = await Reminder.findOne({
+  //       transactionId: tx._id,
+  //       reminderType: REMINDER_TYPES.AFTER_DUE,
+  //       status: { $in: ["pending", "sent"] },
+  //     });
 
 
-      if (exists) continue;
+  //     if (exists) continue;
 
-      await Reminder.create({
-        customerId: tx.customerId._id,
-        transactionId: tx._id,
-        reminderType: REMINDER_TYPES.AFTER_DUE,
-        whatsappTemplate: {
-          name: "nodue_overdue_1",
-          language: "en",
-        },
-        templateVariables: [
-          tx.customerId.name,
-          tx.amount.toString(),
-          // tx.dueDate.toDateString(),
-        ],
-        scheduledFor: new Date(),
-        status: "pending",
-        source: "auto",
-      });
-    }
-  }
+  //     await Reminder.create({
+  //       customerId: tx.customerId._id,
+  //       transactionId: tx._id,
+  //       reminderType: REMINDER_TYPES.AFTER_DUE,
+  //       // whatsappTemplate: {
+  //       //   name: REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE,
+  //       //   language: "en",
+  //       // },
+  //       templateVariables: [
+  //         tx.customerId.name,
+  //         tx.amount.toString(),
+  //         tx.dueDate, // Store raw date
+  //       ],
+  //       scheduledFor: new Date(),
+  //       status: "pending",
+  //       source: "auto",
+  //     });
+  //   }
+  // }
   /* RESCHEDULE REMINDER */
- async rescheduleReminder({ reminderId, scheduledFor }) {
-  const reminder = await Reminder.findById(reminderId);
+  async rescheduleReminder({ reminderId, scheduledFor }) {
+    const reminder = await Reminder.findById(reminderId);
 
-  if (!reminder) {
-    throw new Error("Reminder not found");
+    if (!reminder) {
+      throw new Error("Reminder not found");
+    }
+
+    if (reminder.status !== "pending") {
+      throw new Error("Only pending reminders can be rescheduled");
+    }
+
+    // Optional: prevent duplicate reminders at same time
+    const exists = await Reminder.findOne({
+      _id: { $ne: reminderId },
+      transactionId: reminder.transactionId,
+      scheduledFor: new Date(scheduledFor),
+    });
+
+    if (exists) {
+      throw new Error("Another reminder is already scheduled for this time");
+    }
+
+    reminder.scheduledFor = new Date(scheduledFor);
+
+    await reminder.save();
+
+    return reminder;
   }
-
-  if (reminder.status !== "pending") {
-    throw new Error("Only pending reminders can be rescheduled");
-  }
-
-  // Optional: prevent duplicate reminders at same time
-  const exists = await Reminder.findOne({
-    _id: { $ne: reminderId },
-    transactionId: reminder.transactionId,
-    scheduledFor: new Date(scheduledFor),
-  });
-
-  if (exists) {
-    throw new Error("Another reminder is already scheduled for this time");
-  }
-
-  reminder.scheduledFor = new Date(scheduledFor);
-
-  await reminder.save();
-
-  return reminder;
-}
 
 }
 

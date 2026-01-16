@@ -8,13 +8,27 @@ import Reminder from "../model/remainder.model.js";
 import { formatDate } from "../utils/Helper.js"
 import PaymentTerm from "../model/PaymentTerm.model.js";
 import mongoose from "mongoose";
+import { REMINDER_TEMPLATE_NAMES } from "../utils/reminder.templates.js";
 
 
+const TEMPLATE_MAP = {
+  due_before: REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE,
+  due_today: REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY,
+  overdue: REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE,
+};
 
-const TEMPLATE_MAP = { due_before: "nodue_remainder_1" };
 
+function getReminderType(dueDate, now) {
+  const dDate = new Date(dueDate);
+  dDate.setHours(0, 0, 0, 0);
+  const nDate = new Date(now);
+  nDate.setHours(0, 0, 0, 0);
 
-function getReminderType(dueDate, scheduleFor) {
+  if (nDate.getTime() === dDate.getTime()) {
+    return 'due_today';
+  } else if (nDate > dDate) {
+    return 'overdue';
+  }
   return 'due_before';
 }
 
@@ -88,14 +102,18 @@ export const sendWhatsappRemainder = async (req, res) => {
     }
 
     const customer = tx.customerId;
-    const paymentTerm = customer?.paymentTerm;
-
-    if (!paymentTerm) {
-      return new APIError(400, ["Payment term not found for customer"]).send(res);
+    // We can use paymentTerm to calculate due date OR use tx.dueDate if available
+    let dueDate = tx.dueDate;
+    if (!dueDate && customer?.paymentTerm) {
+      dueDate = new Date(tx.createdAt);
+      dueDate.setDate(dueDate.getDate() + customer.paymentTerm.creditDays);
     }
 
-    const dueDate = new Date(tx.createdAt);
-    dueDate.setDate(dueDate.getDate() + paymentTerm.creditDays);
+    if (!dueDate) {
+      // Fallback or error? defaulting to today for safety or erroring
+      dueDate = new Date(); // unsafe assumption but prevents crash
+    }
+
 
     const reminderType = getReminderType(dueDate, new Date());
 
@@ -108,10 +126,12 @@ export const sendWhatsappRemainder = async (req, res) => {
       ).send(res);
     }
 
+    console.log("templateName: ",templateName,"\n");
+
     const variables = [
       customer.name,
       tx.amount.toString(),
-      formatDate(dueDate)
+      dueDate // Pass Date object, service formats it
     ];
 
     const result = await remainderService.sendNow({
@@ -237,7 +257,7 @@ export const deleteReminder = async (req, res) => {
   } catch (error) {
     console.error("Delete Reminder Error:", error);
 
-    return new APIError(500, null, "Internal server error", false).send(res);
+    return new APIResponse(500, null, "Internal server error", false).send(res);
   }
 };
 

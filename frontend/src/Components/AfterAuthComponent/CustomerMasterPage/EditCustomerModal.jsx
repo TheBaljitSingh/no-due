@@ -106,39 +106,8 @@ export default function EditCustomerModal({  customer,  setEditCustomer,  handle
             </select>
           </div>
 
-          {/* Due */}
-          <div>
-            <label className="text-sm text-gray-700 after:content-['*'] after:ml-1 after:text-red-500">Due</label>
-            <input
-              name="due"
-              value={customer.due || ""}
-              onChange={handleChange}
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
-                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
-                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
-              placeholder="Due amount"
-            />
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="text-sm text-gray-700 after:content-['*'] after:ml-1 after:text-red-500">Status</label>
-            <select
-              name="status"
-              value={customer?.status}
-              onChange={handleChange}
-              className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
-                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
-                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
-            >
-              <option value="Overdue">Overdue</option>
-              <option value="Pending">Pending</option>
-              <option value="Paid">Paid</option>
-              <option value="Due">Due</option>
-            </select>
-          </div>
+         {/* removed the edit due, and due status(if wanted then do in the Manage Transaction Action Button) */}
+        
 
         </div>
 

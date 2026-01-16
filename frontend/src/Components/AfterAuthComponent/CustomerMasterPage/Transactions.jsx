@@ -89,7 +89,6 @@ const TransactionHistoryDuePage = () => {
                 });
             }
 
-            setRows(allRows);
         } catch (err) {
             console.error("Failed to load due summary", err);
         } finally {

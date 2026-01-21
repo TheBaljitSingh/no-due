@@ -190,6 +190,21 @@ class WhatsAppService {
     }
   }
 
+  async markRead(messageId){
+    console.log("marking as read");
+     return axios.post(this.apiUrl,
+      //payload
+    {
+      messaging_product: "whatsapp",
+      status: "read",
+      message_id: messageId
+      
+    },
+    this.headers
+  );
+
+  }
+
 }
 
 export default new WhatsAppService();

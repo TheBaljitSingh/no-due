@@ -14,7 +14,7 @@ export const sendMainMenu = async (to) => {
               {
                 id: "CHECK_CURRENT_DUE",
                 title: "Current Due",
-                description: "View your current outstanding dues"
+                description: "View my current outstanding dues"
               }
             ]
           }

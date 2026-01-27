@@ -11,6 +11,7 @@ import {
   getOverdueMessage
 } from "../utils/reminder.templates.js";
 import User from "../model/user.model.js";
+import { formatDate } from "../utils/Helper.js";
 
 const REMINDER_TYPES = {
   BEFORE_DUE: "before_due",
@@ -24,9 +25,9 @@ class ReminderService {
   async createForDue({ transactionId }) {
     try {
       const transaction = await Transaction
-      .findById(transactionId)
-      .populate("customerId")
-      
+        .findById(transactionId)
+        .populate("customerId")
+
       if (!transaction) throw new Error("Transaction not found");
       if (transaction.type !== "DUE_ADDED") {
         throw new Error("Reminders only allowed for DUE_ADDED");
@@ -37,7 +38,7 @@ class ReminderService {
         .findById(transaction.customerId._id)
         .populate("paymentTerm");
 
-      console.log("payment term:\n",customer?.paymentTerm);
+      console.log("payment term:\n", customer?.paymentTerm);
 
       if (!customer?.paymentTerm) return;
 
@@ -76,7 +77,7 @@ class ReminderService {
             templateVariables: [
               customer.name,
               transaction.amount.toString(),
-              transaction.dueDate, // Pass date object
+              formatDate(transaction.dueDate), // Pass formatted date string
             ],
             scheduledFor,
             status: "pending",
@@ -99,7 +100,7 @@ class ReminderService {
     const transaction = await Transaction
       .findById(transactionId)
       .populate("customerId")
-      .populate({ path: "metadata.operatorId", select: "businessName companyName" });
+      .populate({ path: "metadata.operatorId", select: "companyName" });
 
     if (!transaction) throw new Error("Transaction not found");
     if (transaction.type !== "DUE_ADDED") {
@@ -243,14 +244,14 @@ class ReminderService {
     const now = new Date();
 
     const reminders = await Reminder.find({
-      status: {$in:['pending','rescheduled']},
+      status: { $in: ['pending', 'rescheduled'] },
       scheduledFor: { $lte: now },
     })
       .populate({
         path: "transactionId",
         populate: [
           { path: "customerId" },
-          { path: "metadata.operatorId", select: "businessName companyName" }
+          { path: "metadata.operatorId", select: " companyName" }
         ],
       });
 
@@ -277,7 +278,7 @@ class ReminderService {
         if (tx.reminderPausedUntil && new Date(tx.reminderPausedUntil) > new Date()) {
           console.log(`Reminder paused for transaction ${tx._id} until ${tx.reminderPausedUntil}. Rescheduling.`);
           reminder.scheduledFor = tx.reminderPausedUntil;
-          reminder.status="rescheduled";
+          reminder.status = "rescheduled";
           await reminder.save();
           continue;
         }
@@ -311,17 +312,22 @@ class ReminderService {
             to: `${tx.customerId.mobile}`,
             ...messagePayload
           });
+
+          reminder.status = "sent";
+          reminder.sentAt = new Date();
+          reminder.source = "auto";
+          await reminder.save();
+
+          //same here updating lastReminder for this user
+          await Customer.findByIdAndUpdate(reminder.customerId._id, {
+            lastReminder: reminder.sentAt
+          });
+        } else {
+          console.warn(`[Reminder Service] Unknown template or missing payload for template: ${templateName}`);
+          reminder.status = "failed";
+          reminder.lastError = `Unknown template: ${templateName} or missing payload`;
+          await reminder.save();
         }
-
-        reminder.status = "sent";
-        reminder.sentAt = new Date();
-        reminder.source = "auto";
-        await reminder.save();
-
-        //same here updating lastReminder for this user
-        await Customer.findByIdAndUpdate(reminder.customerId._id, {
-          lastReminder: reminder.sentAt
-        });
 
       } catch (err) {
         reminder.attempts += 1;
@@ -334,7 +340,7 @@ class ReminderService {
   /* AFTER DUE (CRON BASED)*/
   // async createAfterDueReminders() {
   //   //currently there is no user
-  
+
   //   const today = new Date();
   //   today.setHours(0, 0, 0, 0);
 

@@ -70,6 +70,33 @@ class WhatsappAuditService {
             console.error("[Audit] Failed to log message:", error);
         }
     }
+
+    async updateMessageStatus(whatsappMessageId, status, error) {
+        try {
+            if (!whatsappMessageId) return;
+
+            const updateData = { status };
+            if (error) {
+                updateData.error = JSON.stringify(error);
+            }
+
+            // Update the message by whatsappMessageId
+            const result = await WhatsappMessage.findOneAndUpdate(
+                { whatsappMessageId },
+                { $set: updateData },
+                { new: true }
+            );
+
+            if (result) {
+                console.log(`[Audit] Updated status for ${whatsappMessageId} to ${status}`);
+            } else {
+                console.warn(`[Audit] Message not found for status update: ${whatsappMessageId}`);
+            }
+
+        } catch (err) {
+            console.error("[Audit] Failed to update status:", err);
+        }
+    }
 }
 
 export default new WhatsappAuditService();

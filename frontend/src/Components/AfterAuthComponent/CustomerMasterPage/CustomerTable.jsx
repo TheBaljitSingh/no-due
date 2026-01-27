@@ -151,7 +151,7 @@ const CustomerTable = () => {
     console.log("printing the customer txn: ", transactions[0]);
     //update the totalDUE in UI
     // if(transaction type is due added then add in current due, else it is payment then show the as it is )
-    setCustomers(prev => prev.map(c => c._id === currentCustomer._id ? { ...c, "currentDue": transactions[0]?.remainingDue} : c));
+    setCustomers(prev => prev.map(c => c._id === currentCustomer._id ? { ...c, "currentDue": transactions[0]?.remainingDue } : c));
     setShowTransactionModal(false);
   }
 
@@ -162,7 +162,11 @@ const CustomerTable = () => {
     try {
       const response = await getAllcustomers();
       const data = response.data.customers;
-      const headers = Object.keys(data[0]).filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt'].includes(row)); // keys array will be stored
+      let initialKeys = Object.keys(data[0]);
+      if (!initialKeys.includes('feedback')) {
+        initialKeys.push('feedback');
+      }
+      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt'].includes(row)); // keys array will be stored
 
       // Convert headers to CSV row
       const csvRows = [headers.join(",")]; // keystring
@@ -212,7 +216,11 @@ const CustomerTable = () => {
       doc.text("All Customers History", 14, 20);
 
 
-      const tableColumns = Object.keys(data[0]).filter(row => !['_id', '__v', 'email', 'feedback', 'CustomerOfComapny', 'createdAt', 'updatedAt'].includes(row));// array of headers
+      let initialKeys = Object.keys(data[0]);
+      if (!initialKeys.includes('feedback')) {
+        initialKeys.push('feedback');
+      }
+      const tableColumns = initialKeys.filter(row => !['_id', '__v', 'email', 'CustomerOfComapny', 'createdAt', 'updatedAt'].includes(row));// array of headers
 
 
       const tableRows = [];  //rows according to headers

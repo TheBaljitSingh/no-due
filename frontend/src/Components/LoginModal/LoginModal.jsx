@@ -16,7 +16,6 @@ export default function LoginModal({ open, onClose }) {
   // Form fields
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
-  const [businessName, setBusinessName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [lastName, setLastName] = useState("");
   const [pw, setPw] = useState("");
@@ -41,7 +40,6 @@ export default function LoginModal({ open, onClose }) {
   const resetForm = () => {
     setEmail("");
     setFirstName("");
-    setBusinessName("");
     setPhoneNumber("");
     setLastName("");
     setPw("");
@@ -64,7 +62,7 @@ export default function LoginModal({ open, onClose }) {
       case "firstName":
         if (!value) return "First name is required.";
         if (value.length < 2) return "First name must be at least 2 characters.";
-        if (!/^[a-zA-Z]+$/.test(value))
+        if (!/^[a-zA-Z ]+$/.test(value))
           return "First name should contain only letters.";
         return "";
 
@@ -72,18 +70,11 @@ export default function LoginModal({ open, onClose }) {
       case "lastName":
         if (!value) return "Last name is required.";
         if (value.length < 2) return "Last name must be at least 2 characters.";
-        if (!/^[a-zA-Z]+$/.test(value))
+        if (!/^[a-zA-Z ]+$/.test(value))
           return "Last name should contain only letters.";
         return "";
 
-      // BUSINESS NAME
-      case "businessName":
-        if (!value) return "Business name is required.";
-        if (value.length < 3)
-          return "Business name must be at least 3 characters.";
-        if (value.length > 70)
-          return "Business name can be at most 70 characters.";
-        return "";
+     
 
       // EMAIL
       case "email":
@@ -127,7 +118,6 @@ export default function LoginModal({ open, onClose }) {
     const newErrors = {
       firstName: isSignUp ? validateField("firstName", firstName) : "",
       lastName: isSignUp ? validateField("lastName", lastName) : "",
-      businessName: isSignUp ? validateField("businessName", businessName) : "",
       phoneNumber: isSignUp ? validateField("phoneNumber", phoneNumber) : "",
       email: validateField("email", email),
       password: validateField("password", pw),
@@ -153,7 +143,6 @@ export default function LoginModal({ open, onClose }) {
           email: email.trim(),
           fname: firstName.trim(),
           phoneNumber: phoneNumber.trim(),
-          businessName: businessName.trim(),
           lname: lastName.trim(),
           password: pw
         });
@@ -300,20 +289,7 @@ export default function LoginModal({ open, onClose }) {
           {
             isSignUp && (
               <>
-                <div>
-                  <input
-                    type="text"
-                    value={businessName}
-                    onChange={(e) => {
-                      setBusinessName(e.target.value);
-                      setErr(prev => ({ ...prev, businessName: validateField("businessName", e.target.value) }));
-                    }}
-                    className="w-full rounded border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
-                    placeholder="Business Name"
-                  />
-                  {err.businessName && <p className="text-xs text-red-600">{err.businessName}</p>}
-
-                </div>
+            
 
                 <div>
                   <input
@@ -441,4 +417,3 @@ export default function LoginModal({ open, onClose }) {
     </div>
   );
 }
-

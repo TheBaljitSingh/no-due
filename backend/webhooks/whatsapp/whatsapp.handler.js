@@ -3,12 +3,23 @@ import { sendMainMenu } from "./whatsapp.template.js";
 import whatsappService from "../../services/whatsapp.service.js";
 import { getCurrentDue, updateTransactionStatus } from "../../services/due.service.js"
 import whatsappAuditService from "../../services/whatsapp.audit.service.js";
-import {getOrCreateSession, updateSession} from "../../services/whatsappSession.service.js"
+import { getOrCreateSession, updateSession } from "../../services/whatsappSession.service.js"
 import whatsappSessionModel from "../../models/whatsappSession.model.js";
+import whatsappMessage from "../../model/whatsappMessage.modal.js";
+import Customer from "../../model/customer.model.js";
 
 export const handleWhatsappEvent = async (payload) => {
   const entry = payload?.entry?.[0];
   if (!entry) return;
+
+  // Handle Status Updates (Sent, Delivered, Read, Failed)
+  const statusUpdate = entry?.changes?.[0]?.value?.statuses?.[0];
+  if (statusUpdate) {
+    const { id, status, errors } = statusUpdate;
+    // console.log(`[WhatsApp Status] Message ${id} is ${status}`);
+    await whatsappAuditService.updateMessageStatus(id, status, errors);
+    return;
+  }
 
   const intent = parseWhatsappMessage(entry);
   if (!intent) return;
@@ -16,8 +27,21 @@ export const handleWhatsappEvent = async (payload) => {
   const rawMsg = entry?.changes?.[0]?.value?.messages?.[0];
 
 
-  if(rawMsg?.id){
+  if (rawMsg?.id) {
     await whatsappService.markRead(rawMsg.id);
+  }
+
+
+  // Check for duplicate response to the same message
+  if (intent.context?.id) {
+    const existingResponse = await whatsappMessage.findOne({
+      responseToMessageId: intent.context.id
+    });
+
+    if (existingResponse) {
+      console.warn(`[Audit] Duplicate response blocked. Message ${intent.context.id} already responded to.`);
+      return;
+    }
   }
 
   //if there is not session then send msg to start session
@@ -31,17 +55,33 @@ export const handleWhatsappEvent = async (payload) => {
     whatsappMessageId: rawMsg?.id,
     status: "received",
     payload: intent,
+    responseToMessageId: intent.context?.id
   });
+
+  // Update Customer Feedback with the latest message
+  // Assuming 'from' matches the mobile in DB (e.g. 919876543210)
+  try {
+    const feedbackText = intent.text || intent.actionId || "Interaction received";
+    await Customer.findOneAndUpdate(
+      { mobile: intent.from },
+      {
+        feedback: feedbackText,
+        lastInteraction: new Date()
+      }
+    );
+  } catch (err) {
+    console.error("Error updating customer feedback:", err);
+  }
 
   // Greeting
   if (intent.type === "TEXT" && ["hi", "hello"].includes(intent.text.toLowerCase())) {
 
     //i have to initialize the session
     const session = await getOrCreateSession(intent.from);
-    
+
     //will send menu from pre defined templates 
     return sendMainMenu(intent.from);
-  }else if(intent.type === "LIST") {
+  } else if (intent.type === "LIST") {
     // List action routing seprately
     routeAction(intent);
   }
@@ -57,23 +97,23 @@ const routeAction = async (intent) => {
       console.log("Processing CHECK_CURRENT_DUE");
       //check my current due
 
-      const session = await whatsappSessionModel.findOne({mobile:from});
-      
-      if(session){
-        await updateSession(intent.from, {state:"CHECK_CURRENT_DUE"});
+      const session = await whatsappSessionModel.findOne({ mobile: from });
+
+      if (session) {
+        await updateSession(intent.from, { state: "CHECK_CURRENT_DUE" });
         const response = await getCurrentDue({ from });
         if (response.success) {
           await whatsappService.sendTextMessage({ to: from, text: response?.text });
         }
 
-      }else{
-        
-const restartConversactionTxt = `Due to inactive on the channel, your session has timed out ⌛. 
+      } else {
+
+        const restartConversactionTxt = `Due to inactive on the channel, your session has timed out ⌛. 
 Just type *Hi* to restart your conversation👋 `;
-         whatsappService.sendTextMessage({to:intent.from, text:restartConversactionTxt});
-        }
-      
-    
+        whatsappService.sendTextMessage({ to: intent.from, text: restartConversactionTxt });
+      }
+
+
       break;
 
 

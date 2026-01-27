@@ -43,7 +43,7 @@ export const sendReply = async (req, res) => {
   };
 
   try {
-    const META_URL = `https://graph.facebook.com/v23.0/974705779052142/messages`;
+    const META_URL = `https://graph.facebook.com/v23.0/927548713781362/messages`;
 
     const response = await axios.post(META_URL, payload, {
       headers: {

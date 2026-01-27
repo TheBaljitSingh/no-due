@@ -26,7 +26,7 @@ export default function UserProfile() {
         : user?.fname && user?.lname
           ? `${user.fname} ${user.lname}`
           : "",
-      plan: { name: "Growth", price: 999, renewsOn: "2025-11-01" }
+      plan: { name: "Growth", price: 999, renewsOn: "2026-11-01" }
     }
     setForm(formatted);
     setOriginal(formatted);
@@ -36,13 +36,17 @@ export default function UserProfile() {
     // If field originally had value AND new value is empty → block
     if (original[field] && value.trim() === "") {
       toast.error(`${field} cannot be empty`);
-      return original[field]; // rollback to original
+      // return original[field]; // rollback to original
     }
     return value;
   };
+  let hasShownProfileWarning = useRef(false);
+
 
   useEffect(() => {
     if (!user) return;
+
+    if (hasShownProfileWarning.current) return;
 
     const isIncomplete =
       !user.fname ||
@@ -53,10 +57,11 @@ export default function UserProfile() {
       !user.address?.city ||
       !user.address?.state ||
       !user.address?.country ||
-      !user.address?.pincode;
+      !user.address?.pinCode;
 
 
     if (isIncomplete) {
+      hasShownProfileWarning.current = true;
       toast.warning("Please complete your profile to continue!", {
         position: "top-right",
         autoClose: 3000,
@@ -137,14 +142,15 @@ export default function UserProfile() {
   }, []);
 
   const handleConnectWhatsApp = async () => {
-   try{ const response = await connectWhatsApp();
-    console.log("WhatsApp connection initiated");
+    try {
+      const response = await connectWhatsApp();
+      console.log("WhatsApp connection initiated");
 
-    console.log("Redirecting to:", response.data.url);
-    window.location.href = response.data.url;
-  }catch(err){
-    console.error("Error connecting WhatsApp:", err);
-    toast.error("Failed to connect WhatsApp. Please try again.");
+      console.log("Redirecting to:", response.data.url);
+      window.location.href = response.data.url;
+    } catch (err) {
+      console.error("Error connecting WhatsApp:", err);
+      toast.error("Failed to connect WhatsApp. Please try again.");
     }
   };
 
@@ -162,8 +168,8 @@ export default function UserProfile() {
             </div>
             <div className="flex items-center gap-3">
               <button className="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              onClick={handleConnectWhatsApp}>
-                <LogOut className="w-4 h-4"/> Connect WhatsApp Account
+                onClick={handleConnectWhatsApp}>
+                <LogOut className="w-4 h-4" /> Connect WhatsApp Account
               </button>
             </div>
           </div>
@@ -193,7 +199,7 @@ export default function UserProfile() {
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatar} />
               </div>
               <div className="flex-1 pt-4">
-                <h2 className="text-2xl font-semibold text-gray-800">{form?.businessName || "—"}</h2>
+                <p className="text-gray-600">{form?.fname} {form?.lname}</p>
                 <p className="text-gray-600">{form?.email}</p>
                 <p className="text-sm text-gray-500">{form?.phone}</p>
               </div>
@@ -414,8 +420,8 @@ export default function UserProfile() {
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${twoFA
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : "bg-gray-50 text-gray-700 border-gray-200"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : "bg-gray-50 text-gray-700 border-gray-200"
                         }`}>
                         {twoFA ? <CheckCircle2 className="w-3 h-3" /> : null}
                         {twoFA ? "Enabled" : "Disabled"}

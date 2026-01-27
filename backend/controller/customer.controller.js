@@ -6,34 +6,103 @@ import Transaction from "../model/transaction.model.js"
 export const createCustomer = async (req, res) => {
   try {
     const customerData = req.body;
-    // console.log(req.body.customerData);
 
     if (!customerData) {
       return new APIResponse(400, null, "Data is required").send(res);
     }
 
     if (Array.isArray(customerData)) {
+      const userId = req.user._id;
+      let createdCount = 0;
+      let updatedCount = 0;
+      const results = [];
 
-      const formattedData = customerData.map(c => ({
-        ...c,
-        CustomerOfComapny: req.user._id
-      }));
+      for (const customer of customerData) {
+        // Ensure mobile number has country code
+        const mobile = customer.mobile?.toString().replace(/\D/g, ''); // sanitize
+        const formattedMobile = mobile.startsWith('91') ? mobile : `91${mobile}`;
 
-      // console.log("Formatted Data:", formattedData);
+        // Check if customer already exists by mobile number
+        const existingCustomer = await Customer.findOne({
+          mobile: formattedMobile,
+          CustomerOfComapny: userId
+        }).populate('paymentTerm');
 
-      const inserted = await Customer.insertMany(formattedData ); // if any error it roll back, use boolean if required
+        if (existingCustomer) {
+          // Customer exists - accumulate due
+          const dueAmount = Number(customer.currentDue) || 0;
+
+          if (dueAmount > 0) {
+            // Calculate due date based on payment term
+            const creditDays = existingCustomer.paymentTerm?.creditDays ?? 0;
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + creditDays);
+
+            // Create transaction for the new due
+            const transaction = await Transaction.create({
+              customerId: existingCustomer._id,
+              type: "DUE_ADDED",
+              amount: dueAmount,
+              paidAmount: 0,
+              paymentStatus: "PENDING",
+              dueDate,
+              metadata: {
+                note: customer.note || "Bulk upload due addition",
+                operatorId: userId
+              }
+            });
+
+            // Update customer's current due and last transaction
+            existingCustomer.currentDue += dueAmount;
+            existingCustomer.lastTransaction = transaction._id;
+            existingCustomer.status = existingCustomer.status === "Overdue" ? "Overdue" : "Due";
+
+            // Update feedback if provided in upload (optional, but good for sync)
+            if (customer.feedback) existingCustomer.feedback = customer.feedback;
+
+            // Update other fields if provided (optional - decide if overwrite or keep)
+            // For now, let's keep existing details to avoid accidental overwrites of corrected data
+            if (customer.name) existingCustomer.name = customer.name;
+            if (customer.email) existingCustomer.email = customer.email;
+            if (customer.company) existingCustomer.company = customer.company;
+
+            await existingCustomer.save();
+          }
+
+          updatedCount++;
+          results.push(existingCustomer);
+        } else {
+          // New customer - create record
+          const newCustomerData = {
+            ...customer,
+            mobile: formattedMobile,
+            CustomerOfComapny: userId
+          };
+
+          const newCustomer = await Customer.create(newCustomerData);
+          createdCount++;
+          results.push(newCustomer);
+        }
+      }
 
       return new APIResponse(
         201,
-        inserted,
-        `${inserted.length} customers inserted`
+        {
+          customers: results,
+          summary: {
+            total: customerData.length,
+            created: createdCount,
+            updated: updatedCount
+          }
+        },
+        `Bulk upload complete: ${createdCount} created, ${updatedCount} updated`
       ).send(res);
     }
 
-    customerData.CustomerOfComapny =  req.user._id;
-    customerData.mobile=`91${customerData.mobile}`; // code here with respect to db for now
+    // Handle single customer creation
+    customerData.CustomerOfComapny = req.user._id;
+    customerData.mobile = `91${customerData.mobile}`;
 
-    //creating customer if due then i have to create  with the traansaction
     const newCustomer = new Customer(customerData);
     await newCustomer.save();
 
@@ -58,16 +127,16 @@ export const createCustomer = async (req, res) => {
 };
 
 
-export const getCustomers = async(req, res)=>{
+export const getCustomers = async (req, res) => {
   try {
-        const {page = 1 , limit = 10} = req.query;
-        const offset = (page - 1)*limit;
-        const queryLimit = limit==="all"?0:parseInt(limit);
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+    const queryLimit = limit === "all" ? 0 : parseInt(limit);
 
     const userId = req.user._id;
 
 
-        const query = {CustomerOfComapny:userId}; 
+    const query = { CustomerOfComapny: userId };
 
     const customers = await Customer.find(query)
       .populate("lastTransaction", "commitmentStatus")

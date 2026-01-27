@@ -17,7 +17,13 @@ const whatsappMessageSchema = new Schema({
     required: true,
     index: true,
   },
+  // The ID of the message this message is responding to (context.id)
+  responseToMessageId:{
+    type:String,
+    index:true,
+    sparse:true // it only index this field if it actually exists
 
+  },
   mobile: {
     type: String,
     required: true,

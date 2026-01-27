@@ -50,18 +50,20 @@ passport.use(new GoogleStrategy({
                 user = await existingUser.save();
                 return done(null, user);
             }
+             const [firstName, ...rest] = profile.displayName.split(" "); //hello inovation singh
 
             user = await User.create({
                 googleId: profile.id,
-                businessName: profile.displayName,
+                fname: firstName,
+                lname:rest.join(""),
                 email: profile.emails[0].value,
                 password: "GoogleUser@" + Math.random().toString(36).slice(-8) // strong password
             });
 
-            const isProfileComplete = user.name && user.phone && user.address?.city;
-        user.isProfileComplete = !!isProfileComplete; // temporary field for frontend functionality
+            const isProfileComplete = user?.fname && user.phone && user.address?.city;
+            user.isProfileComplete = !!isProfileComplete; // temporary field for frontend functionality
 
-        return done(null, user);
+            return done(null, user);
 
         }catch(err){
             console.error('Error in Google strategy:', err);

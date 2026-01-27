@@ -1,6 +1,6 @@
 import WhatsappSession from "../models/whatsappSession.model.js";
 
-const SESSION_TTL_MS = Number(process.env.WHATSAPP_SESSION_TTL_MS) || 1*60*1000; // 2 minutes
+const SESSION_TTL_MS = Number(process.env.WHATSAPP_SESSION_TTL_MS) || 1*60*1000; // 1 minutes
 
 export const getOrCreateSession = async (mobile) => {
   const now = new Date();

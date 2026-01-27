@@ -18,7 +18,7 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
   );
   const {user} = useAuth();
   console.log(user);
-  const fullName =  user?.name || user?.businessName ||  (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "") || "";
+  const fullName =  user?.name ||  (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "") || "";
 
   useEffect(() => {
     const onDown = (e) => {

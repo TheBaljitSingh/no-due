@@ -49,13 +49,6 @@ const whatsappSchema = new Schema({
 }, { _id: false });
 
 const userSchema = new Schema({
-    businessName: {
-        type: String,
-        required: true,
-        minlength: [3, "Name must be at least 3 characters long"],
-        maxlength: [70, "Name can be at most 70 characters long"],
-        trim: true,
-    },
     fname: {
         type: String,
         trim: true,

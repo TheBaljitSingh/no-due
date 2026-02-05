@@ -23,16 +23,83 @@ export default function ScheduleOrSendReminderModal({
   // ----------------------------------
   const [mode, setMode] = useState("schedule"); // 'schedule' | 'now'
   const [scheduleDate, setScheduleDate] = useState("");
-  const [template, setTemplate] = useState("nodue_remainder_1"); // Default template if desired
+  const [template, setTemplate] = useState(""); // Will be auto-selected based on due date
+
+  // User's configured template names
+  const [configuredTemplates, setConfiguredTemplates] = useState({
+    beforeDue: '',
+    dueToday: '',
+    overdue: ''
+  });
 
   // ----------------------------------
-  // CONSTANTS
+  // CONSTANTS: 3 Default Templates
   // ----------------------------------
-  const TEMPLATE_PREVIEWS = {
-    nodue_remainder_1:
-      "Remainder! \n Hi {{customer_first_name}} 👋, \n Just a reminder that your payment of ₹{{amount}} is due on ({{due_date}}). \nKindly make the payment at your convenience.\n Thank you!",
-    // nodue_remainder_2: "..."
+  const TEMPLATE_OPTIONS = {
+    nodue_before_due_1: {
+      label: "Before Due Reminder",
+      value: "nodue_before_due_1",
+      preview: "Hi {{1}} 👋,\n\nThis is a reminder that ₹{{2}} is due on {{3}}.\n\nPlease make the payment at your convenience.\n\nThank you!"
+    },
+    nodue_due_today_1: {
+      label: "Due Today Reminder",
+      value: "nodue_due_today_1",
+      preview: "Hi {{1}} 👋,\n\nThis is a reminder that ₹{{2}} is due TODAY ({{3}}).\n\nKindly make the payment at your earliest convenience.\n\nThank you!\n{{4}}"
+    },
+    nodue_overdue_1: {
+      label: "Overdue Reminder",
+      value: "nodue_overdue_1",
+      preview: "Hi {{1}} 👋,\n\nThis is a follow-up regarding ₹{{2}}, which was due on {{3}} and is currently pending.\n\nPlease make the payment at your earliest convenience.\n\nThank you!\n{{4}}"
+    }
   };
+
+  // ----------------------------------
+  // EFFECTS: Fetch user's configured templates
+  // ----------------------------------
+  useEffect(() => {
+    const fetchConfiguredTemplates = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/whatsapp/template-config`, {
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setConfiguredTemplates(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch configured templates", error);
+      }
+    };
+    fetchConfiguredTemplates();
+  }, []);
+
+  // ----------------------------------
+  // EFFECTS: Auto-select template based on due date
+  // ----------------------------------
+  useEffect(() => {
+    if (selectedTransaction && configuredTemplates) {
+      const dueDate = new Date(selectedTransaction.dueDate);
+      const today = new Date();
+
+      // Normalize dates to compare only date part (not time)
+      dueDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+
+      let autoTemplate;
+      if (dueDate > today) {
+        // Due date is in the future - use configured beforeDue template
+        autoTemplate = configuredTemplates.beforeDue || "nodue_before_due_1";
+      } else if (dueDate.getTime() === today.getTime()) {
+        // Due date is today - use configured dueToday template
+        autoTemplate = configuredTemplates.dueToday || "nodue_due_today_1";
+      } else {
+        // Due date has passed (overdue) - use configured overdue template
+        autoTemplate = configuredTemplates.overdue || "nodue_overdue_1";
+      }
+
+      setTemplate(autoTemplate);
+    }
+  }, [selectedTransaction, configuredTemplates]);
 
   // ----------------------------------
   // EFFECTS: Fetch Data
@@ -46,6 +113,7 @@ export default function ScheduleOrSendReminderModal({
       setSelectedTransaction(null);
       setMode("schedule");
       setScheduleDate("");
+      setTemplate("");
 
       async function fetchCus() {
         try {
@@ -81,12 +149,26 @@ export default function ScheduleOrSendReminderModal({
   }
 
   const handleSubmit = () => {
-    if (!selectedTransaction) return;
+    if (!selectedTransaction || !template) return;
+
+    // Prepare template variables based on selected template
+    const variables = [
+      selectedUser.name,
+      selectedTransaction.remainingDue.toString(),
+      formatDate(selectedTransaction.dueDate)
+    ];
+
+    // Add company name for due_today and overdue templates
+    if (template === "nodue_due_today_1" || template === "nodue_overdue_1") {
+      variables.push("No Due"); // You can make this dynamic from user settings
+    }
 
     onSubmit?.({
       transactionId: selectedTransaction._id,
       mode,
       scheduleDate: mode === "schedule" ? scheduleDate : null,
+      templateName: template,
+      variables: variables
     });
   };
 
@@ -103,10 +185,16 @@ export default function ScheduleOrSendReminderModal({
   const previewMessage = useMemo(() => {
     if (!template || !selectedTransaction || !selectedUser) return "";
 
-    return TEMPLATE_PREVIEWS[template]
-      ?.replace("{{customer_first_name}}", selectedUser.name)
-      ?.replace("{{amount}}", selectedTransaction?.remainingDue)
-      ?.replace("{{due_date}}", formatDate(selectedTransaction.dueDate));
+    const templateData = TEMPLATE_OPTIONS[template];
+    if (!templateData) return "";
+
+    let preview = templateData.preview;
+    preview = preview.replace("{{1}}", selectedUser.name);
+    preview = preview.replace("{{2}}", selectedTransaction.remainingDue);
+    preview = preview.replace("{{3}}", formatDate(selectedTransaction.dueDate));
+    preview = preview.replace("{{4}}", "No Due"); // Company name
+
+    return preview;
   }, [template, selectedTransaction, selectedUser]);
 
 
@@ -297,14 +385,21 @@ export default function ScheduleOrSendReminderModal({
 
                     {/* Template Selection */}
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">Template</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Template
+                        <span className="ml-2 text-green-600 text-[10px] font-normal normal-case">(Auto-selected based on due date)</span>
+                      </label>
                       <select
                         value={template}
                         onChange={(e) => setTemplate(e.target.value)}
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
                       >
-                        <option value="nodue_remainder_1">Standard Due Reminder</option>
-                        {/* Add more options as needed */}
+                        <option value="">Select a template...</option>
+                        {Object.values(TEMPLATE_OPTIONS).map((tmpl) => (
+                          <option key={tmpl.value} value={tmpl.value}>
+                            {tmpl.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
 

@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { User, Mail, Phone, Building2, MapPin, Globe, Shield, Lock, Eye, EyeOff, Camera, Trash2, Save, Bell, Crown, CreditCard, QrCode, LogOut, CheckCircle2, Download } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { toast } from "react-toastify";
 import { updateUser } from "../../utils/service/userService.js";
-import { connectWhatsApp } from "../../utils/service/whatsappService.js";
 
 const MOCK_INVOICES = [
   { id: "INV-1008", date: "2025-10-01", amount: 499, status: "Paid" },
@@ -141,18 +141,7 @@ export default function UserProfile() {
     console.log(form);
   }, []);
 
-  const handleConnectWhatsApp = async () => {
-    try {
-      const response = await connectWhatsApp();
-      console.log("WhatsApp connection initiated");
 
-      console.log("Redirecting to:", response.data.url);
-      window.location.href = response.data.url;
-    } catch (err) {
-      console.error("Error connecting WhatsApp:", err);
-      toast.error("Failed to connect WhatsApp. Please try again.");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -167,10 +156,9 @@ export default function UserProfile() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button className="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-                onClick={handleConnectWhatsApp}>
+              <Link to="/nodue/settings/whatsapp" className="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                 <LogOut className="w-4 h-4" /> Connect WhatsApp Account
-              </button>
+              </Link>
             </div>
           </div>
         </div>

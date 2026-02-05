@@ -4,7 +4,7 @@ import whatsappService from "../../services/whatsapp.service.js";
 import { getCurrentDue, updateTransactionStatus } from "../../services/due.service.js"
 import whatsappAuditService from "../../services/whatsapp.audit.service.js";
 import { getOrCreateSession, updateSession } from "../../services/whatsappSession.service.js"
-import whatsappSessionModel from "../../models/whatsappSession.model.js";
+import whatsappSessionModel from "../../model/whatsappSession.model.js";
 import whatsappMessage from "../../model/whatsappMessage.modal.js";
 import Customer from "../../model/customer.model.js";
 

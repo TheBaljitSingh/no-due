@@ -9,7 +9,9 @@ import whatsappWebhookRoutes from "./whatsappWebhookRoutes.routes.js"
 const routes = (app) => {
   app.use('/api/v1/customers', customerRoutes);
   app.use('/api/v1/auth', authRoutes);
-  app.use('/api/v1/user',userRoutes);
+  // Support for specific Facebook callback URL requested by user
+  // app.use('/api/auth', authRoutes);
+  app.use('/api/v1/user', userRoutes);
   app.use('/api/v1/remainders', remainderRoutes);
   app.use('/api/v1/payment-terms', paymentTermRoutes);
   app.use("/api/v1/whatsapp", whatsappRoutes);

@@ -1,6 +1,8 @@
 import passport from "../utils/passportSetup/passportSetup.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
+import axios from "axios";
+import User from "../model/user.model.js";
 
 export const googleLogin = passport.authenticate('google',{
     scope:['profile','email'],
@@ -100,3 +102,97 @@ export const localLogin = (req,res) => {
     })(req,res);
 };
 
+
+export const metaCallback = async(req, res)=>{
+      const { code, state } = req.body || req.query; // Support both POST and GET
+    
+      if (!code || !state) {
+        console.log("code",code);
+        console.log("state",state);
+        return res.status(400).send("Invalid OAuth callback");
+      }
+    
+      try {
+        // 1️⃣ Exchange code → access token
+        const tokenRes = await axios.get(
+          "https://graph.facebook.com/v24.0/oauth/access_token",
+          {
+            params: {
+              client_id: process.env.META_APP_ID,
+              client_secret: process.env.META_APP_SECRET,
+              redirect_uri: '',
+              code,
+            },
+          }
+        );
+    
+        const accessToken = tokenRes.data.access_token;
+    
+        // 2️⃣ Get WhatsApp Business Accounts
+        // 2️⃣ Get assigned WhatsApp Business Accounts directly
+        const wabaRes = await axios.get(
+          "https://graph.facebook.com/v24.0/me/assigned_whatsapp_business_accounts",
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+    
+        console.log("WABA Response:", wabaRes.data);
+    
+        const wabaId = wabaRes.data.data?.[0]?.id;
+        if (!wabaId) throw new Error("No WhatsApp Business Account found");
+    
+    
+        // 3️⃣ Get phone numbers
+        const phoneRes = await axios.get(
+          `https://graph.facebook.com/v24.0/${wabaId}/phone_numbers`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+    
+        const phoneNumberId = phoneRes.data.data?.[0]?.id;
+        if (!phoneNumberId) throw new Error("No phone number found");
+    
+        // 4️⃣ Save to DB // state is userId
+        await User.findByIdAndUpdate(state, {
+          whatsapp: {
+            status: "connected",
+            provider: "meta",
+            wabaId,
+            phoneNumberId,
+            accessToken,
+          },
+        });
+    
+        // 5️⃣ Return response based on request method
+        // If POST request from frontend, return JSON
+        if (req.method === 'POST') {
+          return res.status(200).json({
+            success: true,
+            message: "WhatsApp connected successfully",
+            data: { wabaId, phoneNumberId }
+          });
+        }
+        
+        // If GET request from OAuth flow, redirect
+        // return res.redirect(
+        //   `${process.env.CLIENT_BASE_URL}/settings/whatsapp?connected=true`
+        // );
+      } catch (err) {
+        console.error("WhatsApp OAuth Error:", err.response?.data || err.message);
+        
+        // Return JSON for POST, redirect for GET
+        if (req.method === 'POST') {
+          return res.status(500).json({
+            success: false,
+            message: "Failed to connect WhatsApp",
+            error: err.response?.data || err.message
+          });
+        }
+        
+        // return res.redirect(
+        //   `${process.env.CLIENT_BASE_URL}/settings/whatsapp?connected=false`
+        // );
+      }
+}

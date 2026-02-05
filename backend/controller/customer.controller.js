@@ -22,15 +22,19 @@ export const createCustomer = async (req, res) => {
         const mobile = customer.mobile?.toString().replace(/\D/g, ''); // sanitize
         const formattedMobile = mobile.startsWith('91') ? mobile : `91${mobile}`;
 
+        console.log(formattedMobile);
+
         // Check if customer already exists by mobile number
         const existingCustomer = await Customer.findOne({
           mobile: formattedMobile,
           CustomerOfComapny: userId
         }).populate('paymentTerm');
 
+        console.log(existingCustomer);
+
         if (existingCustomer) {
           // Customer exists - accumulate due
-          const dueAmount = Number(customer.currentDue) || 0;
+          const dueAmount = Number(customer.due) || 0;
 
           if (dueAmount > 0) {
             // Calculate due date based on payment term
@@ -52,10 +56,16 @@ export const createCustomer = async (req, res) => {
               }
             });
 
+            console.log("transactikon created", transaction);
+
             // Update customer's current due and last transaction
             existingCustomer.currentDue += dueAmount;
             existingCustomer.lastTransaction = transaction._id;
             existingCustomer.status = existingCustomer.status === "Overdue" ? "Overdue" : "Due";
+
+
+
+            //one doubt should i add reminder also???
 
             // Update feedback if provided in upload (optional, but good for sync)
             if (customer.feedback) existingCustomer.feedback = customer.feedback;
@@ -73,13 +83,43 @@ export const createCustomer = async (req, res) => {
           results.push(existingCustomer);
         } else {
           // New customer - create record
+
+          const dueAmount = Number(customer.due) || 0;
+          const paymentTerm = customer.paymentTerm;
+
+
           const newCustomerData = {
             ...customer,
             mobile: formattedMobile,
             CustomerOfComapny: userId
           };
-
           const newCustomer = await Customer.create(newCustomerData);
+
+          if(dueAmount>0){
+            //have to create transaction here
+            const creditDays = paymentTerm?.creditDays ?? 0;
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + creditDays);
+
+            const transaction = await Transaction.create({
+              customerId: newCustomer._id,
+              type: "DUE_ADDED",
+              amount: dueAmount,
+              paidAmount: 0,
+              paymentStatus: "PENDING",
+              dueDate,
+              metadata: {
+                note: customer.note || "Bulk upload due addition",
+                operatorId: userId
+              }
+            });
+            newCustomer.lastTransaction = transaction._id;
+            newCustomer.currentDue = dueAmount;
+            newCustomer.status = customer.status=='Due'?'Due':'';
+            await newCustomer.save();
+          }
+          console.log("newCustomer", newCustomer);
+
           createdCount++;
           results.push(newCustomer);
         }

@@ -23,6 +23,8 @@ router.get("/", (req, res) => {
 });
 
 router.post("/",(req, res)=>{
+
+  console.log("webhook response");
         
     res.sendStatus(200);
 

@@ -34,18 +34,29 @@ const addressSchema = new Schema({
 
 const whatsappSchema = new Schema({
 
-    provider:{
+    provider: {
         type: String,
-        default:"meta"
+        default: "meta"
     },
     status: {
         type: String,
-        enum: ['not_connected', 'connected'],
+        enum: ['not_connected', 'connected', 'pending'],
         default: 'not_connected'
+    },
+    setupStatus: {
+        type: String,
+        enum: ['PENDING', 'COMPLETED', 'FAILED'],
     },
     wabaId: String,
     phoneNumberId: String,
     accessToken: String,
+    businessProfileId: String, // Meta Business Portfolio ID
+    sharedWabaId: String, // If using On-Behalf-Of flow
+    reminderTemplates: {
+        beforeDue: { type: String, default: '' },
+        dueToday: { type: String, default: '' },
+        overdue: { type: String, default: '' }
+    }
 }, { _id: false });
 
 const userSchema = new Schema({

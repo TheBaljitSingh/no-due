@@ -9,6 +9,7 @@ import AfterAuthLanding from "../Pages/AfterAuthPages/AfterAuthLanding";
 import CustomerMaster from "../Pages/AfterAuthPages/CustomerMaster";
 import UploadCenter from "../Pages/AfterAuthPages/UploadCenter";
 import ReminderManagement from "../Pages/AfterAuthPages/ReminderManagement";
+import ReminderTemplates from "../Pages/AfterAuthPages/ReminderTemplates";
 import ReminderHistory from "../Pages/AfterAuthPages/ReminderHistory";
 import UserProfile from "../Pages/AfterAuthPages/UserProfile";
 import SubcriptionPage from "../Pages/AfterAuthCTCPages/SubcriptionPage";
@@ -26,6 +27,7 @@ import PaymentReminder from "../Pages/PaymentReminder/PaymentReminder"
 import WhatsappChats from "../Pages/WhatsappChats/WhatsappChats"
 import AllTransaction from "../Pages/AfterAuthPages/AllTransaction"
 import TransactionHistoryDuePage from "../Components/AfterAuthComponent/CustomerMasterPage/Transactions";
+import WhatsappConnectivity from "../Pages/AfterAuthPages/WhatsappConnectivity";
 
 const PageLinks = () => {
   const location = useLocation();
@@ -72,15 +74,17 @@ const PageLinks = () => {
         <Route path="transactions" element={<TransactionHistoryDuePage />} />
         <Route path="upload-center" element={<UploadCenter />} />
         <Route path="reminder-management" element={<ReminderManagement />} />
+        <Route path="reminder-templates" element={<ReminderTemplates />} />
         <Route path="reminder-history" element={<ReminderHistory />} />
         <Route path="user-profile" element={<UserProfile />} />
         <Route path="subscriptions" element={<SubcriptionPage />} />
         <Route path="documentaion" element={<Documentation />} />
         <Route path="help" element={<HelpPage />} />
         <Route path="payment-reminder" element={<PaymentReminder />} />
-        <Route path="whatsapp-chat" element={<WhatsappChats/>} />
-        <Route path="all-transactions" element={<AllTransaction/>} />
-         
+        <Route path="whatsapp-chat" element={<WhatsappChats />} />
+        <Route path="all-transactions" element={<AllTransaction />} />
+        <Route path="settings/whatsapp" element={<WhatsappConnectivity />} />
+
 
       </Route>
 

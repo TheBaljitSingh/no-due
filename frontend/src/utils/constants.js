@@ -114,6 +114,10 @@ export const SidebarFeatures = [
       icon: 'ReminderIcon',
       path: "reminder-management"
     }, {
+      name: "Templates",
+      icon: "BookIcon",
+      path: "reminder-templates"
+    }, {
       name: "Reminder History",
       icon: "HistoryIcon",
       path: "reminder-history"
@@ -125,7 +129,7 @@ export const SidebarFeatures = [
     icon: "ClipboardClock",
     path: "payment-reminder"
   },
-  
+
   // {
   //   name:"whatsapp chats",
   //   icon:"FaWhatsapp",

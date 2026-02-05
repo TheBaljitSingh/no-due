@@ -6,9 +6,9 @@ import mongoose from "mongoose";
 import { canSendReminder } from "../middleware/reminderLimitMiddleware.js";
 import {
   REMINDER_TEMPLATE_NAMES,
-  getBeforeDueMessage,
-  getDueTodayMessage,
-  getOverdueMessage
+  getBeforeDueTemplate,
+  getDueTodayTemplate,
+  getOverdueTemplate
 } from "../utils/reminder.templates.js";
 import User from "../model/user.model.js";
 import { formatDate } from "../utils/Helper.js";
@@ -133,24 +133,48 @@ class ReminderService {
         const [name, amount, dueDate] = variables;
 
         if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE) {
-          messagePayload = getBeforeDueMessage(name, amount, new Date(dueDate), companyName);
+          // messagePayload = getBeforeDueTemplate(name, amount, new Date(dueDate), companyName);
+          messagePayload = getBeforeDueTemplate(name, amount, new Date(dueDate));
         } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY) {
-          messagePayload = getDueTodayMessage(name, amount, new Date(dueDate), companyName);
+          messagePayload = getDueTodayTemplate(name, amount, new Date(dueDate), companyName);
         } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE) {
-          messagePayload = getOverdueMessage(name, amount, new Date(dueDate), companyName);
+          messagePayload = getOverdueTemplate(name, amount, new Date(dueDate), companyName);
+        }
+
+        // Fetch credentials from Customer -> User
+        const customer = await Customer.findById(transaction.customerId._id).populate('CustomerOfComapny');
+        const merchant = customer?.CustomerOfComapny;
+
+        if (!merchant || !merchant.whatsapp || !merchant.whatsapp.accessToken) {
+          throw new Error("Merchant WhatsApp credentials not found");
         }
 
         if (messagePayload) {
-          await whatsappService.sendInteractiveMessage({
+          await whatsappService.sendTemplateMessage({
             to: `${transaction.customerId.mobile}`,
-            ...messagePayload
+            templateName: messagePayload.templateName,
+            variables: messagePayload.variables,
+            language: "en_US",
+            accessToken: merchant.whatsapp.accessToken,
+            phoneNumberId: merchant.whatsapp.phoneNumberId
           });
         }
       } else {
+        // Fetch credentials from Customer -> User
+        const customer = await Customer.findById(transaction.customerId._id).populate('CustomerOfComapny');
+        const merchant = customer?.CustomerOfComapny;
+
+        if (!merchant || !merchant.whatsapp || !merchant.whatsapp.accessToken) {
+          throw new Error("Merchant WhatsApp credentials not found");
+        }
+
         await whatsappService.sendTemplateMessage({
           to: `${transaction.customerId.mobile}`,
           templateName,
           variables,
+          language: "en ",
+          accessToken: merchant.whatsapp.accessToken,
+          phoneNumberId: merchant.whatsapp.phoneNumberId
         });
       }
 
@@ -298,19 +322,36 @@ class ReminderService {
         const [name, amount, dueDate] = reminder.templateVariables; // Ensure variables stored match this order
         let templateName = reminder?.whatsappTemplate?.name;
         if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE) {
-          messagePayload = getBeforeDueMessage(name, amount, new Date(dueDate), companyName);
+          messagePayload = getBeforeDueTemplate(name, amount, new Date(dueDate), companyName);
         } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY) {
-          messagePayload = getDueTodayMessage(name, amount, new Date(dueDate), companyName);
+          messagePayload = getDueTodayTemplate(name, amount, new Date(dueDate), companyName);
         } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE) {
-          messagePayload = getOverdueMessage(name, amount, new Date(dueDate), companyName);
+          messagePayload = getOverdueTemplate(name, amount, new Date(dueDate), companyName);
         }
 
         console.log("message payload: ", messagePayload, "\n");
 
         if (messagePayload) {
-          await whatsappService.sendInteractiveMessage({
+          // Fetch credentials from Customer -> User
+          // reminder.customerId might be populated but we need to ensure we get the User.
+          // Reminder has customerId, Transaction has customerId. 
+          // Let's use reminder.customerId and populate CustomerOfComapny
+          const customer = await Customer.findById(reminder.customerId._id || reminder.customerId).populate('CustomerOfComapny');
+          const merchant = customer?.CustomerOfComapny;
+
+          if (!merchant || !merchant.whatsapp || !merchant.whatsapp.accessToken) {
+            console.error(`[Reminder Service] No WhatsApp credentials for customer ${customer._id}`);
+            // fail safely or continue
+            throw new Error("No WhatsApp credentials");
+          }
+
+          await whatsappService.sendTemplateMessage({
             to: `${tx.customerId.mobile}`,
-            ...messagePayload
+            templateName: messagePayload.templateName,
+            variables: messagePayload.variables,
+            language: "en",
+            accessToken: merchant.whatsapp.accessToken,
+            phoneNumberId: merchant.whatsapp.phoneNumberId
           });
 
           reminder.status = "sent";

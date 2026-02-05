@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const PRODUCTION_SERVERS=[];
+const PRODUCTION_SERVERS=['https://nodue.rvpuni.in'];
 
 let currentServerIndex=0;
 

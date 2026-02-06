@@ -1,5 +1,5 @@
 import express from 'express';
-import { metaCallback, checkAuth, getGoogleProfile, googleLogin, googleLoginCallback, localLogin, logout } from '../controller/auth.controller.js';
+import { metaCallback, checkAuth, getGoogleProfile, googleLogin, googleLoginCallback, localLogin, logout, disconnectWhatsApp } from '../controller/auth.controller.js';
 
 const router = express.Router();
 
@@ -9,6 +9,7 @@ router.get('/profile', getGoogleProfile);
 router.get('/check-auth', checkAuth);
 router.get('/logout', logout);
 router.post('/login', localLogin);
-router.post("/meta/callback", metaCallback);
+router.get("/meta/callback", metaCallback);
+router.post("/whatsapp/disconnect", disconnectWhatsApp);
 
 export default router;

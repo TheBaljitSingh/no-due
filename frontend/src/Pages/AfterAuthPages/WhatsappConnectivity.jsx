@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Facebook } from 'lucide-react';
+import { Facebook, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import api from '../../utils/service/api';
+import { diconnectWhatsapp } from "../../utils/service/authService.js"
+
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const WhatsappConnectivity = () => {
     const { user, setUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState(user?.whatsapp?.status || 'not_connected');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Load Facebook SDK
@@ -27,6 +34,54 @@ const WhatsappConnectivity = () => {
             fjs.parentNode.insertBefore(js, fjs);
         }(document, 'script', 'facebook-jssdk'));
     }, []);
+
+    // Handle OAuth callback redirect
+    useEffect(() => {
+        const connected = searchParams.get('connected');
+        const errorParam = searchParams.get('error');
+
+        if (connected === 'true') {
+            // Success - fetch updated user data
+            const fetchUserData = async () => {
+                try {
+                    //in dev it will log 2 time may be
+                    const response = await api.get('/v1/auth/check-auth');
+                    if (response.data.success && response.data.data.user) {
+                        setUser(response.data.data.user);
+                        setStatus('connected');
+                    }
+                    toast.success('WhatsApp connected successfully!', {
+                        position: 'top-right',
+                        autoClose: 5000,
+                    });
+                } catch (error) {
+                    console.error('Failed to fetch updated user data:', error);
+                    toast.success('WhatsApp connected successfully!', {
+                        position: 'top-right',
+                        autoClose: 5000,
+                    });
+                }
+                // Clean up URL
+                searchParams.delete('connected');
+                setSearchParams(searchParams, { replace: true });
+            };
+            fetchUserData();
+        } else if (connected === 'false') {
+            // Failure - show error message
+            const errorMessage = errorParam
+                ? decodeURIComponent(errorParam)
+                : 'Failed to connect WhatsApp. Please try again.';
+
+            toast.error(errorMessage, {
+                position: 'top-right',
+                autoClose: 7000,
+            });
+            // Clean up URL
+            searchParams.delete('connected');
+            searchParams.delete('error');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams, setUser]);
 
     const launchWhatsAppSignup = () => {
         setLoading(true);
@@ -54,34 +109,15 @@ const WhatsappConnectivity = () => {
                 const code = response.authResponse.code;
 
                 try {
-
-
-                    const res = await fetch(
-                        `https://unblocked-nonnutritively-coralie.ngrok-free.dev/api/v1/auth/meta/callback`,
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
-                            credentials: "include",
-                            body: JSON.stringify({ code, state: user._id })
-                        }
-                    );
-
-                    const data = await res.json();
-
-                    if (!res.ok || !data.success) {
-                        throw new Error(data.message || "Failed to connect WhatsApp");
-                    }
-
-                    setStatus("connected");
-                    toast.success("Whatsapp Connected Successfully");
-                    
-                    
+                    // Redirect to backend callback endpoint
+                    // Backend will handle token exchange and redirect back to frontend
+                    window.location.href = `${VITE_API_BASE_URL}/api/v1/auth/meta/callback?code=${code}&state=${user._id}`;
                 } catch (error) {
                     console.error("Connection failed:", error);
-                    alert("Failed to connect WhatsApp: " + error.message);
-                } finally {
+                    toast.error(`Failed to connect WhatsApp: ${error.message}`, {
+                        position: 'top-right',
+                        autoClose: 5000,
+                    });
                     setLoading(false);
                 }
             })();
@@ -100,7 +136,7 @@ const WhatsappConnectivity = () => {
 
 
 
-    
+
     const [showManual, setShowManual] = useState(false);
     const [manualData, setManualData] = useState({
         wabaId: '',
@@ -114,13 +150,68 @@ const WhatsappConnectivity = () => {
         try {
             const res = await api.post('/v1/whatsapp/manual-connect', manualData);
             if (res.data.success) {
+                // Fetch updated user data
+                try {
+                    const userResponse = await api.get('/v1/auth/check-auth');
+                    if (userResponse.data.success && userResponse.data.data.user) {
+                        setUser(userResponse.data.data.user);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch updated user data:', error);
+                }
+
                 setStatus('connected');
-                alert('Connected successfully (Manual Mode)');
-                window.location.reload();
+                toast.success('WhatsApp connected successfully (Manual Mode)! 🎉', {
+                    position: 'top-right',
+                    autoClose: 5000,
+                });
+                setShowManual(false);
             }
         } catch (error) {
             console.error("Manual connect failed", error);
-            alert("Failed to connect: " + (error.response?.data?.message || error.message));
+            toast.error(`Failed to connect: ${error.response?.data?.message || error.message}`, {
+                position: 'top-right',
+                autoClose: 5000,
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDisconnect = async () => {
+        // Confirmation dialog
+        const confirmed = window.confirm(
+            'Are you sure you want to disconnect your WhatsApp Business Account? This will stop all automated reminders and messages.'
+        );
+
+        if (!confirmed) return;
+
+        setLoading(true);
+        try {
+            const res = await diconnectWhatsapp();
+            if (res.success) {
+                // Fetch updated user data
+                try {
+                    const userResponse = await api.get('/v1/auth/check-auth');
+                    if (userResponse.data.success && userResponse.data.data.user) {
+                        setUser(userResponse.data.data.user);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch updated user data:', error);
+                }
+
+                setStatus('not_connected');
+                toast.success('WhatsApp disconnected successfully', {
+                    position: 'top-right',
+                    autoClose: 5000,
+                });
+            }
+        } catch (error) {
+            console.error("Disconnect failed", error);
+            toast.error(`Failed to disconnect: ${error.response?.data?.message || error.message}`, {
+                position: 'top-right',
+                autoClose: 5000,
+            });
         } finally {
             setLoading(false);
         }
@@ -241,8 +332,12 @@ const WhatsappConnectivity = () => {
                             </div>
                         </dl>
                         <div className="mt-6 flex justify-end">
-                            <button className="text-red-600 text-sm hover:text-red-700 font-medium">
-                                Disconnect Account
+                            <button
+                                onClick={handleDisconnect}
+                                disabled={loading}
+                                className="text-red-600 text-sm hover:text-red-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? 'Disconnecting...' : 'Disconnect Account'}
                             </button>
                         </div>
                     </div>

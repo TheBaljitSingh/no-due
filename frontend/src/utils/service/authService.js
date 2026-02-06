@@ -27,3 +27,8 @@ export const getGoogleProfile = async () => {
         const response = await api.get('/v1/auth/profile');
         return response.data;
 };
+
+export const diconnectWhatsapp = async ()=>{
+        const response = await api.post('/v1/auth/whatsapp/disconnect');
+        return response.data;
+}

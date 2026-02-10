@@ -30,7 +30,7 @@ export default function ReminderManagement() {
     failed: 0,
     pending: 0,
     total: 0,
-    responseRate: "41%" // hardcoded for now or fetch if API supports
+    responseRate: "0%" // hardcoded for now or fetch if API supports
   });
 
   const fetchReminders = useCallback(async () => {
@@ -56,7 +56,7 @@ export default function ReminderManagement() {
       setPagination(prev => ({ ...prev, ...output.meta }));
 
       if (output.stats) {
-        setStats(prev => ({ ...prev, ...output.stats }));
+        setStats(prev => ({ ...prev, ...output.stats,scheduled:output?.stats?.pending  }));
       }
 
     } catch (error) {

@@ -185,6 +185,8 @@ export const sendWhatsappRemainder = async (req, res) => {
       dueDate // Pass Date object, service formats it
     ];
 
+    console.log("variables",variables);
+
     const result = await remainderService.sendNow({
       transactionId: tx._id,
       templateName,

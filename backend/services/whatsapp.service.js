@@ -137,7 +137,6 @@ class WhatsappService {
       if (!accessToken || !phoneNumberId) {
         throw new Error("Missing WhatsApp credentials (accessToken or phoneNumberId)");
       }
-
       const payload = {
         messaging_product: "whatsapp",
         recipient_type: "individual",
@@ -149,9 +148,11 @@ class WhatsappService {
           components: [
             {
               type: "body",
-              parameters: variables.map(v => ({
+              parameters: Object.entries(variables).map(([key, v]) => ({
                 type: "text",
-                text: String(v)
+                text: String(v),
+                parameter_name: key
+
               }))
             }
           ]

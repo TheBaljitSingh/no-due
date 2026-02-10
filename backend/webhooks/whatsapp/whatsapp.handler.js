@@ -26,9 +26,17 @@ export const handleWhatsappEvent = async (payload) => {
 
   const rawMsg = entry?.changes?.[0]?.value?.messages?.[0];
 
+  // Get merchant credentials from customer
+  const customer = await Customer.findOne({ mobile: intent.from }).populate('CustomerOfComapny');
+  const merchant = customer?.CustomerOfComapny;
+  
+  const mercantCredentials = {
+    accessToken: merchant?.whatsapp?.accessToken,
+    phoneNumberId: merchant?.whatsapp?.phoneNumberId
+  };
 
-  if (rawMsg?.id) {
-    await whatsappService.markRead(rawMsg.id);
+  if (rawMsg?.id && mercantCredentials.accessToken && mercantCredentials.phoneNumberId) {
+    await whatsappService.markRead(rawMsg.id, mercantCredentials.accessToken, mercantCredentials.phoneNumberId);
   }
 
 
@@ -80,14 +88,14 @@ export const handleWhatsappEvent = async (payload) => {
     const session = await getOrCreateSession(intent.from);
 
     //will send menu from pre defined templates 
-    return sendMainMenu(intent.from);
+    return sendMainMenu(intent.from, mercantCredentials);
   } else if (intent.type === "LIST") {
     // List action routing seprately
-    routeAction(intent);
+    routeAction(intent, mercantCredentials);
   }
 };
 
-const routeAction = async (intent) => {
+const routeAction = async (intent, mercantCredentials) => {
   const { actionId, from } = intent;
   console.log(`User ${from} selected action Id : ${actionId}`);
 
@@ -103,14 +111,28 @@ const routeAction = async (intent) => {
         await updateSession(intent.from, { state: "CHECK_CURRENT_DUE" });
         const response = await getCurrentDue({ from });
         if (response.success) {
-          await whatsappService.sendTextMessage({ to: from, text: response?.text });
+          if (mercantCredentials.accessToken && mercantCredentials.phoneNumberId) {
+            await whatsappService.sendTextMessage({
+              to: from,
+              text: response?.text,
+              accessToken: mercantCredentials.accessToken,
+              phoneNumberId: mercantCredentials.phoneNumberId
+            });
+          }
         }
 
       } else {
 
         const restartConversactionTxt = `Due to inactive on the channel, your session has timed out ⌛. 
 Just type *Hi* to restart your conversation👋 `;
-        whatsappService.sendTextMessage({ to: intent.from, text: restartConversactionTxt });
+        if (mercantCredentials.accessToken && mercantCredentials.phoneNumberId) {
+          whatsappService.sendTextMessage({
+            to: intent.from,
+            text: restartConversactionTxt,
+            accessToken: mercantCredentials.accessToken,
+            phoneNumberId: mercantCredentials.phoneNumberId
+          });
+        }
       }
 
 

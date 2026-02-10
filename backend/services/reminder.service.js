@@ -133,8 +133,8 @@ class ReminderService {
         const [name, amount, dueDate] = variables;
 
         if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE) {
-          // messagePayload = getBeforeDueTemplate(name, amount, new Date(dueDate), companyName);
-          messagePayload = getBeforeDueTemplate(name, amount, new Date(dueDate));
+          messagePayload = getBeforeDueTemplate(name, amount, new Date(dueDate), companyName);
+          // messagePayload = getBeforeDueTemplate(name, amount, new Date(dueDate));
         } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY) {
           messagePayload = getDueTodayTemplate(name, amount, new Date(dueDate), companyName);
         } else if (templateName === REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE) {
@@ -154,7 +154,7 @@ class ReminderService {
             to: `${transaction.customerId.mobile}`,
             templateName: messagePayload.templateName,
             variables: messagePayload.variables,
-            language: "en_US",
+            language: "en",
             accessToken: merchant.whatsapp.accessToken,
             phoneNumberId: merchant.whatsapp.phoneNumberId
           });

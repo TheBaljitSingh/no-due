@@ -2,10 +2,10 @@
 import { formatDate } from "./Helper.js";
 
 export const REMINDER_TEMPLATE_NAMES = {
-    //en_US
-    INTERACTIVE_BEFORE_DUE: 'nodue_before_due_1',
-    INTERACTIVE_DUE_TODAY: 'nodue_due_today_1',
-    INTERACTIVE_OVERDUE: 'nodue_overdue_1',
+    //en_US 
+    INTERACTIVE_BEFORE_DUE: 'interactive_before_due1',
+    INTERACTIVE_DUE_TODAY: 'interactive_due_today',
+    INTERACTIVE_OVERDUE: 'interactive_overdue',
 };
 
 //                en_US     APPROVED  1171560151854968
@@ -101,21 +101,23 @@ export const REMINDER_TEMPLATE_NAMES = {
 export const getBeforeDueTemplate = (name, amount, dueDate, companyName) => {
     return {
         templateName: REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE,
-        variables: [name, amount, formatDate(dueDate)]
-        // variables: [name, amount, formatDate(dueDate), companyName]
+        // variables: [name, amount, formatDate(dueDate)]
+        variables: {"name":name, "amount":amount, "duedate":formatDate(dueDate), "companyname":companyName}
     };
 };
 
 export const getDueTodayTemplate = (name, amount, dueDate, companyName) => {
     return {
         templateName: REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY,
-        variables: [name, amount, formatDate(dueDate), companyName]
+        variables: {"name":name, "amount":amount, "duedate":formatDate(dueDate), "companyname":companyName}
+        // variables: [name, amount, formatDate(dueDate), companyName]
     };
 };
 
 export const getOverdueTemplate = (name, amount, dueDate, companyName) => {
     return {
         templateName: REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE,
-        variables: [name, amount, formatDate(dueDate), companyName]
+        variables: {"name":name, "amount":amount, "duedate":formatDate(dueDate), "companyname":companyName}
+        // variables: [name, amount, formatDate(dueDate), companyName]
     };
 };

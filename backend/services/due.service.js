@@ -76,9 +76,21 @@ export const updateTransactionStatus = async ({ from, actionId }) => {
 
           if (ownerMobile) {
             const message = `Action Required: Customer ${customer.name} (${customer.mobile}) has marked their due of ₹${transaction.amount} as PAID today. Please verify.`;
-            // Assuming sending text message to owner. If owner is not a customer, we might need a different sending mechanism or just use sendTextMessage if the number is valid whatsapp number.
-            await whatsappService.sendTextMessage({ to: ownerMobile, text: message });
-            console.log(`Notification sent to owner ${ownerMobile}`);
+            // Get merchant credentials
+            const populatedCustomer = await Customer.findOne({ mobile: from }).populate('CustomerOfComapny');
+            const merchant = populatedCustomer?.CustomerOfComapny;
+            
+            if (merchant?.whatsapp?.accessToken && merchant?.whatsapp?.phoneNumberId) {
+              await whatsappService.sendTextMessage({
+                to: ownerMobile,
+                text: message,
+                accessToken: merchant.whatsapp.accessToken,
+                phoneNumberId: merchant.whatsapp.phoneNumberId
+              });
+              console.log(`Notification sent to owner ${ownerMobile}`);
+            } else {
+              console.error("Merchant WhatsApp credentials not configured");
+            }
           }
         } catch (notifyErr) {
           console.error("Failed to notify owner:", notifyErr);
@@ -140,7 +152,20 @@ export const updateTransactionStatus = async ({ from, actionId }) => {
 
         statementText += `*Pending Balance: ₹${remainingForThisDue}*`;
 
-        await whatsappService.sendTextMessage({ to: from, text: statementText });
+        // Get merchant credentials
+        const populatedCustomer = await Customer.findOne({ mobile: from }).populate('CustomerOfComapny');
+        const merchant = populatedCustomer?.CustomerOfComapny;
+        
+        if (merchant?.whatsapp?.accessToken && merchant?.whatsapp?.phoneNumberId) {
+          await whatsappService.sendTextMessage({
+            to: from,
+            text: statementText,
+            accessToken: merchant.whatsapp.accessToken,
+            phoneNumberId: merchant.whatsapp.phoneNumberId
+          });
+        } else {
+          console.error("Merchant WhatsApp credentials not configured");
+        }
         break;
 
       default:

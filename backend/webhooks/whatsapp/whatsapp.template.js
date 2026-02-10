@@ -1,6 +1,6 @@
 import whatsAppService from "../../services/whatsapp.service.js";
 
-export const sendMainMenu = async (to) => {
+export const sendMainMenu = async (to, mercantCredentials) => {
     const menu = {
         to,
         type: "list",
@@ -22,5 +22,17 @@ export const sendMainMenu = async (to) => {
       }
     };
 
-    return await whatsAppService.sendInteractiveMessage(menu);
+    if (mercantCredentials?.accessToken && mercantCredentials?.phoneNumberId) {
+      return await whatsAppService.sendInteractiveMessage({
+        to: menu.to,
+        type: menu.type,
+        body: menu.body,
+        action: menu.action,
+        accessToken: mercantCredentials.accessToken,
+        phoneNumberId: mercantCredentials.phoneNumberId
+      });
+    } else {
+      console.error("Merchant WhatsApp credentials not provided");
+      return null;
+    }
 };

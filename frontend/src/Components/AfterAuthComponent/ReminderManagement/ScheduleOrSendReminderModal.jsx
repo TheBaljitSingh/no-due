@@ -51,6 +51,23 @@ export default function ScheduleOrSendReminderModal({
       value: "nodue_overdue_1",
       preview: "Hi {{1}} 👋,\n\nThis is a follow-up regarding ₹{{2}}, which was due on {{3}} and is currently pending.\n\nPlease make the payment at your earliest convenience.\n\nThank you!\n{{4}}"
     }
+    ,
+    interactive_before_due1:{
+      label:"Interactive Before",
+      value:"interactive_before_due1",
+      preview: "Dear {{name}} 👋, \n This is a reminder that ₹{{amount}} is due on {{duedate}}. Please let us know your payment plan by selecting an option below. If payment has already been made, please ignore this message. \n Thanks, From {{companyname}} team"
+    },
+    interactive_due_today:{
+      label:"Interactive Today",
+      value:"interactive_due_today",
+      preview:"Dear {{name}},\n This is a reminder that ₹{{amount}} is due today ({{duedate}}).\n Kindly update the payment status by selecting an option below. \n If payment has already been made, please ignore this message. \n Thanks,\n From {{companyname}} team"
+
+    },
+    interactive_overdue:{
+      label:"Interactive overdue",
+      value:"interactive_overdue",
+      preview:"Dear {{name}},\n This is a follow-up regarding ₹{{amount}}, which was due on {{duedate}} and is currently pending. \n Please select an option below to update the payment status. \n If payment has already been made, please ignore this message. \n Thanks, n From {{companyname}} team"
+    }
   };
 
   // ----------------------------------
@@ -63,7 +80,9 @@ export default function ScheduleOrSendReminderModal({
           credentials: 'include'
         });
         const data = await res.json();
+        console.log("called the config template api")
         if (data.success && data.data) {
+          console.log("template data.data",data.data);
           setConfiguredTemplates(data.data);
         }
       } catch (error) {
@@ -77,6 +96,9 @@ export default function ScheduleOrSendReminderModal({
   // EFFECTS: Auto-select template based on due date
   // ----------------------------------
   useEffect(() => {
+
+    console.log("configuredTemplates",configuredTemplates);
+
     if (selectedTransaction && configuredTemplates) {
       const dueDate = new Date(selectedTransaction.dueDate);
       const today = new Date();
@@ -165,10 +187,11 @@ export default function ScheduleOrSendReminderModal({
 
     onSubmit?.({
       transactionId: selectedTransaction._id,
-      mode,
-      scheduleDate: mode === "schedule" ? scheduleDate : null,
-      templateName: template,
-      variables: variables
+      // mode,
+      // scheduleDate: mode === "schedule" ? scheduleDate : null,
+      // templateName: template,
+      // variables: variables
+      //i can send custom template language en or en_US
     });
   };
 
@@ -189,10 +212,10 @@ export default function ScheduleOrSendReminderModal({
     if (!templateData) return "";
 
     let preview = templateData.preview;
-    preview = preview.replace("{{1}}", selectedUser.name);
-    preview = preview.replace("{{2}}", selectedTransaction.remainingDue);
-    preview = preview.replace("{{3}}", formatDate(selectedTransaction.dueDate));
-    preview = preview.replace("{{4}}", "No Due"); // Company name
+    preview = preview.replace("{{name}}", selectedUser.name);
+    preview = preview.replace("{{amount}}", selectedTransaction.remainingDue);
+    preview = preview.replace("{{duedate}}", formatDate(selectedTransaction.dueDate));
+    preview = preview.replace("{{companyname}}", "No Due"); // Company name
 
     return preview;
   }, [template, selectedTransaction, selectedUser]);

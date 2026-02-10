@@ -216,7 +216,7 @@ export default function LoginModal({ open, onClose }) {
         {/* Logo Area */}
         <div className="mb-6 text-center">
           <div className={`mx-auto ${isSignUp ? 'hidden' : 'flex'} h-32 w-32 items-center justify-center rounded-full `}>
-            <img src="/src/assets/logo.png" alt="" />
+            <img src='https://res.cloudinary.com/dzdt11nsx/image/upload/v1770710830/logo_s59z23.png' alt="" />
           </div>
           <h2 className="text-2xl font-normal text-gray-800">
             {isSignUp ? "Create your Account" : "Sign in"}

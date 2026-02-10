@@ -84,7 +84,7 @@ const csvFileToJson = (file) => {
   }
   const handleDownloadCSVFormat = async()=>{
     const link = document.createElement('a');
-    link.href = '../../../../public/Template.csv'; 
+    link.href = 'https://res.cloudinary.com/dzdt11nsx/raw/upload/v1770710746/Template_sqpjjn.csv'; //template file upload on cloudinary 
     link.download="CSVFormat-nodue.csv";
     link.click();
   }

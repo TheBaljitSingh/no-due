@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, Copy, AlertCircle, Filter, History } from "lucide-react";
 import { MOCK_REMINDERS, TEMPLATES } from "../../utils/constants";
-import { currency2, IconBtn, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
+import { currency2, formatDate, IconBtn, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
 import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/EditDrawer";
 import AuditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/AuditDrawer";
@@ -363,7 +363,7 @@ export default function ReminderManagement() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-gray-700 text-sm">
                         <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-xs">{new Date(r.sendAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+                        <span className="text-xs">{new Date(r.sendAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

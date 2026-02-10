@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import logo from "../../assets/logo.png";
 import LoginModal from "../LoginModal/LoginModal";
 import { useNavigate, useLocation } from "react-router-dom";
 import logger from "../../utils/logger.js";
@@ -72,7 +71,7 @@ const Navbar = () => {
             className="inline-flex items-center gap-3"
           >
             <img
-              src={logo}
+              src='https://res.cloudinary.com/dzdt11nsx/image/upload/v1770710830/logo_s59z23.png'
               alt="NODUE logo"
               className="h-28 w-auto rounded-sm"
               loading="eager"

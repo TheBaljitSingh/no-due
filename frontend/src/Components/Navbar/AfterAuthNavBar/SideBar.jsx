@@ -123,7 +123,7 @@ const SideBar = ({ ActivePage, handleCollapse, isCollapsed}) => {
 
             {/* Logo (default or visible always based on isCollapsed) */}
             <img
-          src={isCollapsed?`/src/assets/logo_cropped.png`:`/src/assets/logo.png`}
+          src={isCollapsed?`https://res.cloudinary.com/dzdt11nsx/image/upload/v1770711210/logo_cropped_kop1bs.png`:`https://res.cloudinary.com/dzdt11nsx/image/upload/v1770710830/logo_s59z23.png`}
               alt="Nodue Logo"
               className={`
              absolute left-0 top-1/2 -translate-y-1/2

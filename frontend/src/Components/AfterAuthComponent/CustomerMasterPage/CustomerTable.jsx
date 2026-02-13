@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 const CustomerTable = () => {
 
+  const [loading, setLoading] = useState(null);
   const [customers, setCustomers] = useState([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
@@ -49,6 +50,7 @@ const CustomerTable = () => {
 
   useEffect(() => {
     const fetchCustomers = async () => {
+      setLoading(true);
       try {
         const data = await getCustomers({ page, limit });
         setCustomers(data.data.customers);
@@ -56,6 +58,8 @@ const CustomerTable = () => {
         setTotalCustomers(data.data.total);
       } catch (error) {
         console.log(error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -263,6 +267,14 @@ const CustomerTable = () => {
 
   }
 
+
+   if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[60vh]">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+            </div>
+        );
+    }
 
 
   return (

@@ -18,7 +18,7 @@ const TEMPLATE_MAP = {
 };
 
 
-function getReminderType(dueDate, now) {
+export function getReminderType(dueDate, now) {
   const dDate = new Date(dueDate);
   dDate.setHours(0, 0, 0, 0);
   const nDate = new Date(now);
@@ -185,7 +185,6 @@ export const sendWhatsappRemainder = async (req, res) => {
       dueDate // Pass Date object, service formats it
     ];
 
-    console.log("variables",variables);
 
     const result = await remainderService.sendNow({
       transactionId: tx._id,

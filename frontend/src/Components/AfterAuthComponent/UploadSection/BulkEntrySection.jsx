@@ -95,7 +95,7 @@ const BulkEntrySection = ({ paymentTerms }) => {
   }
   const handleDownloadCSVFormat = async () => {
     const link = document.createElement('a');
-    link.href = 'https://res.cloudinary.com/dzdt11nsx/raw/upload/v1770710746/Template_sqpjjn.csv'; //template file upload on cloudinary 
+    link.href = 'https://res.cloudinary.com/dzdt11nsx/raw/upload/v1770956095/Updated_Test_Data_d0br4m.xlsx'; //template file upload on cloudinary 
     link.download = "CSVFormat-nodue.csv";
     link.click();
   }

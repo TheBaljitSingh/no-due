@@ -22,7 +22,6 @@ export const createCustomer = async (req, res) => {
         const mobile = customer.mobile?.toString().replace(/\D/g, ''); // sanitize
         const formattedMobile = mobile.startsWith('91') ? mobile : `91${mobile}`;
 
-        console.log(formattedMobile);
 
         // Check if customer already exists by mobile number
         const existingCustomer = await Customer.findOne({
@@ -30,7 +29,7 @@ export const createCustomer = async (req, res) => {
           CustomerOfComapny: userId
         }).populate('paymentTerm');
 
-        console.log(existingCustomer);
+        // console.log(existingCustomer);
 
         if (existingCustomer) {
           // Customer exists - accumulate due

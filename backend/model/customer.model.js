@@ -62,6 +62,7 @@ const customerSchema = new Schema({
         type: String,
         enum: ["Paid", "Due", "Overdue", "Pending"],
         default: "Due",
+        
     },
     gender: {
         type: String,

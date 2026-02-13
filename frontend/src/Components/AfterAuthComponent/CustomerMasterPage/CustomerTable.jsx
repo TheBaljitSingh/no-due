@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { currency, formatDate, StatusBadge, ActionBadge } from '../../../utils/AfterAuthUtils/Helpers'
-import { Download, FileText, Pencil, Trash2 } from 'lucide-react'
+import { Download, FileText, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { TableHeaders } from "../../../utils/constants.js";
 import { deleteCustomerById, getAllcustomers, getCustomers, getCustomerTransactions, updatecustomer } from "../../../utils/service/customerService";
 import { toast } from 'react-toastify';

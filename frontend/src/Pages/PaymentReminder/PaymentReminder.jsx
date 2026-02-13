@@ -1,16 +1,16 @@
 import React, { use, useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import PaymentReminderTemplateCreationModel from "../../Components/AfterAuthComponent/PaymentReminder/PaymentReminderTemplateCreationModel";
-import {createPaymentTerms, deletePaymentTerms, getUserPaymentTerms, updatePaymentTerms} from "../../utils/service/paymentTermService"
+import { createPaymentTerms, deletePaymentTerms, getUserPaymentTerms, updatePaymentTerms } from "../../utils/service/paymentTermService"
 import { toast } from "react-toastify";
-import {useAuth} from "../../context/AuthContext"
+import { useAuth } from "../../context/AuthContext"
 
 export default function PaymentReminder() {
   const [globalTerms, setGlobalTerms] = useState([]);
   const [customTerms, setCustomTerms] = useState([]);
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [editingTerm, setEditingTerm] = useState();
-  const [deletePaymentTerm,  setPaymentTerm] = useState();
+  const [deletePaymentTerm, setPaymentTerm] = useState();
 
   const [showTemplateCreationModal, setShowTemplateCreationModal] = useState(false);
   const templateCreationRef = useRef();
@@ -19,15 +19,15 @@ export default function PaymentReminder() {
   useEffect(() => {
 
 
-    async function fetchUserTemplate(){
+    async function fetchUserTemplate() {
       try {
         //api should be protected by auth middleware that only user can fetch thair template and default provided by nodue
         const res = await getUserPaymentTerms();
         let templates = res.data.paymentTerms;
-  
-      setGlobalTerms(templates.filter((t) => t.owner === null)); //have to verify
-      setCustomTerms(templates.filter((t) => t.owner === user._id));
-        
+
+        setGlobalTerms(templates.filter((t) => t.owner === null)); //have to verify
+        setCustomTerms(templates.filter((t) => t.owner === user._id));
+
 
       } catch (error) {
         console.log(error);
@@ -35,63 +35,63 @@ export default function PaymentReminder() {
     }
 
     fetchUserTemplate();
-   
+
   }, []);
 
 
 
 
-useEffect(() => {
-  function handleClickOutside(e) {
-    if (
-      templateCreationRef.current &&
-      !templateCreationRef.current.contains(e.target)
-    ) {
-      setShowTemplateCreationModal(false);
-      setEditingTerm(null);
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (
+        templateCreationRef.current &&
+        !templateCreationRef.current.contains(e.target)
+      ) {
+        setShowTemplateCreationModal(false);
+        setEditingTerm(null);
+      }
     }
-  }
 
-  if (showTemplateCreationModal) {
-    window.addEventListener("mousedown", handleClickOutside);
-  }
+    if (showTemplateCreationModal) {
+      window.addEventListener("mousedown", handleClickOutside);
+    }
 
-  return () => {
-    window.removeEventListener("mousedown", handleClickOutside);
-  };
-}, [showTemplateCreationModal]);
-
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showTemplateCreationModal]);
 
 
 
 
 
-  const handleCreationSubmit = async (payload)=>{ // dout can i make it async?
-    console.log("payload",payload);
-    
+
+  const handleCreationSubmit = async (payload) => { // dout can i make it async?
+    console.log("payload", payload);
+
     try {
 
-      if(editingTerm){
+      if (editingTerm) {
         const res = await updatePaymentTerms(editingTerm._id, payload);
 
         setCustomTerms(prev =>
-        prev.map(t =>
-          t._id === editingTerm._id ? res.data.paymentTerm : t
-        )
-        
-      );
-      toast.success("Payment term updated");
+          prev.map(t =>
+            t._id === editingTerm._id ? res.data.paymentTerm : t
+          )
 
-      }else{
+        );
+        toast.success("Payment term updated");
+
+      } else {
 
         const res = await createPaymentTerms(payload);
-        
+
         //have to update the res
-        setCustomTerms((prev)=>([
+        setCustomTerms((prev) => ([
           ...prev,
           res.data.paymentTerm
         ]));
-      toast.success("Payment term created");
+        toast.success("Payment term created");
       }
 
       setEditingTerm(null);
@@ -120,9 +120,9 @@ useEffect(() => {
   };
 
   const handleEdit = (term) => {
-  setEditingTerm(term);
-  setShowTemplateCreationModal(true);
-};
+    setEditingTerm(term);
+    setShowTemplateCreationModal(true);
+  };
 
 
   return (
@@ -169,7 +169,7 @@ useEffect(() => {
             </h3>
 
             <button
-            onClick={()=>setShowTemplateCreationModal(true)}
+              onClick={() => setShowTemplateCreationModal(true)}
               className="flex items-center gap-1 text-sm bg-green-700 text-white px-3 py-1.5 rounded-lg hover:bg-green-900 transition"
             >
               <Plus size={16} />
@@ -190,27 +190,27 @@ useEffect(() => {
                 >
                   <div>
                     <div className="font-medium text-gray-800">
-                    {term.name}
+                      {term.name}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Reminders: {term.reminderOffsets.map((d, index) => `${d}${term.reminderOffsets.length - 1 == index ? '' : ','}`)} days before
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Reminders: {term.reminderOffsets.map((d,index)=>`${d}${  term.reminderOffsets.length-1==index?'':','}`)} days before
-                  </div>
-                  </div>
-                <div className="flex gap-3 text-sm">
-                <button
-                  onClick={() => handleEdit(term)}
-                  className="text-black hover:underline hover:text-blue-500"
-                >
-                  Edit
-                </button>
+                  <div className="flex gap-3 text-sm">
+                    <button
+                      onClick={() => handleEdit(term)}
+                      className="text-black hover:underline hover:text-blue-500"
+                    >
+                      Edit
+                    </button>
 
-                <button
-                  onClick={() => handleDelete(term._id)}
-                  className="text-black hover:underline hover:text-red-500"
-                >
-                  Delete
-                </button>
-              </div>
+                    <button
+                      onClick={() => handleDelete(term._id)}
+                      className="text-black hover:underline hover:text-red-500"
+                    >
+                      Delete
+                    </button>
+                  </div>
 
 
                 </div>
@@ -219,11 +219,11 @@ useEffect(() => {
           )}
         </div>
       </div>
-      { showTemplateCreationModal &&
+      {showTemplateCreationModal &&
         <div ref={templateCreationRef}>
-          <PaymentReminderTemplateCreationModel editingTerm={editingTerm}  handleClose={()=>{
+          <PaymentReminderTemplateCreationModel editingTerm={editingTerm} handleClose={() => {
             setShowTemplateCreationModal(false),
-            setEditingTerm(null);
+              setEditingTerm(null);
           }} handleSubmit={handleCreationSubmit} />
 
         </div>

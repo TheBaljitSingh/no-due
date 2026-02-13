@@ -1,13 +1,54 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { useState } from "react";
 
 export default function PreviewCustomerModal({ data, setData, handleClose, setContinueFile }) {
 
-const handleContinue = () => {
-  setContinueFile(true);
-  handleClose();
-};
+  const handleContinue = () => {
+    setContinueFile(true);
+    handleClose();
+  };
+
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+
+    let hasChanges = false;
+    const updatedData = data.map((row) => {
+      const newRow = { ...row };
+      let rowChanged = false;
+
+      Object.keys(newRow).forEach((key) => {
+        if (key.toLowerCase() === 'lastreminder') {
+          const val = newRow[key];
+          // Check if value is potentially an Excel serial date (e.g. 46054)
+          // Ensure it's not already formatted (doesn't contain '-')
+          if (val && !isNaN(val) && Number(val) > 30000 && String(val).indexOf('-') === -1) {
+            try {
+              // Convert Excel serial date to JS Date
+              // Excel base date: Dec 30 1899. JS base date: Jan 1 1970.
+              // Difference is ~25569 days. A day is 86400000 ms.
+              // We add 12 hours (43200000 ms) to avoid timezone/rounding issues landing heavily on previous day.
+              const date = new Date((Number(val) - 25569) * 86400 * 1000 + 43200000);
+
+              if (!isNaN(date.getTime())) {
+                newRow[key] = date.toISOString().split('T')[0];
+                rowChanged = true;
+              }
+            } catch (e) {
+              console.error("Date conversion error", e);
+            }
+          }
+        }
+      });
+
+      if (rowChanged) hasChanges = true;
+      return newRow;
+    });
+
+    if (hasChanges) {
+      setData(updatedData);
+    }
+  }, [JSON.stringify(data)]); // Ideally depend on data content, or run once if data is stable. using JSON.stringify to catch content changes.
+
   // Extract dynamic table headers from first row
   const headers = data.length > 0 ? Object.keys(data[0]) : [];
 

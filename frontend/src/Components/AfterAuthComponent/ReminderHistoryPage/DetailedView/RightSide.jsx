@@ -82,6 +82,7 @@ const RightSide = memo(({ setDetailedView, setSelectedCustomer, imgFor, selected
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Channel</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Due Amount</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
@@ -90,15 +91,16 @@ const RightSide = memo(({ setDetailedView, setSelectedCustomer, imgFor, selected
                     <tr key={r?._id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{formatDate(r?.createdAt)}</td>
                       <td className="px-4 py-3 text-gray-700">{r?.channel || 'WhatsApp'} </td>
+                      <td className="px-4 py-3 text-gray-700">{r?.dueAmount || '0'} </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${r.status === 'Delivered'
-                              ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
-                              : r.status === 'Seen'
-                                ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
-                                : r.status === 'Answered'
-                                  ? 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20'
-                                  : 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20'
+                            ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
+                            : r.status === 'Seen'
+                              ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
+                              : r.status === 'Answered'
+                                ? 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20'
+                                : 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20'
                             }`}
                         >
                           {r?.status}

@@ -8,6 +8,7 @@ import AuditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/
 import { deleteReminder, getAllRemainders, scheduleReminder, sendReminderNow } from "../../utils/service/remainderService.js"
 import ScheduleOrSendReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/ScheduleOrSendReminderModal.jsx";
 import { toast } from "react-toastify";
+import ConfirmModal from "../../Components/AfterAuthComponent/CustomerMasterPage/ConfirmModal.jsx";
 
 
 export default function ReminderManagement() {
@@ -32,6 +33,9 @@ export default function ReminderManagement() {
     total: 0,
     responseRate: "0%" // hardcoded for now or fetch if API supports
   });
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [toBedeletedReminder, setToBeDeletedReminder] = useState();
 
   const fetchReminders = useCallback(async () => {
     try {
@@ -158,18 +162,16 @@ export default function ReminderManagement() {
 
   }
 
-  const handleDeleteReminder = async (rem) => {
-    console.log("clicking the delete", rem)
+  const handleDeleteReminder = async (id) => {
     //show alert here
-    const userChoice = confirm("Are you sure you want to delete this reminder?");
-    if (!userChoice) return;
+
     try {
-      if (!rem?.id) {
+      if (!id) {
         toast.error("Invalid reminder");
         return;
       }
 
-      const res = await deleteReminder(rem.id);
+      const res = await deleteReminder(id);
 
       console.log(res);
 
@@ -178,7 +180,7 @@ export default function ReminderManagement() {
 
         // OPTIONAL: update UI immediately
         setData(prev =>
-          prev.filter(r => r._id !== rem.id)
+          prev.filter(r => r._id !== id)
         );
       } else {
         toast.error(res?.message || "Failed to delete reminder");
@@ -190,6 +192,8 @@ export default function ReminderManagement() {
         error?.response?.data?.message || "Something went wrong"
       );
     }
+    setConfirmOpen(false);
+    setToBeDeletedReminder(null);
   };
 
   const handleDrawerDeleteSuccess = (id) => {
@@ -201,6 +205,9 @@ export default function ReminderManagement() {
     fetchReminders(); //instade of fetcing can i insert normally data here as i have to clicnet side, will work later
     setDrawer(null);
   };
+
+
+
 
 
   return (
@@ -379,7 +386,10 @@ export default function ReminderManagement() {
                       <div className="inline-flex items-center gap-0.5">
                         <IconBtn title="History" onClick={() => setAuditCustomer(r.customer)}> <History className="w-4 h-4" /> </IconBtn>
                         <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-4 h-4" /></IconBtn>
-                        <IconBtn title="Delete" danger onClick={() => handleDeleteReminder(r)} ><Trash2 className="w-4 h-4" /></IconBtn>
+                        <IconBtn title="Delete" danger onClick={() =>{ 
+                          console.log(r)
+                          setConfirmOpen(true) 
+                          setToBeDeletedReminder(r.id)}} ><Trash2 className="w-4 h-4" /></IconBtn>
                       </div>
                     </td>
                   </tr>
@@ -429,6 +439,7 @@ export default function ReminderManagement() {
       {openNew && <ScheduleOrSendReminderModal open={openNew} onClose={() => setOpenNew(false)} onSubmit={handleSubmit} />}
       {drawer && <EditDrawer reminder={drawer} onClose={() => setDrawer(null)} onDeleteSuccess={handleDrawerDeleteSuccess} onRescheduleSuccess={handleDrawerRescheduleSuccess} />}
       {auditCustomer && <AuditDrawer customer={auditCustomer} onClose={() => setAuditCustomer(null)} />}
+      {confirmOpen &&   <ConfirmModal open={confirmOpen} onClose={() => { setConfirmOpen(false); setToBeDeletedReminder(null);  }} onConfirm={() => handleDeleteReminder(toBedeletedReminder)} message="Are you sure you want to delete this reminder?"/>}
     </div>
   );
 }

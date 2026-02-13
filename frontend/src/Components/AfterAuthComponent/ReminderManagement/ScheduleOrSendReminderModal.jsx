@@ -188,10 +188,10 @@ export default function ScheduleOrSendReminderModal({
 
     onSubmit?.({
       transactionId: selectedTransaction._id,
-      mode,
-      scheduleDate: mode === "schedule" ? scheduleDate : null,
-      templateName: template,
-      variables: variables
+      // mode,
+      // scheduleDate: mode === "schedule" ? scheduleDate : null,
+      // templateName: template,
+      // variables: variables
       // i can send custom template language en or en_US
     });
   };

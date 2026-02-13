@@ -81,7 +81,7 @@ export const getAllRemainders = async (req, res) => {
           pending: {
             $sum: {
               $cond: [
-                { $in: ["$status", ["pending", "rescheduled"]] },
+                { $in: ["$status", ["pending", "rescheduled", ""]] },
                 1,
                 0
               ]
@@ -244,6 +244,20 @@ export const getCustomerReminderHistory = async (req, res) => {
       {
         $match: { customerId: customerObjectId }
       },
+      {
+        $lookup: {
+          from: "transactions",
+          localField: "transactionId",
+          foreignField: "_id",
+          as: "txn"
+        }
+      },
+      {
+        $unwind: {
+          path: "$txn",
+          preserveNullAndEmptyArrays: true
+        }
+      },
 
       {
         $facet: {
@@ -273,7 +287,8 @@ export const getCustomerReminderHistory = async (req, res) => {
                 status: 1,
                 templateName: 1,
                 sentAt: 1,
-                createdAt: 1
+                createdAt: 1,
+                dueAmount: "$txn.amount"
               }
             },
             { $sort: { createdAt: -1 } }

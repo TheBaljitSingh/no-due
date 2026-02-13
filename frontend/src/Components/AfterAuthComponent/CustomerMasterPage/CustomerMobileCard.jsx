@@ -39,6 +39,7 @@ const CustomerMobileCard = () => {
     try {
       const response = await getAllcustomers();
       const data = response.data.customers;
+      console.log("data", data);
       let initialKeys = Object.keys(data[0]);
       if (!initialKeys.includes('feedback')) {
         initialKeys.push('feedback');
@@ -52,7 +53,27 @@ const CustomerMobileCard = () => {
       data.forEach((row) => {
         const values = headers.map((header) => {
           //for each keys
-          let val = row[header] !== null && row[header] !== undefined ? row[header] : "";
+          let val = row[header];
+
+          if (val && typeof val === 'object') {
+            if (header === 'lastTransaction') {
+              const txId = val._id || val.id || '';
+              const amount = val.amount ? `${val.amount}` : '';
+              const date = val.createdAt || val.date ? `(${formatDate(val.createdAt || val.date)})` : '';
+
+              if (val.amount) {
+                val = `${amount} ${date} ID:${txId}`;
+              } else {
+                val = `ID:${txId}`;
+              }
+            } else if (header === 'paymentTerm') {
+              val = val.name || '';
+            } else {
+              val = JSON.stringify(val); // Fallback for other objects
+            }
+          }
+
+          val = val !== null && val !== undefined ? val : "";
           return `"${val}"`; // wrap values in quotes to avoid comma issues
         });
         csvRows.push(values.join(","));
@@ -103,7 +124,25 @@ const CustomerMobileCard = () => {
       const tableRows = [];  //rows according to headers
       data.forEach((row) => {
         const values = tableColumns.map((header) => {
-          return row[header]; //taking only that is defined in filtered tableColumns above
+          let val = row[header];
+          if (val && typeof val === 'object') {
+            if (header === 'lastTransaction') {
+              const txId = val._id || val.id || '';
+              const amount = val.amount ? `${val.amount}` : '';
+              const date = val.createdAt || val.date ? `(${formatDate(val.createdAt || val.date)})` : '';
+
+              if (val.amount) {
+                val = `${amount} ${date} ID:${txId}`;
+              } else {
+                val = `ID:${txId}`;
+              }
+            } else if (header === 'paymentTerm') {
+              val = val.name || '';
+            } else {
+              val = JSON.stringify(val);
+            }
+          }
+          return val;
         });
 
         tableRows.push(values);

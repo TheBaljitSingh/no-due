@@ -7,6 +7,7 @@ export const createCustomer = async (req, res) => {
   try {
     const customerData = req.body;
 
+
     if (!customerData) {
       return new APIResponse(400, null, "Data is required").send(res);
     }

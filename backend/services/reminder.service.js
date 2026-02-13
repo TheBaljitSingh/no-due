@@ -280,7 +280,7 @@ class ReminderService {
       });
 
 
-    console.log("will process this reminder", reminders);
+    // console.log("will process this reminder", reminders);
 
 
 

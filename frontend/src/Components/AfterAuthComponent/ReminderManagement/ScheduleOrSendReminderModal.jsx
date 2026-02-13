@@ -188,11 +188,11 @@ export default function ScheduleOrSendReminderModal({
 
     onSubmit?.({
       transactionId: selectedTransaction._id,
-      // mode,
-      // scheduleDate: mode === "schedule" ? scheduleDate : null,
-      // templateName: template,
-      // variables: variables
-      //i can send custom template language en or en_US
+      mode,
+      scheduleDate: mode === "schedule" ? scheduleDate : null,
+      templateName: template,
+      variables: variables
+      // i can send custom template language en or en_US
     });
   };
 
@@ -323,6 +323,8 @@ export default function ScheduleOrSendReminderModal({
                 ) : (
                   <div className="space-y-3">
                     {transactions.map((tx) => (
+                      tx.remainingDue > 0 && (
+                        //only showing if remaining due is greater than 0
                       <div
                         key={tx._id}
                         onClick={() => handleSelectTransaction(tx)}
@@ -347,7 +349,7 @@ export default function ScheduleOrSendReminderModal({
                           <Calendar size={14} />
                           <span>Due: {formatDate(tx.dueDate)}</span>
                         </div>
-                      </div>
+                      </div>)
                     ))}
                   </div>
                 )}

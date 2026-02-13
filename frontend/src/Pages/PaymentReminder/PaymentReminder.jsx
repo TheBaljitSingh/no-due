@@ -67,6 +67,7 @@ useEffect(() => {
 
 
   const handleCreationSubmit = async (payload)=>{ // dout can i make it async?
+    console.log("payload",payload);
     
     try {
 
@@ -123,9 +124,6 @@ useEffect(() => {
   setShowTemplateCreationModal(true);
 };
 
-
-
- 
 
   return (
     <div className="p-6 space-y-6">

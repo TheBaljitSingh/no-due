@@ -52,12 +52,12 @@ export default function ReminderManagement() {
       console.log(res);
       const output = res.data.data;
 
-      console.log("output.data",output.data);
+      console.log("output.data", output.data);
       setData(output.data || []);
       setPagination(prev => ({ ...prev, ...output.meta }));
 
       if (output.stats) {
-        setStats(prev => ({ ...prev, ...output.stats,scheduled:output?.stats?.pending  }));
+        setStats(prev => ({ ...prev, ...output.stats, scheduled: output?.stats?.pending }));
       }
 
     } catch (error) {
@@ -160,6 +160,9 @@ export default function ReminderManagement() {
 
   const handleDeleteReminder = async (rem) => {
     console.log("clicking the delete", rem)
+    //show alert here
+    const userChoice = confirm("Are you sure you want to delete this reminder?");
+    if (!userChoice) return;
     try {
       if (!rem?.id) {
         toast.error("Invalid reminder");
@@ -269,9 +272,9 @@ export default function ReminderManagement() {
                   />
                 </div>
               </div>
-              <button className="inline-flex items-center justify-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+              {/* <button className="inline-flex items-center justify-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                 <Filter className="w-4 h-4" /> Filters
-              </button>
+              </button> */}
             </div>
 
             {/* Bulk Actions */}

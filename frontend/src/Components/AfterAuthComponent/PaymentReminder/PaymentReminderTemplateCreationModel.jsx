@@ -12,7 +12,7 @@ export default function PaymentTermCreationModal({ editingTerm, handleClose, han
   const [form, setForm] = useState({
     name: editingTerm?.name || "",
     creditDays: editingTerm?.creditDays || "",
-    reminderOffsets: editingTerm?.reminderOffsets || "",
+    reminderOffsets: Array.isArray(editingTerm?.reminderOffsets) ? editingTerm.reminderOffsets.join(", ") : (editingTerm?.reminderOffsets || ""),
     isDefault: editingTerm?.isDefault || false,
     isActive: editingTerm?.isActive || true,
   });
@@ -31,7 +31,7 @@ export default function PaymentTermCreationModal({ editingTerm, handleClose, han
     const payload = {
       name: form.name.trim(),
       creditDays: Number(form.creditDays),
-      reminderOffsets: form.reminderOffsets
+      reminderOffsets: String(form?.reminderOffsets || "")
         .split(",")
         .map((d) => Number(d.trim()))
         .filter((d) => !isNaN(d)),
@@ -118,7 +118,7 @@ export default function PaymentTermCreationModal({ editingTerm, handleClose, han
           </div>
 
           {/* Toggles */}
-       
+
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">

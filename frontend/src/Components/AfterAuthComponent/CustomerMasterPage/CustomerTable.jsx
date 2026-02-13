@@ -58,7 +58,7 @@ const CustomerTable = () => {
         setTotalCustomers(data.data.total);
       } catch (error) {
         console.log(error);
-      } finally{
+      } finally {
         setLoading(false);
       }
     };
@@ -179,7 +179,40 @@ const CustomerTable = () => {
       data.forEach((row) => {
         const values = headers.map((header) => {
           //for each keys
-          let val = row[header] !== null && row[header] !== undefined ? row[header] : "";
+          let val = row[header];
+          if (header && header === 'lastReminder' && row[header]) {
+
+            //formatting date: 13 Feb 2026, 09:24 am
+
+            val = new Date(row[header]).toLocaleString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true
+            })
+          }
+
+          if (val && typeof val === 'object') {
+            if (header === 'lastTransaction') {
+              const txId = val._id || '';
+              const amount = val.amount ? `${val.amount}` : '';
+              const date = val.createdAt || val.date ? `(${formatDate(val.createdAt || val.date)})` : '';
+
+              if (val.amount) {
+                val = `${amount} ${date} ID:${txId}`;
+              } else {
+                val = `${txId}`;
+              }
+            } else if (header === 'paymentTerm') {
+              val = val.name || ''; // have to add here id
+            } else {
+              val = JSON.stringify(val);
+            }
+          }
+
+          val = val !== null && val !== undefined ? val : "";
           return `"${val}"`; // wrap values in quotes to avoid comma issues
         });
         csvRows.push(values.join(","));
@@ -230,7 +263,39 @@ const CustomerTable = () => {
       const tableRows = [];  //rows according to headers
       data.forEach((row) => {
         const values = tableColumns.map((header) => {
-          return row[header]; //taking only that is defined in filtered tableColumns above
+
+          let val = row[header];
+          if (header && header === 'lastReminder' && row[header]) {
+            //formatting date: 13 Feb 2026, 09:24 am
+
+            val = new Date(row[header]).toLocaleString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true
+            })
+          }
+          console.log("val", val);
+          if (val && typeof val === 'object') {
+            if (header === 'lastTransaction') {
+              const txId = val._id || val.id || '';
+              const amount = val.amount ? `${val.amount}` : '';
+              const date = val.createdAt || val.date ? `(${formatDate(val.createdAt || val.date)})` : '';
+
+              if (val.amount) {
+                val = `${amount} ${date} ID:${txId}`;
+              } else {
+                val = `${txId}`; // only adding id
+              }
+            } else if (header === 'paymentTerm') {
+              val = val.name || '';
+            } else {
+              val = JSON.stringify(val);
+            }
+          }
+          return val; //taking only that is defined in filtered tableColumns above
         });
 
         tableRows.push(values);
@@ -238,6 +303,9 @@ const CustomerTable = () => {
 
       const updatedColumns = tableColumns.map(hd => hd.charAt(0).toUpperCase() + hd.substring(1));
 
+      const nameIndex = tableColumns.indexOf('name');
+      const reminderIndex = tableColumns.indexOf('lastReminder');
+      const mobileIndex = tableColumns.indexOf('mobile');
 
       // Generate table
       autoTable(doc, {
@@ -250,6 +318,11 @@ const CustomerTable = () => {
           textColor: [0, 0, 0],       // header text color
           fontStyle: "bold",
           halign: "left",
+        },
+        columnStyles: { // manually adding some space in that 
+          [nameIndex]: { cellWidth: 30 },
+          [reminderIndex]: { cellWidth: 25 },
+          [mobileIndex]: { cellWidth: 28 }
         }
       });
 
@@ -268,13 +341,13 @@ const CustomerTable = () => {
   }
 
 
-   if (loading) {
-        return (
-            <div className="flex items-center justify-center h-[60vh]">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
-            </div>
-        );
-    }
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+      </div>
+    );
+  }
 
 
   return (

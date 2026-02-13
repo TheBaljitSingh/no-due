@@ -15,7 +15,7 @@ export const deletePaymentTerms = async (id)=>{
     return response.data;
 }
 
-export const updatePaymentTerms = async (id)=>{
-    const response = await api.put(`/v1/payment-terms/${id}`);
+export const updatePaymentTerms = async (id, data) => {
+    const response = await api.put(`/v1/payment-terms/${id}`, data);
     return response.data;
 }

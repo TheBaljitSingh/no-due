@@ -27,6 +27,7 @@ const ReminderTemplates = () => {
     overdue: ''
   });
   const [savingConfig, setSavingConfig] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchTemplates();
@@ -143,6 +144,10 @@ const ReminderTemplates = () => {
   //   )
   // }
 
+  const filteredTemplates = templates.filter((t) =>
+    t.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -240,7 +245,7 @@ const ReminderTemplates = () => {
           </div>
         </div>
 
-      
+
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -249,7 +254,9 @@ const ReminderTemplates = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
+              value={searchTerm}
               placeholder="Search templates..."
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
             />
           </div>
@@ -260,7 +267,7 @@ const ReminderTemplates = () => {
 
         {loading ? (
           <div className="p-12 text-center text-gray-500">Loading templates...</div>
-        ) : templates && templates.length > 0 ? (
+        ) : filteredTemplates && filteredTemplates.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -272,7 +279,7 @@ const ReminderTemplates = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {templates.map((t) => (
+                {filteredTemplates.map((t) => (
                   <tr key={t.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{t.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{t.category}</td>
@@ -284,7 +291,7 @@ const ReminderTemplates = () => {
                         {t.status}
                       </span>
                     </td>
-                   
+
                   </tr>
                 ))}
               </tbody>

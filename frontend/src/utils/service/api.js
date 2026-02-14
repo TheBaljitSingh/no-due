@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const PRODUCTION_SERVERS=['https://backendnodue.rvpuni.in/api'];
+const PRODUCTION_SERVERS=[`${process.env.VITE_API_BASE_URL}/api`];
 
 let currentServerIndex=0;
 

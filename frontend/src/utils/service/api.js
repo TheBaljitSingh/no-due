@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const PRODUCTION_SERVERS=[`${process.env.VITE_API_BASE_URL}/api`];
+const PRODUCTION_SERVERS=[`${import.meta.env.VITE_API_BASE_URL}/api`];
 
 let currentServerIndex=0;
 

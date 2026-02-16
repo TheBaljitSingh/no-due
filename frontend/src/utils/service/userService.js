@@ -9,3 +9,8 @@ export const updateUser = async (updatedData) => {
         const response = await api.put('/v1/user', updatedData);
         return response.data;
 };
+
+export const updatePassword = async (passwordData) => {
+        const response = await api.put('/v1/user/password', passwordData);
+        return response.data;
+};

@@ -375,47 +375,47 @@ class ReminderService {
   }
 
   /* AFTER DUE (CRON BASED)*/
-  // async createAfterDueReminders() {
-  //   //currently there is no user
+  async createAfterDueReminders() {
+    //currently there is no user
 
-  //   const today = new Date();
-  //   today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  //   const overdueTxs = await Transaction.find({
-  //     type: "DUE_ADDED",
-  //     paymentStatus: { $ne: "PAID" },
-  //     dueDate: { $lt: today },
-  //   }).populate("customerId");
+    const overdueTxs = await Transaction.find({
+      type: "DUE_ADDED",
+      paymentStatus: { $ne: "PAID" },
+      dueDate: { $lt: today },
+    }).populate("customerId");
 
-  //   for (const tx of overdueTxs) {
-  //     const exists = await Reminder.findOne({
-  //       transactionId: tx._id,
-  //       reminderType: REMINDER_TYPES.AFTER_DUE,
-  //       status: { $in: ["pending", "sent"] },
-  //     });
+    for (const tx of overdueTxs) {
+      const exists = await Reminder.findOne({
+        transactionId: tx._id,
+        reminderType: REMINDER_TYPES.AFTER_DUE,
+        status: { $in: ["pending", "sent"] },
+      });
 
 
-  //     if (exists) continue;
+      if (exists) continue;
 
-  //     await Reminder.create({
-  //       customerId: tx.customerId._id,
-  //       transactionId: tx._id,
-  //       reminderType: REMINDER_TYPES.AFTER_DUE,
-  //       // whatsappTemplate: {
-  //       //   name: REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE,
-  //       //   language: "en",
-  //       // },
-  //       templateVariables: [
-  //         tx.customerId.name,
-  //         tx.amount.toString(),
-  //         tx.dueDate, // Store raw date
-  //       ],
-  //       scheduledFor: new Date(),
-  //       status: "pending",
-  //       source: "auto",
-  //     });
-  //   }
-  // }
+      await Reminder.create({
+        customerId: tx.customerId._id,
+        transactionId: tx._id,
+        reminderType: REMINDER_TYPES.AFTER_DUE,
+        whatsappTemplate: {
+          name: REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE,
+          language: "en",
+        },
+        templateVariables: [
+          tx.customerId.name,
+          tx.amount.toString(),
+          tx.dueDate, // Store raw date
+        ],
+        scheduledFor: new Date(),
+        status: "pending",
+        source: "auto",
+      });
+    }
+  }
   /* RESCHEDULE REMINDER */
   async rescheduleReminder({ reminderId, scheduledFor }) {
     const reminder = await Reminder.findById(reminderId);

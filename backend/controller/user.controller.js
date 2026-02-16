@@ -3,15 +3,15 @@ import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 
 export const registerUser = async (req, res) => {
-    const userData  = req.body;
-    try{
+    const userData = req.body;
+    try {
         const savedUser = await User.create(userData);
-        return new APIResponse(201,{user: savedUser},'User registered successfully').send(res);
-    }catch(err){
+        return new APIResponse(201, { user: savedUser }, 'User registered successfully').send(res);
+    } catch (err) {
         console.error('Error registering user:', err);
-        return new APIError(500,['User registration failed', err.message]).send(res);
+        return new APIError(500, ['User registration failed', err.message]).send(res);
     }
-    
+
 };
 
 export const updateUser = async (req, res) => {
@@ -56,3 +56,41 @@ export const updateUser = async (req, res) => {
     }
 };
 
+export const updatePassword = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { currentPassword, newPassword } = req.body;
+
+        // Validate input
+        if (!currentPassword || !newPassword) {
+            return new APIError(400, ['Current password and new password are required']).send(res);
+        }
+
+        // Get user with password field
+        const user = await User.findById(userId).select('+password');
+
+        if (!user) {
+            return new APIError(404, ['User not found']).send(res);
+        }
+
+        // Check if user has a password (might be Google OAuth user)
+        if (!user.password) {
+            return new APIError(400, ['Cannot update password for OAuth users']).send(res);
+        }
+
+        // Verify current password
+        const isPasswordCorrect = await user.comparePassword(currentPassword);
+        if (!isPasswordCorrect) {
+            return new APIError(401, ['Current password is incorrect']).send(res);
+        }
+
+        // Update password
+        user.password = newPassword;
+        await user.save();
+
+        return new APIResponse(200, {}, 'Password updated successfully').send(res);
+    } catch (error) {
+        console.error("Password update error:", error);
+        return new APIError(500, [error.message]).send(res);
+    }
+};

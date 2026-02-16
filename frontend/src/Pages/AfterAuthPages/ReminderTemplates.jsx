@@ -22,9 +22,9 @@ const ReminderTemplates = () => {
 
   // Template Configuration State
   const [templateConfig, setTemplateConfig] = useState({
-    beforeDue: '',
-    dueToday: '',
-    overdue: ''
+    beforeDue: { name: '', language: 'en' },
+    dueToday: { name: '', language: 'en' },
+    overdue: { name: '', language: 'en' }
   });
   const [savingConfig, setSavingConfig] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -144,9 +144,15 @@ const ReminderTemplates = () => {
   //   )
   // }
 
+  if (!templates) {
+    return <div>no templates</div>
+  }
   const filteredTemplates = templates.filter((t) =>
     t.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+
+
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -188,8 +194,11 @@ const ReminderTemplates = () => {
               <span className="ml-1 text-xs text-gray-500">(Future due dates)</span>
             </label>
             <select
-              value={templateConfig.beforeDue}
-              onChange={(e) => setTemplateConfig(prev => ({ ...prev, beforeDue: e.target.value }))}
+              value={templateConfig.beforeDue?.name || ''}
+              onChange={(e) => setTemplateConfig(prev => ({
+                ...prev,
+                beforeDue: { name: e.target.value, language: prev.beforeDue?.language || 'en' }
+              }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-sm"
             >
               <option value="">Select template...</option>
@@ -197,8 +206,8 @@ const ReminderTemplates = () => {
                 <option key={t.id} value={t.name}>{t.name}</option>
               ))}
             </select>
-            {templateConfig.beforeDue && (
-              <p className="mt-1 text-xs text-green-600">✓ {templateConfig.beforeDue}</p>
+            {templateConfig?.beforeDue?.name && (
+              <p className="mt-1 text-xs text-green-600">✓ {templateConfig.beforeDue.name} ({templateConfig.beforeDue.language})</p>
             )}
           </div>
 
@@ -209,8 +218,11 @@ const ReminderTemplates = () => {
               <span className="ml-1 text-xs text-gray-500">(Due date is today)</span>
             </label>
             <select
-              value={templateConfig.dueToday}
-              onChange={(e) => setTemplateConfig(prev => ({ ...prev, dueToday: e.target.value }))}
+              value={templateConfig.dueToday?.name || ''}
+              onChange={(e) => setTemplateConfig(prev => ({
+                ...prev,
+                dueToday: { name: e.target.value, language: prev.dueToday?.language || 'en' }
+              }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-sm"
             >
               <option value="">Select template...</option>
@@ -218,8 +230,8 @@ const ReminderTemplates = () => {
                 <option key={t.id} value={t.name}>{t.name}</option>
               ))}
             </select>
-            {templateConfig.dueToday && (
-              <p className="mt-1 text-xs text-green-600">✓ {templateConfig.dueToday}</p>
+            {templateConfig.dueToday?.name && (
+              <p className="mt-1 text-xs text-green-600">✓ {templateConfig.dueToday.name} ({templateConfig.dueToday.language})</p>
             )}
           </div>
 
@@ -230,8 +242,11 @@ const ReminderTemplates = () => {
               <span className="ml-1 text-xs text-gray-500">(Past due dates)</span>
             </label>
             <select
-              value={templateConfig.overdue}
-              onChange={(e) => setTemplateConfig(prev => ({ ...prev, overdue: e.target.value }))}
+              value={templateConfig.overdue?.name || ''}
+              onChange={(e) => setTemplateConfig(prev => ({
+                ...prev,
+                overdue: { name: e.target.value, language: prev.overdue?.language || 'en' }
+              }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-sm"
             >
               <option value="">Select template...</option>
@@ -239,8 +254,8 @@ const ReminderTemplates = () => {
                 <option key={t.id} value={t.name}>{t.name}</option>
               ))}
             </select>
-            {templateConfig.overdue && (
-              <p className="mt-1 text-xs text-green-600">✓ {templateConfig.overdue}</p>
+            {templateConfig.overdue?.name && (
+              <p className="mt-1 text-xs text-green-600">✓ {templateConfig.overdue.name} ({templateConfig.overdue.language})</p>
             )}
           </div>
         </div>

@@ -1,5 +1,5 @@
-
 import { formatDate } from "./Helper.js";
+import User from "../model/user.model.js";
 
 export const REMINDER_TEMPLATE_NAMES = {
     //en_US 
@@ -8,116 +8,77 @@ export const REMINDER_TEMPLATE_NAMES = {
     INTERACTIVE_OVERDUE: 'interactive_overdue',
 };
 
-//                en_US     APPROVED  1171560151854968
-//              en_US     APPROVED  1188394839928363
-// 
-// export const getBeforeDueMessage = (name, amount, dueDate, companyName) => {
-//     return {
-//         type: "list",
-//         body: {
-//             text: `Dear ${name},
-// This is a reminder that ₹${amount} is due on ${formatDate(dueDate)}.
-// Please let us know your payment plan by selecting an option below.
-// If payment has already been made, please ignore this message.
 
-// Thanks,
-// ${companyName}`
-//         },
-//         action: {
-//             button: "Select Response",
-//             sections: [
-//                 {
-//                     title: "Payment Options",
-//                     rows: [
-//                         { id: "PAY_TODAY", title: "I will pay today" },
-//                         { id: "PAY_WEEK", title: "I will pay within a week" },
-//                         { id: "PAY_SOON", title: "I will pay soon" },
-//                         { id: "NEED_STATEMENT", title: "Need statement" }
-//                     ]
-//                 }
-//             ]
-//         }
-//     };
-// };
+/**
+ * Fetches custom template name and language from user's WhatsApp settings
+ * Falls back to predefined template if not configured
+ * @param {string} userId - The user/merchant ID
+ * @param {string} templateType - 'beforeDue', 'dueToday', or 'overdue'
+ * @param {string} defaultTemplate - Default template name to use as fallback
+ * @returns {Promise<{name: string, language: string}>} Template name and language to use
+ */
+const getTemplateNameFromUser = async (userId, templateType, defaultTemplate) => {
+    try {
+        if (!userId) {
+            return { name: defaultTemplate, language: 'en' };
+        }
 
-// export const getDueTodayMessage = (name, amount, dueDate, companyName) => {
-//     return {
-//         type: "list",
-//         body: {
-//             text: `Dear ${name},
-// This is a reminder that ₹${amount} is due today (${formatDate(dueDate)}).
-// Kindly update the payment status by selecting an option below.
-// If payment has already been made, please ignore this message.
+        const user = await User.findById(userId).select('whatsapp.reminderTemplates');
 
-// Thanks,
-// ${companyName}`
-//         },
-//         action: {
-//             button: "Select Response",
-//             sections: [
-//                 {
-//                     title: "Payment Options",
-//                     rows: [
-//                         { id: "PAID_TODAY", title: "Paid today" },
-//                         { id: "WILL_PAY_TODAY", title: "Will pay today" },
-//                         { id: "PAY_WEEK", title: "Will pay within a week" },
-//                         { id: "NEED_STATEMENT", title: "Need statement" }
-//                     ]
-//                 }
-//             ]
-//         }
-//     };
-// };
+        if (user?.whatsapp?.reminderTemplates?.[templateType]?.name) {
+            const templateConfig = user.whatsapp.reminderTemplates[templateType];
+            console.log("user saved data of template", templateConfig);
+            return {
+                name: templateConfig.name,
+                language: templateConfig.language || 'en'
+            };
+        }
 
-// export const getOverdueMessage = (name, amount, dueDate, companyName) => {
-//     return {
-//         type: "list",
-//         body: {
-//             text: `Dear ${name},
-// This is a follow-up regarding ₹${amount}, which was due on ${formatDate(dueDate)} and is currently pending.
-// Please select an option below to update the payment status.
-// If payment has already been made, please ignore this message.
+        return { name: defaultTemplate, language: 'en' };
+    } catch (error) {
+        console.error(`Error fetching template for user ${userId}:`, error);
+        return { name: defaultTemplate, language: 'en' };
+    }
+};
 
-// Thanks,
-// ${companyName}`
-//         },
-//         action: {
-//             button: "Select Response",
-//             sections: [
-//                 {
-//                     title: "Payment Options",
-//                     rows: [
-//                         { id: "WILL_PAY_TODAY", title: "Will pay today" },
-//                         { id: "PAY_WEEK", title: "Will pay within a week" },
-//                         { id: "PAY_SOON", title: "Will pay soon" },
-//                         { id: "NEED_STATEMENT", title: "Need statement" }
-//                     ]
-//                 }
-//             ]
-//         }
-//     };
-// };
+export const getBeforeDueTemplate = async (name, amount, dueDate, companyName, userId = null) => {
+    const templateConfig = await getTemplateNameFromUser(
+        userId,
+        'beforeDue',
+        REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE
+    );
 
-export const getBeforeDueTemplate = (name, amount, dueDate, companyName) => {
     return {
-        templateName: REMINDER_TEMPLATE_NAMES.INTERACTIVE_BEFORE_DUE,
-        // variables: [name, amount, formatDate(dueDate)]
-        variables: {"name":name, "amount":amount, "duedate":formatDate(dueDate), "companyname":companyName}
+        templateName: templateConfig.name,
+        language: templateConfig.language,
+        variables: { "name": name, "amount": amount, "duedate": formatDate(dueDate), "companyname": companyName }
     };
 };
 
-export const getDueTodayTemplate = (name, amount, dueDate, companyName) => {
+export const getDueTodayTemplate = async (name, amount, dueDate, companyName, userId = null) => {
+    const templateConfig = await getTemplateNameFromUser(
+        userId,
+        'dueToday',
+        REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY
+    );
+
     return {
-        templateName: REMINDER_TEMPLATE_NAMES.INTERACTIVE_DUE_TODAY,
-        variables: {"name":name, "amount":amount, "duedate":formatDate(dueDate), "companyname":companyName}
-        // variables: [name, amount, formatDate(dueDate), companyName]
+        templateName: templateConfig.name,
+        language: templateConfig.language,
+        variables: { "name": name, "amount": amount, "duedate": formatDate(dueDate), "companyname": companyName }
     };
 };
 
-export const getOverdueTemplate = (name, amount, dueDate, companyName) => {
+export const getOverdueTemplate = async (name, amount, dueDate, companyName, userId = null) => {
+    const templateConfig = await getTemplateNameFromUser(
+        userId,
+        'overdue',
+        REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE
+    );
+
     return {
-        templateName: REMINDER_TEMPLATE_NAMES.INTERACTIVE_OVERDUE,
-        variables: {"name":name, "amount":amount, "duedate":formatDate(dueDate), "companyname":companyName}
-        // variables: [name, amount, formatDate(dueDate), companyName]
+        templateName: templateConfig.name,
+        language: templateConfig.language,
+        variables: { "name": name, "amount": amount, "duedate": formatDate(dueDate), "companyname": companyName }
     };
 };

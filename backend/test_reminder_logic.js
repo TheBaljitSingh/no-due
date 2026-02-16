@@ -1,5 +1,5 @@
 
-import { getReminderType } from './controller/remainder.controller.js';
+import { getReminderType } from './controller/reminder.controller.js';
 
 // Logic extracted from backend/services/reminder.service.js (scheduleByUser)
 // The service logic uses this snippet:
@@ -43,7 +43,7 @@ function serviceLogic(dueDateInput, scheduledForInput) {
     return reminderType;
 }
 
-// Controller Logic from backend/controller/remainder.controller.js
+// Controller Logic from backend/controller/reminder.controller.js
 // function getReminderType(dueDate, now) { ... }
 // Uses: 'due_before', 'due_today', 'overdue'
 

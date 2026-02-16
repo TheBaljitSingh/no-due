@@ -180,6 +180,9 @@ const CustomerTable = () => {
         const values = headers.map((header) => {
           //for each keys
           let val = row[header];
+          if (header && header === 'currentDue' && row[header] !== undefined && row[header] !== null) {
+            val = `Rs. ${row[header]}`;
+          }
           if (header && header === 'lastReminder' && row[header]) {
 
             //formatting date: 13 Feb 2026, 09:24 am
@@ -265,6 +268,9 @@ const CustomerTable = () => {
         const values = tableColumns.map((header) => {
 
           let val = row[header];
+          if (header && header === 'currentDue' && row[header] !== undefined && row[header] !== null) {
+            val = `Rs. ${row[header]}`;
+          }
           if (header && header === 'lastReminder' && row[header]) {
             //formatting date: 13 Feb 2026, 09:24 am
 
@@ -277,7 +283,6 @@ const CustomerTable = () => {
               hour12: true
             })
           }
-          console.log("val", val);
           if (val && typeof val === 'object') {
             if (header === 'lastTransaction') {
               const txId = val._id || val.id || '';
@@ -306,6 +311,9 @@ const CustomerTable = () => {
       const nameIndex = tableColumns.indexOf('name');
       const reminderIndex = tableColumns.indexOf('lastReminder');
       const mobileIndex = tableColumns.indexOf('mobile');
+      const currentDueIndex = tableColumns.indexOf('currentDue');
+      const genderIndex = tableColumns.indexOf('gender');
+      const statusIndex = tableColumns.indexOf('status');
 
       // Generate table
       autoTable(doc, {
@@ -320,9 +328,12 @@ const CustomerTable = () => {
           halign: "left",
         },
         columnStyles: { // manually adding some space in that 
-          [nameIndex]: { cellWidth: 30 },
+          [nameIndex]: { cellWidth: 28 },
           [reminderIndex]: { cellWidth: 25 },
-          [mobileIndex]: { cellWidth: 28 }
+          [mobileIndex]: { cellWidth: 28 },
+          [currentDueIndex]: { cellWidth: 18 },
+          [statusIndex]:{cellWidth:13},
+          [genderIndex]:{cellWidth:16}
         }
       });
 

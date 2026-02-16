@@ -2,7 +2,7 @@ import cron from "node-cron";
 import reminderService from '../../services/reminder.service.js';
 
 
-const jobForRemainder=()=>{
+const jobForReminder=()=>{
 
     cron.schedule('*/1 * * * *', async () => {
         console.log('running a task every minute');
@@ -17,4 +17,4 @@ const jobForRemainder=()=>{
     
 }
 
-export default jobForRemainder;
+export default jobForReminder;

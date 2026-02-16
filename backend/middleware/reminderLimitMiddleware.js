@@ -1,4 +1,4 @@
-import Reminder from "../model/remainder.model.js";
+import Reminder from "../model/reminder.model.js";
 
 export async function canSendReminder({
   transactionId,

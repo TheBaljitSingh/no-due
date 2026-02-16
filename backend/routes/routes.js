@@ -1,7 +1,7 @@
 import customerRoutes from './customer.routes.js';
 import authRoutes from './auth.routes.js';
 import userRoutes from './user.routes.js';
-import remainderRoutes from "./remainder.routes.js"
+import reminderRoutes from "./reminder.routes.js"
 import paymentTermRoutes from './paymentTerm.routes.js';
 import whatsappRoutes from "./whatsapp.routes.js"
 import whatsappWebhookRoutes from "./whatsappWebhookRoutes.routes.js"
@@ -12,7 +12,7 @@ const routes = (app) => {
   // Support for specific Facebook callback URL requested by user
   // app.use('/api/auth', authRoutes);
   app.use('/api/v1/user', userRoutes);
-  app.use('/api/v1/remainders', remainderRoutes);
+  app.use('/api/v1/reminders', reminderRoutes);
   app.use('/api/v1/payment-terms', paymentTermRoutes);
   app.use("/api/v1/whatsapp", whatsappRoutes);
   app.use("/", whatsappWebhookRoutes);

@@ -5,7 +5,7 @@ import { currency2, formatDate, IconBtn, statusChip, TabButton } from "../../uti
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
 import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/EditDrawer";
 import AuditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/AuditDrawer";
-import { deleteReminder, getAllRemainders, scheduleReminder, sendReminderNow } from "../../utils/service/remainderService.js"
+import { deleteReminder, getAllReminders, scheduleReminder, sendReminderNow } from "../../utils/service/reminderService.js"
 import ScheduleOrSendReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/ScheduleOrSendReminderModal.jsx";
 import { toast } from "react-toastify";
 import ConfirmModal from "../../Components/AfterAuthComponent/CustomerMasterPage/ConfirmModal.jsx";
@@ -52,7 +52,7 @@ export default function ReminderManagement() {
         }
       }
 
-      const res = await getAllRemainders(filters);
+      const res = await getAllReminders(filters);
       console.log(res);
       const output = res.data.data;
 
@@ -66,7 +66,7 @@ export default function ReminderManagement() {
 
     } catch (error) {
       console.log(error);
-      console.log("error while loading remainder data");
+      console.log("error while loading reminder data");
     }
   }, [pagination.page, pagination.limit, tab]);
 
@@ -133,7 +133,7 @@ export default function ReminderManagement() {
 
       try {
         const response = await scheduleReminder(apiData);
-        toast.success("remainder scheduled ");
+        toast.success("reminder scheduled ");
         setOpenNew(false);
 
       } catch (error) {
@@ -151,7 +151,7 @@ export default function ReminderManagement() {
       try {
         const response = await sendReminderNow(apiData);
         console.log(response);
-        toast.success("remainder sent!");
+        toast.success("reminder sent!");
         setOpenNew(false);
 
       } catch (error) {

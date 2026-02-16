@@ -10,7 +10,7 @@ if (fs.existsSync('.env.development.local')) {
 import connectDB from './database/databaseConfig.js';
 // import { initSocket } from './socket/index.js';
 
-import jobForRemainder from "./utils/cronJob/job.js";
+import jobForReminder from "./utils/cronJob/job.js";
 import { corsMiddleware } from './config/corsConfig.js';
 
 const PORT = process.env.PORT || 8383;
@@ -27,7 +27,7 @@ const startServer = async () => {
         const server = http.createServer(app);
         // initSocket(server); //confirm await will work here or not?
 
-        await jobForRemainder();
+        await jobForReminder();
 
         app.get('/status', (req, res) => {
             res.send('API is running...');

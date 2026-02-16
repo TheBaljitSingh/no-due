@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import { ArrowDownUp, ArrowUpDown} from 'lucide-react'
+import { ArrowDownUp, ArrowUpDown, Loader2} from 'lucide-react'
 import BulkEntrySection from '../../Components/AfterAuthComponent/UploadSection/BulkEntrySection';
 import { useEffect } from 'react';
 import { getUserPaymentTerms } from '../../utils/service/paymentTermService';
 import CustomerCreationPage from './CustomerCreationPage';
 
 const UploadCenter = () => {
+  const [loading, setLoading] = useState();
   const [inverted , setInverted] = useState(false);
   const [paymentTerms, setPaymentTerms] = useState([]);
 
@@ -18,11 +19,22 @@ const UploadCenter = () => {
           setPaymentTerms(templates);
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     }
     fetchUserTemplate();
   },[]);
 console.log("paymentTerms in upload center",paymentTerms);
+
+
+if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[60vh]">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+            </div>
+        );
+    }
 
   return (
   <div className="max-w-7xl mx-auto md:px-4 px-6 lg:px-8 py-6">

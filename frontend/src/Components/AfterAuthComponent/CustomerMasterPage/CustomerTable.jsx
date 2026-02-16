@@ -170,7 +170,7 @@ const CustomerTable = () => {
       if (!initialKeys.includes('feedback')) {
         initialKeys.push('feedback');
       }
-      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt'].includes(row)); // keys array will be stored
+      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction'].includes(row)); // keys array will be stored
 
       // Convert headers to CSV row
       const csvRows = [headers.join(",")]; // keystring
@@ -260,7 +260,7 @@ const CustomerTable = () => {
       if (!initialKeys.includes('feedback')) {
         initialKeys.push('feedback');
       }
-      const tableColumns = initialKeys.filter(row => !['_id', '__v', 'email', 'CustomerOfComapny', 'createdAt', 'updatedAt'].includes(row));// array of headers
+      const tableColumns = initialKeys.filter(row => !['_id', '__v', 'email', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction'].includes(row));// array of headers
 
 
       const tableRows = [];  //rows according to headers
@@ -332,8 +332,8 @@ const CustomerTable = () => {
           [reminderIndex]: { cellWidth: 25 },
           [mobileIndex]: { cellWidth: 28 },
           [currentDueIndex]: { cellWidth: 18 },
-          [statusIndex]:{cellWidth:13},
-          [genderIndex]:{cellWidth:16}
+          [statusIndex]: { cellWidth: 13 },
+          [genderIndex]: { cellWidth: 16 }
         }
       });
 

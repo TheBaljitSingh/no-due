@@ -44,7 +44,7 @@ const CustomerMobileCard = () => {
       if (!initialKeys.includes('feedback')) {
         initialKeys.push('feedback');
       }
-      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt'].includes(row)); // keys array will be stored
+      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction'].includes(row)); // keys array will be stored
 
       // Convert headers to CSV row
       const csvRows = [headers.join(",")]; // keystring
@@ -56,17 +56,7 @@ const CustomerMobileCard = () => {
           let val = row[header];
 
           if (val && typeof val === 'object') {
-            if (header === 'lastTransaction') {
-              const txId = val._id || val.id || '';
-              const amount = val.amount ? `${val.amount}` : '';
-              const date = val.createdAt || val.date ? `(${formatDate(val.createdAt || val.date)})` : '';
-
-              if (val.amount) {
-                val = `${amount} ${date} ID:${txId}`;
-              } else {
-                val = `ID:${txId}`;
-              }
-            } else if (header === 'paymentTerm') {
+            if (header === 'paymentTerm') {
               val = val.name || '';
             } else {
               val = JSON.stringify(val); // Fallback for other objects
@@ -118,7 +108,7 @@ const CustomerMobileCard = () => {
       if (!initialKeys.includes('feedback')) {
         initialKeys.push('feedback');
       }
-      const tableColumns = initialKeys.filter(row => !['_id', '__v', 'email', 'CustomerOfComapny', 'createdAt', 'updatedAt'].includes(row));// array of headers
+      const tableColumns = initialKeys.filter(row => !['_id', '__v', 'email', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction'].includes(row));// array of headers
 
 
       const tableRows = [];  //rows according to headers

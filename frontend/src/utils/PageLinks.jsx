@@ -33,16 +33,16 @@ const PageLinks = () => {
   const location = useLocation();
   const keyId = location.pathname;
 
-  // const { loading } = useAuth();
+  const { loading } = useAuth();
 
 
-  // if (loading) {
-  //   return (
-  //     <>
-  //       <LoadingPage />
-  //     </>
-  //   )
-  // };
+  if (loading) {
+    return (
+      <>
+        <LoadingPage />
+      </>
+    )
+  };
 
   return (
     <Routes location={location}>

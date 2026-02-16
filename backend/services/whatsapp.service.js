@@ -166,6 +166,7 @@ class WhatsappService {
         }
       });
 
+      console.log(response);
       return response.data;
     } catch (error) {
       console.error('Error sending template message:', error.response?.data || error.message);

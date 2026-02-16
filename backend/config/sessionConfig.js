@@ -19,7 +19,7 @@ export const sessionMiddleware = session({
   cookie: {
     secure: isProd, //user secure in prod
     httpOnly: true, // prevent client side javascript from accessing cookies 
-    sameSite: isProd ? 'none' : 'lax',
+    sameSite: isProd ? 'none' : 'lax', // [ isProd? cookies is send in all request: frontend & backend are ono same domain (localhost) ]
     maxAge: 24 * 60 * 60 * 1000,
   },
 });

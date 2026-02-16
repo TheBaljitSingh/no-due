@@ -1,5 +1,5 @@
 import api from "./api"
-export const getCustomers = async ({ page = 1, limit = 10 } = {}) => {
+export const getCustomers = async ({ page = 1, limit = 100 } = {}) => {
     const response = await api.get(`/v1/customers?page=${page}&limit=${limit}`);
     return response.data ?? [];
 };

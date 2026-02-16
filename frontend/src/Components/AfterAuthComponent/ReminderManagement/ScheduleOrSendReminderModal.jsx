@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { X, Search, Calendar, Send, User, CreditCard, MessageSquare } from "lucide-react";
-import { getCustomers, getCustomerTransactions } from "../../../utils/service/customerService";
+import { getAllcustomers, getCustomerTransactions } from "../../../utils/service/customerService";
 import { formatDate } from '../../../utils/AfterAuthUtils/Helpers';
 
 export default function ScheduleOrSendReminderModal({
@@ -139,7 +139,7 @@ export default function ScheduleOrSendReminderModal({
 
       async function fetchCus() {
         try {
-          const res = await getCustomers();
+          const res = await getAllcustomers();
           setCustomers(res?.data?.customers || []);
         } catch (err) {
           console.error("Failed to fetch customers", err);
@@ -188,10 +188,10 @@ export default function ScheduleOrSendReminderModal({
 
     onSubmit?.({
       transactionId: selectedTransaction._id,
-      // mode,
-      // scheduleDate: mode === "schedule" ? scheduleDate : null,
-      // templateName: template,
-      // variables: variables
+      mode,
+      scheduleDate: mode === "schedule" ? scheduleDate : null,
+      templateName: template,
+      variables: variables
       // i can send custom template language en or en_US
     });
   };

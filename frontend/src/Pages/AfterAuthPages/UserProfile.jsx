@@ -1,14 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { User, Mail, Phone, Building2, MapPin, Globe, Shield, Lock, Eye, EyeOff, Camera, Trash2, Save, Bell, Crown, CreditCard, QrCode, LogOut, CheckCircle2, Download } from "lucide-react";
+import { User, Mail, Phone, Building2, MapPin, Globe, Shield, Eye, EyeOff, Save, Crown, CreditCard, QrCode, LogOut, CheckCircle2, User2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { toast } from "react-toastify";
-import { updateUser } from "../../utils/service/userService.js";
-
-const MOCK_INVOICES = [
-  { id: "INV-1008", date: "2025-10-01", amount: 499, status: "Paid" },
-  { id: "INV-1007", date: "2025-09-01", amount: 499, status: "Paid" },
-];
+import { updateUser, updatePassword } from "../../utils/service/userService.js";
 
 export default function UserProfile() {
 
@@ -73,22 +68,25 @@ export default function UserProfile() {
 
 
 
-  const [avatarUrl, setAvatarUrl] = useState(user?.profileImageUrl);
-  const [showPw, setShowPw] = useState(false);
   const [twoFA, setTwoFA] = useState(false);
   const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
-  const [notif, setNotif] = useState({ whatsapp: true, email: true, voice: false, product: true });
-  const fileRef = useRef(null);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const planText = useMemo(() => (form?.plan?.price === 0 ? "Free" : `₹${form?.plan?.price}/mo`), [form?.plan]);
 
-  const onChange = (k, v) => setForm((s) => ({ ...s, [k]: v }));
-
-  const onAvatar = (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const url = URL.createObjectURL(f);
-    setAvatarUrl(url);
+  const onChange = (k, v) => {
+    if (k === 'address') {
+      // Handle nested address object
+      setForm((s) => ({ ...s, address: { ...s.address, street: v } }));
+    } else if (['city', 'state', 'pincode', 'country'].includes(k)) {
+      // Handle address sub-fields
+      const addressKey = k === 'pincode' ? 'pinCode' : k;
+      setForm((s) => ({ ...s, address: { ...s.address, [addressKey]: v } }));
+    } else if (k === 'locale') {
+      setForm((s) => ({ ...s, language: v }));
+    } else {
+      setForm((s) => ({ ...s, [k]: v }));
+    }
   };
 
   const saveProfile = async () => {
@@ -130,11 +128,39 @@ export default function UserProfile() {
 
   };
 
-  const saveSecurity = () => {
-    if (!pwd.current || !pwd.next || !pwd.confirm) return alert("Fill all password fields");
-    if (pwd.next !== pwd.confirm) return alert("Passwords do not match");
-    alert("Password changed (mock)");
-    setPwd({ current: "", next: "", confirm: "" });
+  const saveSecurity = async () => {
+    if (!pwd.current || !pwd.next || !pwd.confirm) {
+      toast.error("Please fill all password fields");
+      return;
+    }
+    if (pwd.next !== pwd.confirm) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    if (pwd.next.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const response = await updatePassword({
+        currentPassword: pwd.current,
+        newPassword: pwd.next
+      });
+
+      if (response.status === 200 || response.success) {
+        toast.success("Password updated successfully!");
+        setPwd({ current: "", next: "", confirm: "" });
+      } else {
+        toast.error(response.message || "Failed to update password");
+      }
+    } catch (error) {
+      console.error("Password update error:", error);
+      toast.error(error.response?.data?.message || "Failed to update password. Please try again.");
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -171,20 +197,9 @@ export default function UserProfile() {
           <div className="px-6 pb-6">
             <div className="flex items-end gap-4 -mt-12">
               <div className="relative">
-                <div className="w-24 h-24 rounded-full border-4 border-white bg-gray-100 overflow-hidden flex items-center justify-center shadow-lg">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-10 h-10 text-gray-400" />
-                  )}
+                <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-br from-green-400 to-green-600 overflow-hidden flex items-center justify-center shadow-lg">
+                  <User className="w-10 h-10 text-white" />
                 </div>
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  className="absolute bottom-0 right-0 p-2 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Camera className="w-4 h-4" />
-                </button>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatar} />
               </div>
               <div className="flex-1 pt-4">
                 <p className="text-gray-600">{form?.fname} {form?.lname}</p>
@@ -312,7 +327,7 @@ export default function UserProfile() {
                 />
                 <Field
                   label="Language & Locale"
-                  value={form?.address?.country} //locale 
+                  value={form?.language}
                   onChange={(v) => onChange('locale', v)}
                   placeholder="en-IN"
                 />
@@ -374,28 +389,23 @@ export default function UserProfile() {
                       label="Current Password"
                       value={pwd.current}
                       onChange={(v) => setPwd((s) => ({ ...s, current: v }))}
-                      show={showPw}
-                      setShow={setShowPw}
                     />
                     <PwField
                       label="New Password"
                       value={pwd.next}
                       onChange={(v) => setPwd((s) => ({ ...s, next: v }))}
-                      show={showPw}
-                      setShow={setShowPw}
                     />
                     <PwField
                       label="Confirm New Password"
                       value={pwd.confirm}
                       onChange={(v) => setPwd((s) => ({ ...s, confirm: v }))}
-                      show={showPw}
-                      setShow={setShowPw}
                     />
                     <button
                       onClick={saveSecurity}
-                      className="w-full bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                      disabled={passwordLoading}
+                      className="w-full bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Update Password
+                      {passwordLoading ? "Updating..." : "Update Password"}
                     </button>
                   </div>
                 </div>
@@ -441,8 +451,8 @@ export default function UserProfile() {
               </div>
             </Section>
 
-            {/* Billing & Invoices */}
-            <Section title="Billing & Invoices" icon={<CreditCard className="w-5 h-5 text-pink-600" />}>
+            {/* Billing & Plan */}
+            <Section title="Billing & Plan" icon={<CreditCard className="w-5 h-5 text-pink-600" />}>
               <div className="space-y-4">
                 <div className="rounded-lg border border-gray-200 p-4 bg-gradient-to-br from-blue-50 to-indigo-50">
                   <div className="flex items-center gap-3 mb-3">
@@ -454,35 +464,7 @@ export default function UserProfile() {
                       <div className="text-sm text-gray-600">{planText}</div>
                     </div>
                   </div>
-                  <div className="text-xs text-gray-600 mb-3">Renews on {form?.plan?.renewsOn}</div>
-                  {/* <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm">
-                    Upgrade Plan
-                  </button> */}
-                </div>
-
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Recent Invoices</h4>
-                  <div className="space-y-2">
-                    {MOCK_INVOICES.map((inv) => (
-                      <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">{inv.id}</div>
-                          <div className="text-xs text-gray-600">
-                            {new Date(inv.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-gray-900">₹{inv.amount}</div>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                            {inv.status}
-                          </span>
-                        </div>
-                        <button className="ml-3 p-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors">
-                          <Download className="w-4 h-4 text-gray-600" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="text-xs text-gray-600">Renews on {form?.plan?.renewsOn}</div>
                 </div>
               </div>
             </Section>
@@ -552,7 +534,8 @@ function Toggle({ label, description, checked, onChange }) {
   );
 }
 
-function PwField({ label, value, onChange, show, setShow }) {
+function PwField({ label, value, onChange }) {
+  const [show, setShow] = useState(false);
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
@@ -565,10 +548,10 @@ function PwField({ label, value, onChange, show, setShow }) {
         />
         <button
           type="button"
-          onClick={() => setShow?.(v => !v)}
+          onClick={() => setShow(!show)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >
-          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {show ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
         </button>
       </div>
     </div>

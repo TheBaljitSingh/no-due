@@ -44,7 +44,7 @@ const CustomerMobileCard = () => {
       if (!initialKeys.includes('feedback')) {
         initialKeys.push('feedback');
       }
-      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction'].includes(row)); // keys array will be stored
+      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction',].includes(row)); // keys array will be stored
 
       // Convert headers to CSV row
       const csvRows = [headers.join(",")]; // keystring

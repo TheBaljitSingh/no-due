@@ -53,9 +53,18 @@ const whatsappSchema = new Schema({
     businessProfileId: String, // Meta Business Portfolio ID
     sharedWabaId: String, // If using On-Behalf-Of flow
     reminderTemplates: {
-        beforeDue: { type: String, default: '' },
-        dueToday: { type: String, default: '' },
-        overdue: { type: String, default: '' }
+        beforeDue: {
+            name: { type: String, default: '' },
+            language: { type: String, default: 'en' }
+        },
+        dueToday: {
+            name: { type: String, default: '' },
+            language: { type: String, default: 'en' }
+        },
+        overdue: {
+            name: { type: String, default: '' },
+            language: { type: String, default: 'en' }
+        }
     }
 }, { _id: false });
 

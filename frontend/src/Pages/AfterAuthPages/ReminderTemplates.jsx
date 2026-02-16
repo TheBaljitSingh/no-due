@@ -10,7 +10,7 @@ const ReminderTemplates = () => {
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     category: 'UTILITY',
-    language: 'en_US',
+    language: 'en',
     components: [
       { type: 'BODY', text: '' },
     ]

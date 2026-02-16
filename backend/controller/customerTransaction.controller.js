@@ -2,7 +2,7 @@ import Customer from "../model/customer.model.js";
 import Transaction from "../model/transaction.model.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
-import Reminder from "../model/remainder.model.js";
+import Reminder from "../model/reminder.model.js";
 import reminderService from "../services/reminder.service.js";
 import mongoose from "mongoose";
 

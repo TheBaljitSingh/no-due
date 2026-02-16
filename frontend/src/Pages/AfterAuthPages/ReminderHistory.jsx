@@ -8,7 +8,7 @@ import RightSide from '../../Components/AfterAuthComponent/ReminderHistoryPage/D
 import NoDataFallbackPage from '../../Components/AfterAuthComponent/ReminderHistoryPage/NoDataFallbackPage';
 import LoadingPage from '../../Components/AfterAuthComponent/ReminderHistoryPage/LoadingPage';
 import { getAllcustomers } from "../../utils/service/customerService"
-import { getCustomerReminder } from "../../utils/service/remainderService"
+import { getCustomerReminder } from "../../utils/service/reminderService"
 
 const ReminderHistory = () => {
   const [loading, setLoading] = useState(true);
@@ -53,7 +53,7 @@ const ReminderHistory = () => {
 
   const handleSelectCustomer = useCallback(async (customer) => {
     const customerId = customer._id;
-    // append the remainder details in the customer data
+    // append the reminder details in the customer data
 
     // Only proceed if selecting a new customer or if we don't have details yet
     if (selectedCustomer?._id === customerId) return;
@@ -120,7 +120,7 @@ const ReminderHistory = () => {
             setDetailedView={setDetailedView}
             setSelectedCustomer={setSelectedCustomer}
             imgFor={imgFor}
-            //here i have to pass the selectedcustomer remainder details using an api
+            //here i have to pass the selectedcustomer reminder details using an api
             selectedCustomer={selectedCustomer}
           />
         </div>

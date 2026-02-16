@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { MessageCircle, Phone, Trash2, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import { currency2, statusChip } from '../../../utils/AfterAuthUtils/Helpers';
 import { TEMPLATES } from '../../../utils/constants';
-import { deleteReminder, rescheduleReminder } from '../../../utils/service/remainderService';
+import { deleteReminder, rescheduleReminder } from '../../../utils/service/reminderService';
 import { toast } from 'react-toastify';
 
 

@@ -2,9 +2,9 @@ import Customer from "../model/customer.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import whatsappService from "../services/whatsapp.service.js";
-import remainderService from "../services/reminder.service.js";
+import reminderService from "../services/reminder.service.js";
 import Transaction from "../model/transaction.model.js";
-import Reminder from "../model/remainder.model.js";
+import Reminder from "../model/reminder.model.js";
 import { formatDate } from "../utils/Helper.js"
 import PaymentTerm from "../model/PaymentTerm.model.js";
 import mongoose from "mongoose";
@@ -32,7 +32,7 @@ export function getReminderType(dueDate, now) {
   return 'due_before';
 }
 
-export const getAllRemainders = async (req, res) => {
+export const getAllReminders = async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
     const userId = req.user._id;
@@ -121,14 +121,14 @@ export const createReminder = async (req, res) => {
   }
 
   try {
-    const reminder = await remainderService.createForDue({ transactionId });
+    const reminder = await reminderService.createForDue({ transactionId });
     return new APIResponse(201, reminder, "Reminder created successfully").send(res);
   } catch (error) {
     return new APIError(500, [error.message], "Failed to create reminder").send(res);
   }
 };
 
-export const sendWhatsappRemainder = async (req, res) => {
+export const sendWhatsappReminder = async (req, res) => {
   try {
     const { transactionId } = req.body;
 
@@ -186,7 +186,7 @@ export const sendWhatsappRemainder = async (req, res) => {
     ];
 
 
-    const result = await remainderService.sendNow({
+    const result = await reminderService.sendNow({
       transactionId: tx._id,
       templateName,
       variables
@@ -208,7 +208,7 @@ export const sendWhatsappRemainder = async (req, res) => {
   }
 };
 
-export const scheduleWhatsappRemainder = async (req, res) => {
+export const scheduleWhatsappReminder = async (req, res) => {
   try {
     //make sure scheduleFor data is valid
     const { transactionId, scheduledFor } = req.body;
@@ -217,7 +217,7 @@ export const scheduleWhatsappRemainder = async (req, res) => {
       return new APIError(400, ["transactionId and scheduledFor are required"], "Validation Error").send(res);
     }
 
-    const reminder = await remainderService.scheduleByUser({
+    const reminder = await reminderService.scheduleByUser({
       transactionId,
       scheduledFor
     });
@@ -307,13 +307,13 @@ export const getCustomerReminderHistory = async (req, res) => {
 
 export const deleteReminder = async (req, res) => {
   try {
-    const { remainderId } = req.params;
+    const { reminderId } = req.params;
 
-    if (!remainderId) {
+    if (!reminderId) {
       return new APIResponse(400, null, "Reminder ID is required", false).send(res);
     }
 
-    const result = await Reminder.deleteOne({ _id: remainderId });
+    const result = await Reminder.deleteOne({ _id: reminderId });
 
     if (result.deletedCount === 0) {
       return new APIResponse(404, null, "Reminder not found", false).send(res);
@@ -330,15 +330,15 @@ export const deleteReminder = async (req, res) => {
 
 export const rescheduleReminder = async (req, res) => {
   try {
-    const { remainderId } = req.params;
+    const { reminderId } = req.params;
     const { scheduledFor } = req.body;
 
-    if (!remainderId || !scheduledFor) {
+    if (!reminderId || !scheduledFor) {
       return new APIResponse(400, null, "Reminder ID and next date are required", false).send(res);
     }
 
-    const result = await remainderService.rescheduleReminder({
-      reminderId: remainderId,
+    const result = await reminderService.rescheduleReminder({
+      reminderId: reminderId,
       scheduledFor
     });
 

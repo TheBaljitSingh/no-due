@@ -91,7 +91,7 @@ const RightSide = memo(({ setDetailedView, setSelectedCustomer, imgFor, selected
                     <tr key={r?._id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{formatDate(r?.createdAt)}</td>
                       <td className="px-4 py-3 text-gray-700">{r?.channel || 'WhatsApp'} </td>
-                      <td className="px-4 py-3 text-gray-700">{r?.dueAmount || '0'} </td>
+                      <td className="px-4 py-3 text-gray-700">₹{r?.dueAmount || '0'} </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${r.status === 'Delivered'

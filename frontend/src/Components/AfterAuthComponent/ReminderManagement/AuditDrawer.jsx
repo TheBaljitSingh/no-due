@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { X, MessageSquare, ArrowUpRight, ArrowDownLeft, Loader2 } from "lucide-react";
-import { getAuditLogs } from "../../../utils/service/remainderService";
+import { getAuditLogs } from "../../../utils/service/reminderService";
 import { useRef } from "react";
 // import { statusChip } from "../../utils/AfterAuthUtils/Helpers";
 

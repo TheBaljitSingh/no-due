@@ -100,7 +100,7 @@ export const SidebarFeatures = [
       path: "upload-center"
     },
     {
-      name: "All Transactions",
+      name: "All Transaction History",
       icon: "TransactionIcon",
       path: "transactions"
     }

@@ -198,7 +198,7 @@ export default function UserProfile() {
             <div className="flex items-end gap-4 -mt-12">
               <div className="relative">
                 <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-br from-green-400 to-green-600 overflow-hidden flex items-center justify-center shadow-lg">
-                  <User className="w-10 h-10 text-white" />
+                  <img src={user?.profileImageUrl} alt="profile avatar" />                  
                 </div>
               </div>
               <div className="flex-1 pt-4">

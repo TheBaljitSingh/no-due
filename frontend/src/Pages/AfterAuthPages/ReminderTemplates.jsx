@@ -161,13 +161,15 @@ const ReminderTemplates = () => {
           <h1 className="text-2xl font-bold text-gray-900">Message Templates</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your WhatsApp message templates for reminders.</p>
         </div>
-        <button
+        {/* <button
+        disabled
+        
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors"
+          className="inline-flex hover:cursor-not-allowed items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Template
-        </button>
+        </button> */}
       </div>
 
       {/* Template Configuration Section */}
@@ -177,13 +179,14 @@ const ReminderTemplates = () => {
             <h2 className="text-lg font-semibold text-gray-900">Reminder Template Configuration</h2>
             <p className="text-sm text-gray-500 mt-1">Select which template to use for each reminder type</p>
           </div>
-          <button
+          {/* <button
+
             onClick={saveTemplateConfig}
             disabled={savingConfig}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors disabled:opacity-50"
+            className="px-4 py-2 hover:cursor-not-allowed bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors disabled:opacity-50"
           >
             {savingConfig ? 'Saving...' : 'Save Configuration'}
-          </button>
+          </button> */}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

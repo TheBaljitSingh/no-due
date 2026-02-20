@@ -36,25 +36,9 @@ export default function ScheduleOrSendReminderModal({
   // CONSTANTS: 3 Default Templates
   // ----------------------------------
   const TEMPLATE_OPTIONS = {
-    nodue_before_due_1: {
-      label: "Before Due Reminder",
-      value: "nodue_before_due_1",
-      preview: "Hi {{1}} 👋,\n\nThis is a reminder that ₹{{2}} is due on {{3}}.\n\nPlease make the payment at your convenience.\n\nThank you!"
-    },
-    nodue_due_today_1: {
-      label: "Due Today Reminder",
-      value: "nodue_due_today_1",
-      preview: "Hi {{1}} 👋,\n\nThis is a reminder that ₹{{2}} is due TODAY ({{3}}).\n\nKindly make the payment at your earliest convenience.\n\nThank you!\n{{4}}"
-    },
-    nodue_overdue_1: {
-      label: "Overdue Reminder",
-      value: "nodue_overdue_1",
-      preview: "Hi {{1}} 👋,\n\nThis is a follow-up regarding ₹{{2}}, which was due on {{3}} and is currently pending.\n\nPlease make the payment at your earliest convenience.\n\nThank you!\n{{4}}"
-    }
-    ,
-    interactive_before_due1: {
+    interactive_before_due: {
       label: "Interactive Before",
-      value: "interactive_before_due1",
+      value: "interactive_before_due",
       preview: "Dear {{name}} 👋, \n This is a reminder that ₹{{amount}} is due on {{duedate}}. Please let us know your payment plan by selecting an option below. If payment has already been made, please ignore this message. \n Thanks, From {{companyname}} team"
     },
     interactive_due_today: {

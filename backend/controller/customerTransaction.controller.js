@@ -138,12 +138,12 @@ export async function makePayment(req, res) {
 
     if(paymentTx){
       //if new payment is created then update the reminder accordingly with amount
-      await Reminder.updateOne(
+      await Reminder.updateMany(
         {"transactionId": new mongoose.Types.ObjectId(dueTransactionId)},
         {
         $set:{
-          "templateVariables.1":paymentTx.amount,
-          transactionId: new mongoose.Types.ObjectId(paymentTx._id)
+          "templateVariables.1":Number(paymentTx[0].amount),
+          transactionId: new mongoose.Types.ObjectId(paymentTx[0]._id)
         }
       });
 

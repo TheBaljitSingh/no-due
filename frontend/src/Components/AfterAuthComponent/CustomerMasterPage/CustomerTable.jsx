@@ -12,7 +12,7 @@ import TransactionHistoryModal from "./TransactionHistoryModal.jsx"
 import { useNavigate } from 'react-router-dom';
 
 
-const CustomerTable = () => {
+const CustomerTable = ({ search = "" }) => {
 
   const [loading, setLoading] = useState(null);
   const [customers, setCustomers] = useState([]);
@@ -268,7 +268,7 @@ const CustomerTable = () => {
         const values = tableColumns.map((header) => {
 
           let val = row[header];
-          console.log("val",val);
+          console.log("val", val);
           if (header && header === 'currentDue' && row[header] !== undefined && row[header] !== null) {
             val = `Rs. ${row[header]}`;
           }
@@ -284,7 +284,7 @@ const CustomerTable = () => {
               hour12: true
             })
           }
-          if(header && header ==='paymentTerm' && row[header]){ // it will be object have to save it
+          if (header && header === 'paymentTerm' && row[header]) { // it will be object have to save it
             val = row[header].name.slice(0, 20);
           }
           if (val && typeof val === 'object') {
@@ -365,6 +365,11 @@ const CustomerTable = () => {
   }
 
 
+  const filteredCustomers = customers.filter(c =>
+    c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.mobile?.toString().includes(search)
+  );
+
   return (
     <div className="hidden md:block rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ">
       <div className=" ">
@@ -381,7 +386,7 @@ const CustomerTable = () => {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {customers.map((c, index) => (
+            {filteredCustomers.map((c, index) => (
 
               <tr key={c._id} className={`transition-all duration-300 overflow-hidden hover:bg-gray-50 ${deletedCustomerId === c._id ? "opacity-0 h-0" : "opacity-100 h-auto"}`}>
                 <td className="px-2 py-4 font-medium text-gray-900 align-middle">{index + 1}</td>
@@ -416,7 +421,7 @@ const CustomerTable = () => {
               </tr>
             ))}
 
-            {customers.length === 0 && (
+            {filteredCustomers.length === 0 && (
               <tr>
                 <td colSpan={TableHeaders.length} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center justify-center">

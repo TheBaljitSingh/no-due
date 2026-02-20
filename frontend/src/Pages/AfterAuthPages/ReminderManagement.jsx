@@ -289,12 +289,12 @@ export default function ReminderManagement() {
               <div className="flex flex-wrap items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
                 <span className="text-sm font-medium text-green-900">{bulk.size} selected</span>
                 <div className="flex flex-wrap items-center gap-2 ml-auto">
-                  <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
+                  {/* <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
                     <Send className="w-3.5 h-3.5" /> Send Now
-                  </button>
-                  <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
+                  </button> */}
+                  {/* <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
                     <Pause className="w-3.5 h-3.5" /> Pause
-                  </button>
+                  </button> */}
                   <button
                     onClick={async () => {
                       const confirm = window.confirm(`Delete ${bulk.size} reminders?`);

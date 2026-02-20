@@ -3,7 +3,7 @@ import { sendMainMenu } from "./whatsapp.template.js";
 import whatsappService from "../../services/whatsapp.service.js";
 import { getCurrentDue, updateTransactionStatus } from "../../services/due.service.js"
 import whatsappAuditService from "../../services/whatsapp.audit.service.js";
-import { getOrCreateSession, updateSession } from "../../services/whatsappSession.service.js"
+import { getOrCreateSession, updateSession, getValidSession } from "../../services/whatsappSession.service.js"
 import whatsappSessionModel from "../../model/whatsappSession.model.js";
 import whatsappMessage from "../../model/whatsappMessage.modal.js";
 import Customer from "../../model/customer.model.js";
@@ -51,10 +51,12 @@ export const handleWhatsappEvent = async (payload) => {
   // Check for duplicate response to the same message// need to verify this one
   if (intent.context?.id) {
     const existingResponse = await whatsappMessage.findOne({
-      responseToMessageId: intent.context.id
+      responseToMessageId: intent.context.id,
+      "metadata.type": "Button"
     });
 
     if (existingResponse) {
+      console.log(existingResponse);
       console.warn(`[Audit] Duplicate response blocked. Message ${intent.context.id} already responded to.`);
       return;
     }
@@ -74,24 +76,22 @@ export const handleWhatsappEvent = async (payload) => {
     responseToMessageId: intent.context?.id
   });
 
-  // Update Customer Feedback with the latest message
-  // Assuming 'from' matches the mobile in DB (e.g. 919876543210)
-  try {
-    const feedbackText = intent.text || intent.actionId || "Interaction received";
-    await Customer.findOneAndUpdate(
-      { mobile: intent.from },
-      {
-        feedback: feedbackText,
-        lastInteraction: new Date()
-      }
-    );
+  // updating  the customer master table only it it is button as im sending buttons in the template
+  if (intent.type === 'BUTTON') {
+    try {
+      const feedbackText = intent.text || intent.actionId || "Interaction received";
+      await Customer.findOneAndUpdate(
+        { mobile: intent.from },
+        {
+          feedback: feedbackText,
+          lastInteraction: new Date()
+        }
+      );
 
-    //also update the last transaction status
-
-
-    console.log("updated the status of message received");
-  } catch (err) {
-    console.error("Error updating customer feedback:", err);
+      console.log("updated the status of message received");
+    } catch (err) {
+      console.error("Error updating customer feedback:", err);
+    }
   }
 
   // Greeting
@@ -114,13 +114,18 @@ const routeAction = async (intent, mercantCredentials) => {
   //have to update the action Id to use it like chat bot
   console.log(`User ${from} selected action Id : ${actionId}`);
 
+  // const session = await whatsappSessionModel.findOne({ mobile: from });
+  const session = await getValidSession(from);
+
+
   switch (actionId) {
+    //Reminder Response(list) handling
+
+
     case "CHECK_CURRENT_DUE":
       // TODO: Fetch and send current due
       console.log("Processing CHECK_CURRENT_DUE");
       //check my current due
-
-      const session = await whatsappSessionModel.findOne({ mobile: from });
 
       if (session) {
         await updateSession(intent.from, { state: "CHECK_CURRENT_DUE" });
@@ -138,7 +143,7 @@ const routeAction = async (intent, mercantCredentials) => {
 
       } else {
 
-        const restartConversactionTxt = `Due to inactive on the channel, your session has timed out ⌛. 
+        const restartConversactionTxt = `Due to inactive on the channel, session got timed out ⌛. 
 Just type *Hi* to restart your conversation👋 `;
         if (mercantCredentials.accessToken && mercantCredentials.phoneNumberId) {
           whatsappService.sendTextMessage({
@@ -153,15 +158,51 @@ Just type *Hi* to restart your conversation👋 `;
 
       break;
 
+    case "MINI_STATEMENT":
+      console.log("Processing MINI_STATEMENT");
+      if (session) {
+        await updateSession(intent.from, { state: "MINI_STATEMENT" });
 
-    // Reminder Responses
-    case "PAY_TODAY": 
-    case "WILL_PAY_TODAY":
-    case "PAID_TODAY":
-    case "PAY_WEEK":
-    case "PAY_SOON":
-    case "NEED_STATEMENT":
-      console.log(`User ${from} selected options for ${actionId}`);
+        const customer = await Customer.findOne({ mobile: from });
+        if (customer) {
+          // sendMiniStatement independently fetches last 5 dues + their payments
+          await whatsappService.sendMiniStatement({
+            from: from,
+            customerId: customer._id,
+            accessToken: mercantCredentials.accessToken,
+            phoneNumberId: mercantCredentials.phoneNumberId
+          });
+        } else {
+          if (mercantCredentials.accessToken && mercantCredentials.phoneNumberId) {
+            await whatsappService.sendTextMessage({
+              to: from,
+              text: "Customer not found.",
+              accessToken: mercantCredentials.accessToken,
+              phoneNumberId: mercantCredentials.phoneNumberId
+            });
+          }
+        }
+      } else {
+        const restartConversactionTxt = `Due to inactive on the channel, session got timed out ⌛. 
+Just type *Hi* to restart your conversation👋 `;
+        if (mercantCredentials.accessToken && mercantCredentials.phoneNumberId) {
+          whatsappService.sendTextMessage({
+            to: intent.from,
+            text: restartConversactionTxt,
+            accessToken: mercantCredentials.accessToken,
+            phoneNumberId: mercantCredentials.phoneNumberId
+          });
+        }
+      }
+
+      break;
+
+
+    //template response handling
+    case "I will pay today": //updating the reminder response
+    case "I will pay within a week":
+    case "I will pay soon":
+    case "Need statement":
       try {
         await updateTransactionStatus({
           from,
@@ -172,6 +213,7 @@ Just type *Hi* to restart your conversation👋 `;
         console.error("Error processing whatsapp response:", error);
       }
       break;
+
 
     default:
       console.log("Unknown action:", actionId);

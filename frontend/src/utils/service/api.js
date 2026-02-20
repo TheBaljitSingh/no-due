@@ -22,7 +22,7 @@ const api = axios.create({
     withCredentials: true,
 });
 
-api.interceptors.response.use(
+api.interceptors.request.use(
     (config) =>{
         console.log('making request to',config.baseURL + config.url);
         return config;

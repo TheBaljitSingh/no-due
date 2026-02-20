@@ -1,4 +1,6 @@
 import axios from 'axios';
+import whatsappAuditService from './whatsapp.audit.service.js';
+import Transaction from '../model/transaction.model.js';
 
 class WhatsappService {
   constructor() {
@@ -166,7 +168,20 @@ class WhatsappService {
         }
       });
 
-      console.log(response.status);
+      console.log(response);
+
+      // Audit Log for Template Message
+      await whatsappAuditService.logMessage({
+        mobile: to,
+        direction: "OUTBOUND",
+        type: "template",
+        templateName: templateName,
+        text: `Template: ${templateName}`,
+        whatsappMessageId: response.data.messages?.[0]?.id,
+        status: "sent",
+        variables: variables
+      });
+
       return response.data;
     } catch (error) {
       console.error('Error sending template message:', error.response?.data || error.message);
@@ -175,7 +190,12 @@ class WhatsappService {
   }
 
 
-  async sendTextMessage({ to, text }) {
+  async sendTextMessage({ to, text, accessToken, phoneNumberId }) {
+
+    if (!accessToken || !phoneNumberId) {
+      console.error("Missing WhatsApp credentials for sendTextMessage");
+      throw new Error("Missing WhatsApp credentials");
+    }
 
     const payload = {
       messaging_product: "whatsapp",
@@ -188,44 +208,185 @@ class WhatsappService {
     };
     try {
 
-      const response = await axios.post(this.apiUrl, payload, this.headers);
+      const response = await axios.post(`${this.baseUrl}/${phoneNumberId}/messages`, payload, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        }
+      });
 
       // Audit Log
-      // await whatsappAuditService.logMessage({
-      //   mobile: to,
-      //   direction: "OUTBOUND",
-      //   type: "text",
-      //   text: text,
-      //   whatsappMessageId: response.data.messages?.[0]?.id,
-      //   status: "sent"
-      // });
+      await whatsappAuditService.logMessage({
+        mobile: to,
+        direction: "OUTBOUND",
+        type: "text",
+        text: text,
+        whatsappMessageId: response.data.messages?.[0]?.id,
+        status: "sent"
+      });
 
       return { success: true, data: response?.data };
 
     } catch (error) {
-      console.log(error.response);
+      console.log(error.response?.data || error.message);
       throw new Error("Failed to send Text message");
     }
   }
 
-async markRead(messageId){
-    console.log("marking as read");
-     return axios.post(`${this.baseUrl}/${process.env.PhoneNmId}/messages`,
-      //payload
-    {
+  async sendInteractiveMessage({ to, type, body, action, accessToken, phoneNumberId }) {
+
+    if (!accessToken || !phoneNumberId) {
+      console.error("Missing WhatsApp credentials for sendInteractiveMessage");
+      throw new Error("Missing WhatsApp credentials");
+    }
+
+    const payload = {
       messaging_product: "whatsapp",
-      status: "read",
-      message_id: messageId
-      
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type": "application/json"
+      recipient_type: "individual",
+      to,
+      type: "interactive",
+      interactive: {
+        type: type, // 'list' or 'button'
+        body: {
+          text: body
+        },
+        action: action
+      }
+    };
+
+    try {
+      const response = await axios.post(`${this.baseUrl}/${phoneNumberId}/messages`, payload, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        }
+      });
+
+      // Audit Log
+      await whatsappAuditService.logMessage({
+        mobile: to,
+        direction: "OUTBOUND",
+        type: "interactive",
+        text: body, // Logging the body text
+        whatsappMessageId: response.data.messages?.[0]?.id,
+        status: "sent",
+        payload: { type, action } // saving details
+      });
+
+      return { success: true, data: response?.data };
+
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+      throw new Error("Failed to send Interactive message");
+    }
+  }
+
+  async markRead(messageId, accessToken, phoneNumberId) {
+    // console.log("marking as read");
+    if (!accessToken || !phoneNumberId) {
+      console.error("Missing WhatsApp credentials for markRead");
+      return;
+    }
+
+    try {
+      await axios.post(`${this.baseUrl}/${phoneNumberId}/messages`,
+        {
+          messaging_product: "whatsapp",
+          status: "read",
+          message_id: messageId
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Error marking message as read:", error.response?.data || error.message);
+    }
+  }
+
+
+  async sendMiniStatement({ from, customerId, accessToken, phoneNumberId }) {
+
+    // 1. Independently fetch the last 5 DUE_ADDED transactions for this customer
+    const dueTransactions = await Transaction.find({
+      customerId,
+      type: "DUE_ADDED"
+    })
+      .sort({ createdAt: -1 })
+      .limit(4);
+
+    if (dueTransactions.length === 0) {
+      if (accessToken && phoneNumberId) {
+        return this.sendTextMessage({
+          to: from,
+          text: "No due transactions found.",
+          accessToken,
+          phoneNumberId
+        });
+      }
+      return;
+    }
+
+    for (const transaction of dueTransactions) {
+      // 2. For each due, independently fetch its linked payments from DB
+      const linkedPayments = await Transaction.find({
+        linkedDueTransaction: transaction._id,
+        type: "PAYMENT"
+      }).sort({ createdAt: 1 });
+
+      const dueDate = transaction.dueDate
+        ? new Date(transaction.dueDate).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+        })
+        : "N/A";
+
+      const totalPaid = linkedPayments.reduce((sum, tx) => sum + tx.amount, 0);
+      const remainingForThisDue = transaction.amount - totalPaid;
+
+      let statementText = `*STATEMENT FOR DUE #${transaction._id
+        .toString()
+        .slice(-4)}*\n`;
+
+      statementText += `Due Date: ${dueDate}\n`;
+      statementText += `*Original Amount: ₹${transaction.amount}*\n`;
+      statementText += `--------------------------------\n`;
+
+      if (linkedPayments.length > 0) {
+        statementText += `*Payments Received:*\n`;
+
+        linkedPayments.forEach(tx => {
+          const date = new Date(tx.createdAt).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short"
+          });
+
+          statementText += `✅ ${date}: ₹${tx.amount}\n`;
+        });
+
+        statementText += `--------------------------------\n`;
+        statementText += `Total Paid: ₹${totalPaid}\n`;
+      } else {
+        statementText += `_No payments made yet._\n--------------------------------\n`;
+      }
+
+      statementText += `*Pending Due: ₹${remainingForThisDue}*`;
+
+      if (accessToken && phoneNumberId) {
+        await this.sendTextMessage({
+          to: from,
+          text: statementText,
+          accessToken,
+          phoneNumberId
+        });
+      } else {
+        console.error("Merchant WhatsApp credentials not configured");
       }
     }
-  );
-
   }
 }
 

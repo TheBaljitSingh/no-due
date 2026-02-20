@@ -42,3 +42,18 @@ export const updateSession = async (mobile, updates = {}) => {
     { new: true }
   );
 };
+
+export const getValidSession = async (mobile) => {
+  const now = new Date();
+
+  const session = await WhatsappSession.findOne({ mobile });
+
+  if (!session) return null;
+
+  if (session.expiresAt < now) {
+    await WhatsappSession.deleteOne({ mobile });
+    return null;
+  }
+
+  return session;
+};

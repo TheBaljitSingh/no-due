@@ -15,6 +15,10 @@ export const sendMainMenu = async (to, mercantCredentials) => {
                 id: "CHECK_CURRENT_DUE",
                 title: "Current Due",
                 description: "View my current outstanding dues"
+              },{
+                id:"MINI_STATEMENT",
+                title:"Mini statement",
+                description:"Get mini statement"
               }
             ]
           }

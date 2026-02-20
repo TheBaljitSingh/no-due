@@ -310,7 +310,7 @@ class WhatsappService {
 
   async sendMiniStatement({ from, customerId, accessToken, phoneNumberId }) {
 
-    // 1. Independently fetch the last 5 DUE_ADDED transactions for this customer
+    // 1. Independently fetch the last 4 DUE_ADDED transactions for this customer
     const dueTransactions = await Transaction.find({
       customerId,
       type: "DUE_ADDED"
@@ -330,6 +330,12 @@ class WhatsappService {
       return;
     }
 
+    let statementText = `*📄 MINI STATEMENT*\n`;
+    statementText += `--------------------------------\n`;
+
+    let grandTotalPaid = 0;
+    let grandTotalPending = 0;
+
     for (const transaction of dueTransactions) {
       // 2. For each due, independently fetch its linked payments from DB
       const linkedPayments = await Transaction.find({
@@ -348,44 +354,42 @@ class WhatsappService {
       const totalPaid = linkedPayments.reduce((sum, tx) => sum + tx.amount, 0);
       const remainingForThisDue = transaction.amount - totalPaid;
 
-      let statementText = `*STATEMENT FOR DUE #${transaction._id
-        .toString()
-        .slice(-4)}*\n`;
+      grandTotalPaid += totalPaid;
+      grandTotalPending += remainingForThisDue;
 
-      statementText += `Due Date: ${dueDate}\n`;
-      statementText += `*Original Amount: ₹${transaction.amount}*\n`;
-      statementText += `--------------------------------\n`;
+      statementText += `*DUE #${transaction._id.toString().slice(-4)}* (${dueDate})\n`;
+      statementText += `Original: ₹${transaction.amount}\n`;
 
       if (linkedPayments.length > 0) {
-        statementText += `*Payments Received:*\n`;
-
         linkedPayments.forEach(tx => {
           const date = new Date(tx.createdAt).toLocaleDateString("en-IN", {
             day: "2-digit",
             month: "short"
           });
-
-          statementText += `✅ ${date}: ₹${tx.amount}\n`;
-        });
-
-        statementText += `--------------------------------\n`;
-        statementText += `Total Paid: ₹${totalPaid}\n`;
-      } else {
-        statementText += `_No payments made yet._\n--------------------------------\n`;
-      }
-
-      statementText += `*Pending Due: ₹${remainingForThisDue}*`;
-
-      if (accessToken && phoneNumberId) {
-        await this.sendTextMessage({
-          to: from,
-          text: statementText,
-          accessToken,
-          phoneNumberId
+          statementText += `  └ ✅ ${date}: ₹${tx.amount}\n`;
         });
       } else {
-        console.error("Merchant WhatsApp credentials not configured");
+        statementText += `  └ _No payments yet_\n`;
       }
+
+      statementText += `Pending: ₹${remainingForThisDue}\n`;
+      statementText += `--------------------------------\n`;
+    }
+
+    // Add Grand Summary
+    statementText += `*SUMMARY*\n`;
+    statementText += `Total Paid: ₹${grandTotalPaid}\n`;
+    statementText += `*Total Pending Due: ₹${grandTotalPending}*`;
+
+    if (accessToken && phoneNumberId) {
+      await this.sendTextMessage({
+        to: from,
+        text: statementText,
+        accessToken,
+        phoneNumberId
+      });
+    } else {
+      console.error("Merchant WhatsApp credentials not configured");
     }
   }
 }

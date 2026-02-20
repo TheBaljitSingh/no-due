@@ -180,6 +180,7 @@ export const getCustomers = async (req, res) => {
 
     const customers = await Customer.find(query)
       .populate("lastTransaction", "commitmentStatus")
+      .populate("paymentTerm", "name")
       .skip(offset)
       .limit(queryLimit);
 

@@ -149,7 +149,7 @@ class ReminderService {
         }
 
         if (messagePayload) {
-          await whatsappService.sendTemplateMessage({
+          const sentResponse = await whatsappService.sendTemplateMessage({
             to: `${transaction.customerId.mobile}`,
             templateName: messagePayload.templateName,
             variables: messagePayload.variables,
@@ -157,6 +157,10 @@ class ReminderService {
             accessToken: merchant.whatsapp.accessToken,
             phoneNumberId: merchant.whatsapp.phoneNumberId
           });
+
+          if (sentResponse?.messages?.[0]?.id) {
+            reminder.whatsappMessageId = sentResponse.messages[0].id;
+          }
         }
       } else {
         // Fetch credentials from Customer -> User
@@ -341,7 +345,7 @@ class ReminderService {
         console.log("message payload: ", messagePayload, "\n");
 
         if (messagePayload) {
-          await whatsappService.sendTemplateMessage({
+          const sentResponse = await whatsappService.sendTemplateMessage({
             to: `${tx.customerId.mobile}`,
             templateName: messagePayload.templateName,
             variables: messagePayload.variables,
@@ -349,6 +353,10 @@ class ReminderService {
             accessToken: merchant.whatsapp.accessToken,
             phoneNumberId: merchant.whatsapp.phoneNumberId
           });
+
+          if (sentResponse?.messages?.[0]?.id) {
+            reminder.whatsappMessageId = sentResponse.messages[0].id;
+          }
 
           reminder.status = "sent";
           reminder.sentAt = new Date();

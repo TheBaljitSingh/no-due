@@ -268,6 +268,7 @@ const CustomerTable = () => {
         const values = tableColumns.map((header) => {
 
           let val = row[header];
+          console.log("val",val);
           if (header && header === 'currentDue' && row[header] !== undefined && row[header] !== null) {
             val = `Rs. ${row[header]}`;
           }
@@ -282,6 +283,9 @@ const CustomerTable = () => {
               minute: "2-digit",
               hour12: true
             })
+          }
+          if(header && header ==='paymentTerm' && row[header]){ // it will be object have to save it
+            val = row[header].name.slice(0, 20);
           }
           if (val && typeof val === 'object') {
             if (header === 'lastTransaction') {
@@ -402,8 +406,8 @@ const CustomerTable = () => {
                 </td>
                 {/* COMMITTED_THIS_WEEK => Committed This Week*/}
                 <td className="px-2 py-4 whitespace-nowrap text-gray-700">
-                  {c.lastTransaction?.commitmentStatus
-                    ? c.lastTransaction.commitmentStatus.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+                  {c.feedback
+                    ? c.feedback.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
                     : "-"}
                 </td>
                 <td >

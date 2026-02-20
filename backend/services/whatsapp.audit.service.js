@@ -1,4 +1,5 @@
 import Customer from "../model/customer.model.js";
+import Transaction from "../model/transaction.model.js";
 import WhatsappConversation from "../model/whatsappConversation.js";
 import WhatsappMessage from "../model/whatsappMessage.modal.js";
 
@@ -7,7 +8,7 @@ import WhatsappMessage from "../model/whatsappMessage.modal.js";
 class WhatsappAuditService {
 
 
-    async logMessage({ mobile, direction, type, text, templateName, variables, whatsappMessageId, status, customerId, payload }) {
+    async logMessage({ mobile, direction, type, text, templateName, variables, whatsappMessageId, status, customerId, payload, responseToMessageId }) {
 
         try {
             console.log(`[Audit] Saving message: ${mobile} ${direction} ${type} Status: ${status}`);
@@ -60,7 +61,8 @@ class WhatsappAuditService {
                 status: status || (direction === "OUTBOUND" ? "sent" : "delivered"),
                 timestamp: new Date(),
                 customerId: conversation.customerId ? conversation.customerId.toString() : (customerId || "unknown"),
-                metadata: payload || {}
+                metadata: payload || {},
+                responseToMessageId: responseToMessageId
             });
 
 
@@ -71,11 +73,11 @@ class WhatsappAuditService {
         }
     }
 
-    async updateMessageStatus(whatsappMessageId, status, error) {
+    async updateMessageStatus(whatsappMessageId, button, error) {
         try {
             if (!whatsappMessageId) return;
 
-            const updateData = { status };
+            const updateData = button?.text;
             if (error) {
                 updateData.error = JSON.stringify(error);
             }
@@ -87,8 +89,15 @@ class WhatsappAuditService {
                 { new: true }
             );
 
+            //also i have to update the committed status in transaction
+            await Transaction.findOneAndUpdate(
+                { whatsappMessageId },
+                { $set: { committed: true } },
+                { new: true }
+            );
+
             if (result) {
-                console.log(`[Audit] Updated status for ${whatsappMessageId} to ${status}`);
+                console.log(`[Audit] Updated status for ${whatsappMessageId} to ${button?.text}`);
             } else {
                 console.warn(`[Audit] Message not found for status update: ${whatsappMessageId}`);
             }

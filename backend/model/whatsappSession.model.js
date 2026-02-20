@@ -20,12 +20,12 @@ const whatsappSessionSchema = new mongoose.Schema({
   },
   expiresAt: {
     type: Date,
-    require:true
+    require: true
   }
 });
 
 
-whatsappSessionSchema.index({expireAt:1},{expireAfterSeconds:0})
+whatsappSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 
 export default mongoose.model("WhatsappSession", whatsappSessionSchema);

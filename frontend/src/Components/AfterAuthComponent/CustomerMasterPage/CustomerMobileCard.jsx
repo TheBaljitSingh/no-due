@@ -33,7 +33,7 @@ const CustomerMobileCard = () => {
 
 
   const handleDownloadCsv = async () => {
-    // console.log(customers);
+    console.log("calling handle download csv");
 
     //data will be customers data
     try {
@@ -54,6 +54,10 @@ const CustomerMobileCard = () => {
         const values = headers.map((header) => {
           //for each keys
           let val = row[header];
+
+          if(header==='mobile'){
+            val = `="${val}"`;
+          }
 
           if (val && typeof val === 'object') {
             if (header === 'paymentTerm') {
@@ -94,7 +98,7 @@ const CustomerMobileCard = () => {
 
   }
 
-  const handleDownloadPdf = async () => {
+const handleDownloadPdf = async () => {
     try {
       const response = await getAllcustomers();
       const data = response.data.customers;
@@ -114,7 +118,27 @@ const CustomerMobileCard = () => {
       const tableRows = [];  //rows according to headers
       data.forEach((row) => {
         const values = tableColumns.map((header) => {
+
           let val = row[header];
+          console.log("val",val);
+          if (header && header === 'currentDue' && row[header] !== undefined && row[header] !== null) {
+            val = `Rs. ${row[header]}`;
+          }
+          if (header && header === 'lastReminder' && row[header]) {
+            //formatting date: 13 Feb 2026, 09:24 am
+
+            val = new Date(row[header]).toLocaleString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true
+            })
+          }
+          if(header && header ==='paymentTerm' && row[header]){ // it will be object have to save it
+            val = row[header].name.slice(0, 20);
+          }
           if (val && typeof val === 'object') {
             if (header === 'lastTransaction') {
               const txId = val._id || val.id || '';
@@ -124,7 +148,7 @@ const CustomerMobileCard = () => {
               if (val.amount) {
                 val = `${amount} ${date} ID:${txId}`;
               } else {
-                val = `ID:${txId}`;
+                val = `${txId}`; // only adding id
               }
             } else if (header === 'paymentTerm') {
               val = val.name || '';
@@ -132,7 +156,7 @@ const CustomerMobileCard = () => {
               val = JSON.stringify(val);
             }
           }
-          return val;
+          return val; //taking only that is defined in filtered tableColumns above
         });
 
         tableRows.push(values);
@@ -140,6 +164,12 @@ const CustomerMobileCard = () => {
 
       const updatedColumns = tableColumns.map(hd => hd.charAt(0).toUpperCase() + hd.substring(1));
 
+      const nameIndex = tableColumns.indexOf('name');
+      const reminderIndex = tableColumns.indexOf('lastReminder');
+      const mobileIndex = tableColumns.indexOf('mobile');
+      const currentDueIndex = tableColumns.indexOf('currentDue');
+      const genderIndex = tableColumns.indexOf('gender');
+      const statusIndex = tableColumns.indexOf('status');
 
       // Generate table
       autoTable(doc, {
@@ -152,6 +182,14 @@ const CustomerMobileCard = () => {
           textColor: [0, 0, 0],       // header text color
           fontStyle: "bold",
           halign: "left",
+        },
+        columnStyles: { // manually adding some space in that 
+          [nameIndex]: { cellWidth: 28 },
+          [reminderIndex]: { cellWidth: 25 },
+          [mobileIndex]: { cellWidth: 28 },
+          [currentDueIndex]: { cellWidth: 18 },
+          [statusIndex]: { cellWidth: 13 },
+          [genderIndex]: { cellWidth: 16 }
         }
       });
 

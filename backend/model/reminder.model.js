@@ -28,6 +28,13 @@ const reminderSchema = new Schema(
     //   required: true
     // },
 
+    whatsappMessageId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true
+    },
+
     whatsappTemplate: {
       name: { type: String, required: true },
       language: { type: String, default: 'en' }
@@ -49,7 +56,7 @@ const reminderSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["pending", "sent", "failed","cancelled",'rescheduled'],
+      enum: ["pending", "sent", "failed", "cancelled", 'rescheduled'],
       default: "pending",
       index: true
     },
@@ -62,9 +69,9 @@ const reminderSchema = new Schema(
     lastError: {
       type: String
     },
-    source:{
-      type:String,
-      enum:['auto','manual'],
+    source: {
+      type: String,
+      enum: ['auto', 'manual'],
       default: "manual"
     }
   },
@@ -74,7 +81,7 @@ const reminderSchema = new Schema(
 );
 
 reminderSchema.index(
-  { transactionId: 1, reminderType: 1 ,scheduledFor:1},
+  { transactionId: 1, reminderType: 1, scheduledFor: 1 },
   { unique: true }
 );
 

@@ -146,7 +146,6 @@ export async function makePayment(req, res) {
           transactionId: new mongoose.Types.ObjectId(paymentTx[0]._id)
         }
       });
-
     }
 
     // THEN recalculate

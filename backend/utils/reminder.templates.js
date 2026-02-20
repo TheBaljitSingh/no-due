@@ -3,20 +3,13 @@ import User from "../model/user.model.js";
 
 export const REMINDER_TEMPLATE_NAMES = {
     //en_US 
-    INTERACTIVE_BEFORE_DUE: 'interactive_before_due1',
+    INTERACTIVE_BEFORE_DUE: 'interactive_before_due',
     INTERACTIVE_DUE_TODAY: 'interactive_due_today',
     INTERACTIVE_OVERDUE: 'interactive_overdue',
 };
 
 
-/**
- * Fetches custom template name and language from user's WhatsApp settings
- * Falls back to predefined template if not configured
- * @param {string} userId - The user/merchant ID
- * @param {string} templateType - 'beforeDue', 'dueToday', or 'overdue'
- * @param {string} defaultTemplate - Default template name to use as fallback
- * @returns {Promise<{name: string, language: string}>} Template name and language to use
- */
+
 const getTemplateNameFromUser = async (userId, templateType, defaultTemplate) => {
     try {
         if (!userId) {

@@ -95,7 +95,7 @@ export const createCustomer = async (req, res) => {
           };
           const newCustomer = await Customer.create(newCustomerData);
 
-          if(dueAmount>0){
+          if (dueAmount > 0) {
             //have to create transaction here
             const creditDays = paymentTerm?.creditDays ?? 0;
             const dueDate = new Date();
@@ -115,7 +115,7 @@ export const createCustomer = async (req, res) => {
             });
             newCustomer.lastTransaction = transaction._id;
             newCustomer.currentDue = dueAmount;
-            newCustomer.status = customer.status=='Due'?'Due':'';
+            newCustomer.status = customer.status == 'Due' ? 'Due' : '';
             await newCustomer.save();
           }
           console.log("newCustomer", newCustomer);
@@ -169,14 +169,19 @@ export const createCustomer = async (req, res) => {
 
 export const getCustomers = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, search = "" } = req.query;
     const offset = (page - 1) * limit;
     const queryLimit = limit === "all" ? 0 : parseInt(limit);
 
     const userId = req.user._id;
 
-
     const query = { CustomerOfComapny: userId };
+
+    // If a search term is provided, filter by name or mobile (case-insensitive)
+    if (search && search.trim() !== "") {
+      const regex = new RegExp(search.trim(), "i"); //case insensitive
+      query.$or = [{ name: regex }, { mobile: regex }];
+    }
 
     const customers = await Customer.find(query)
       .populate("lastTransaction", "commitmentStatus")
@@ -184,13 +189,11 @@ export const getCustomers = async (req, res) => {
       .skip(offset)
       .limit(queryLimit);
 
-
     const total = await Customer.countDocuments(query);
-    return new APIResponse(200, { customers, total, page, limit, totalPages: Math.ceil(total / limit) }, "Fetched all customers",).send(res); // have to check response 
+    return new APIResponse(200, { customers, total, page, limit, totalPages: Math.ceil(total / limit) }, "Fetched all customers").send(res);
 
   } catch (error) {
-    return new APIError(500, error, "Failed to fetch the customers data").send(res); // have to check res
-
+    return new APIError(500, error, "Failed to fetch the customers data").send(res);
   }
 }
 

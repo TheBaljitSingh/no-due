@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PageHeaders from "../../utils/AfterAuthUtils/PageHeaders";
 import CustomerTable from "../../Components/AfterAuthComponent/CustomerMasterPage/CustomerTable";
 import CustomerMobileCard from "../../Components/AfterAuthComponent/CustomerMasterPage/CustomerMobileCard";
@@ -7,6 +7,15 @@ import { Search } from "lucide-react";
 
 const CustomerMaster = () => {
   const [search, setSearch] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -34,11 +43,12 @@ const CustomerMaster = () => {
         </div>
       </div>
 
-      {/* Desktop Table */}
-      <CustomerTable search={search} />
-
-      {/* Mobile Cards */}
-      <CustomerMobileCard search={search} />
+      {/* Render only one based on screen size to avoid double API calls */}
+      {isMobile ? (
+        <CustomerMobileCard search={search} />
+      ) : (
+        <CustomerTable search={search} />
+      )}
     </div>
   );
 };

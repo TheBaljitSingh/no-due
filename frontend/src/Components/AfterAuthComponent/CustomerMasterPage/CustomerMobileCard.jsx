@@ -5,31 +5,41 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from 'react-toastify';
 
-const CustomerMobileCard = () => {
+const CustomerMobileCard = ({ search = "" }) => {
 
 
   const [customers, setCustomers] = useState([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalCustomers, setTotalCustomers] = useState();
+  const [debounceQuery, setDebounceQuery] = useState("");
 
+  // Debounce: wait 500ms after the user stops typing before hitting the backend
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebounceQuery(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
+  // Fetch whenever page, limit, or the debounced search term changes
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const data = await getCustomers({ page, limit });
-        console.log(customers);
+        const data = await getCustomers({ page, limit, search: debounceQuery });
         setCustomers(data.data.customers);
         setTotalCustomers(data.data.total);
-
       } catch (error) {
         console.log(error);
       }
     };
 
     fetchCustomers();
+  }, [page, limit, debounceQuery]);
 
-  }, [page, limit]);
+  // No client-side filter needed — backend already returns the right results
+  const filteredCustomers = customers;
+
 
 
   const handleDownloadCsv = async () => {
@@ -55,7 +65,7 @@ const CustomerMobileCard = () => {
           //for each keys
           let val = row[header];
 
-          if(header==='mobile'){
+          if (header === 'mobile') {
             val = `="${val}"`;
           }
 
@@ -98,7 +108,7 @@ const CustomerMobileCard = () => {
 
   }
 
-const handleDownloadPdf = async () => {
+  const handleDownloadPdf = async () => {
     try {
       const response = await getAllcustomers();
       const data = response.data.customers;
@@ -120,7 +130,7 @@ const handleDownloadPdf = async () => {
         const values = tableColumns.map((header) => {
 
           let val = row[header];
-          console.log("val",val);
+          console.log("val", val);
           if (header && header === 'currentDue' && row[header] !== undefined && row[header] !== null) {
             val = `Rs. ${row[header]}`;
           }
@@ -136,7 +146,7 @@ const handleDownloadPdf = async () => {
               hour12: true
             })
           }
-          if(header && header ==='paymentTerm' && row[header]){ // it will be object have to save it
+          if (header && header === 'paymentTerm' && row[header]) { // it will be object have to save it
             val = row[header].name.slice(0, 20);
           }
           if (val && typeof val === 'object') {
@@ -209,7 +219,7 @@ const handleDownloadPdf = async () => {
 
   return (
     <div className="md:hidden space-y-4">
-      {customers.map((c) => (
+      {filteredCustomers.map((c) => (
         <div key={c._id} className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="p-4 space-y-3">
             <div className="flex items-start justify-between">

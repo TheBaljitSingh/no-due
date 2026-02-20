@@ -20,6 +20,7 @@ const CustomerTable = ({ search = "" }) => {
   const [limit, setLimit] = useState(5);
   const [totalPages, setTotalPages] = useState();
   const [totalCustomers, setTotalCustomers] = useState();
+  const [debounceQuery, setDebounceQuery] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [currentCustomer, setCurrentCustomer] = useState([]);
   const [showEditMOdal, setShowEditModal] = useState(false);
@@ -48,13 +49,26 @@ const CustomerTable = ({ search = "" }) => {
     return () => document.removeEventListener("mousedown", handleMouseClick);
   });
 
+  // Debounce: wait 500ms after the user stops typing before hitting the backend
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebounceQuery(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // When the debounced search term changes, reset to page 1
+  useEffect(() => {
+    setPage(1);
+  }, [debounceQuery]);
+
   useEffect(() => {
     const fetchCustomers = async () => {
       setLoading(true);
       try {
-        const data = await getCustomers({ page, limit });
+        const data = await getCustomers({ page, limit, search: debounceQuery });
         setCustomers(data.data.customers);
-        setTotalPages(data.data.totalPages)
+        setTotalPages(data.data.totalPages);
         setTotalCustomers(data.data.total);
       } catch (error) {
         console.log(error);
@@ -65,7 +79,7 @@ const CustomerTable = ({ search = "" }) => {
 
     fetchCustomers();
 
-  }, [page]);
+  }, [page, debounceQuery]);
 
 
   const handleEditCustomer = (customer) => {
@@ -365,10 +379,8 @@ const CustomerTable = ({ search = "" }) => {
   }
 
 
-  const filteredCustomers = customers.filter(c =>
-    c.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.mobile?.toString().includes(search)
-  );
+  // Filtering is now done server-side; `customers` already contains only matching results
+  const filteredCustomers = customers;
 
   return (
     <div className="hidden md:block rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ">

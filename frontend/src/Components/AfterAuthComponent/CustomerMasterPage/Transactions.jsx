@@ -26,8 +26,11 @@ const TransactionHistoryDuePage = () => {
 
     useEffect(() => {
         fetchData(pagination.currentPage);
-        fetchCustomers();
     }, [pagination.currentPage]);
+
+    useEffect(() => {
+        fetchCustomers();
+    }, []);
 
     const fetchCustomers = async () => {
         try {
@@ -86,9 +89,9 @@ const TransactionHistoryDuePage = () => {
                 buttonName="Add Transaction"
                 handleOnClick={() => setShowAddTransactionModal(true)}
             />
-            
 
-        <p className='text-xs component-subheader'>Only pending Due are shown here</p>
+
+            <p className='text-xs component-subheader'>Only pending Due are shown here</p>
 
             {showAddTransactionModal && !showTransactionModal && (
                 <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">

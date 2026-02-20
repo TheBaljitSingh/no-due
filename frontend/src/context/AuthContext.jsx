@@ -10,12 +10,12 @@ export const AuthProvider = ({ children }) => {
 
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [isUserLoggedOut,setIsUserLoggedOut] = useState(true);
+    const [isUserLoggedOut, setIsUserLoggedOut] = useState(true);
 
     useEffect(() => {
-        if(user){
+        if (user) {
             setIsUserLoggedOut(false);
-        }else{
+        } else {
             setIsUserLoggedOut(true);
         }
     }, [user]);
@@ -26,13 +26,13 @@ export const AuthProvider = ({ children }) => {
     const fetchUser = async () => {
         try {
             const response = await checkAuth();
-             console.log("Auth Check Response:", response);
-            if(response.status === 200){
+            console.log("Auth Check Response:", response);
+            if (response.status === 200) {
                 setUser(response.data.user);
             }
         } catch (err) {
             // toast.error(err?.message)
-            console.error("Error checking Auth:",err);
+            console.error("Error checking Auth:", err);
             setUser(null);
         } finally {
             setLoading(false);
@@ -42,13 +42,11 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const hasLoggedIn = localStorage.getItem('isUserLoggedIn') === 'true';
 
-        if(!user && hasLoggedIn){
+        if (hasLoggedIn) {
             fetchUser();
-        }else{
-            setLoading(false); // have to check this from my side
-
+        } else {
+            setLoading(false);
         }
-        fetchUser();
     }, []);
 
     const value = { user, loading, setUser, isUserLoggedOut, setIsUserLoggedOut };

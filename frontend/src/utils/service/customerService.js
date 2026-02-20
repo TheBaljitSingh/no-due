@@ -1,6 +1,8 @@
 import api from "./api"
-export const getCustomers = async ({ page = 1, limit = 100 } = {}) => {
-    const response = await api.get(`/v1/customers?page=${page}&limit=${limit}`);
+export const getCustomers = async ({ page = 1, limit = 100, search = "" } = {}) => {
+    const params = new URLSearchParams({ page, limit });
+    if (search && search.trim() !== "") params.append("search", search.trim());
+    const response = await api.get(`/v1/customers?${params.toString()}`);
     return response.data ?? [];
 };
 

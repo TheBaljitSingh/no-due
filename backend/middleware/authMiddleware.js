@@ -1,6 +1,14 @@
 export const isAuthenticated = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "You must login first" });
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
   }
-  next();
+  // Fallback check for non-Passport setups
+  if (req.user) {
+    return next();
+  }
+  return res.status(401).json({
+    success: false,
+    error: "UNAUTHENTICATED",
+    message: "You must be logged in to access this resource.",
+  });
 };

@@ -5,10 +5,10 @@ import logger from "../../utils/logger.js";
 
 
 const links = [
-  { href: "/",     label: "Home" },
+  { href: "/", label: "Home" },
   { href: "#features", label: "Features" },
-  { href: "#pricing",  label: "Pricing" },
-  { href: "#contact",  label: "Contact" },
+  { href: "#pricing", label: "Pricing" },
+  { href: "/contact", label: "Contact" },
 ];
 
 const NAV_HEIGHT_PX = 64; // your sticky header height (h-16 => 64px)
@@ -16,22 +16,22 @@ const NAV_HEIGHT_PX = 64; // your sticky header height (h-16 => 64px)
 const Navbar = () => {
   const [open, setOpen] = useState(false);
 
-  const [openLogin , setOpenLogin] = useState(false);
+  const [openLogin, setOpenLogin] = useState(false);
 
   const navigate = useNavigate();
 
 
   const location = useLocation();
 
-  useEffect(()=>{
+  useEffect(() => {
     //this is very important usecase of useLocation state
-    if(location?.state?.openLogin){
+    if (location?.state?.openLogin) {
       logger.log(location.state);
       setOpenLogin(true);
     }
 
-    navigate(location.pathname, {replace:true, state:null});
-  },[]);
+    navigate(location.pathname, { replace: true, state: null });
+  }, []);
 
 
   const handleNavClick = useCallback((e, href) => {
@@ -42,7 +42,7 @@ const Navbar = () => {
       e.preventDefault();
 
       if (href === "#contact") {
-        navigate("/contact");   
+        navigate("/contact");
         setOpen(false);
         return;
       }
@@ -87,7 +87,7 @@ const Navbar = () => {
                 <li key={l.href}>
                   <a
                     href={l.href}
-                    onClick={(e) => handleNavClick(e, l.href) }
+                    onClick={(e) => handleNavClick(e, l.href)}
                     className="text-md font-medium text-gyay-950 hover:text-slate-600 transition-colors"
                   >
                     {l.label}
@@ -97,14 +97,14 @@ const Navbar = () => {
             </ul>
 
 
-           <button onClick={() => setOpenLogin(true)} className="inline-flex mr-1 cursor-pointer items-center rounded-full text-transparent bg-clip-text font-[font3] border-teal-400 border-2 py-2 px-3 bg-gradient-to-r from-blue-400 to-teal-600 p-[2px] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
-                Login
+            <button onClick={() => setOpenLogin(true)} className="inline-flex mr-1 cursor-pointer items-center rounded-full text-transparent bg-clip-text font-[font3] border-teal-400 border-2 py-2 px-3 bg-gradient-to-r from-blue-400 to-teal-600 p-[2px] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+              Login
             </button>
 
-              <LoginModal
-                open={openLogin}
-                onClose={() => setOpenLogin(false)}
-               />
+            <LoginModal
+              open={openLogin}
+              onClose={() => setOpenLogin(false)}
+            />
           </div>
 
           {/* Mobile toggle */}
@@ -117,11 +117,11 @@ const Navbar = () => {
           >
             {open ? (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             ) : (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             )}
           </button>
@@ -149,14 +149,14 @@ const Navbar = () => {
                 onClick={(e) => handleNavClick(e, "#contact")}
                 className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-blue-400 to-teal-600 p-[2px]"
               > */}
-                <button onClick={() => setOpenLogin(true)} className="inline-flex  mr-1 cursor-pointer items-center rounded-full text-transparent bg-clip-text font-[font3] border-teal-400 border-2 py-2 px-3 bg-gradient-to-r from-blue-400 to-teal-600 p-[2px] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+              <button onClick={() => setOpenLogin(true)} className="inline-flex  mr-1 cursor-pointer items-center rounded-full text-transparent bg-clip-text font-[font3] border-teal-400 border-2 py-2 px-3 bg-gradient-to-r from-blue-400 to-teal-600 p-[2px] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
                 Login
-                </button>
+              </button>
 
-                <LoginModal
-                  open={openLogin}
-                  onClose={() => setOpenLogin(false)}
-                />
+              <LoginModal
+                open={openLogin}
+                onClose={() => setOpenLogin(false)}
+              />
               {/* </a> */}
             </div>
           </div>

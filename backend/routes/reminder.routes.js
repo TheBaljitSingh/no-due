@@ -1,6 +1,11 @@
 import express from "express";
-import { getAllReminders, scheduleWhatsappReminder, sendWhatsappReminder, getCustomerReminderHistory, deleteReminder, rescheduleReminder, getAuditLogs } from "../controller/reminder.controller.js"
+import { getAllReminders, scheduleWhatsappReminder, sendWhatsappReminder, getCustomerReminderHistory, deleteReminder, rescheduleReminder, getAuditLogs } from "../controller/reminder.controller.js";
+import { isAuthenticated } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
+
+// Protect all reminder routes
+router.use(isAuthenticated);
 
 
 //logged in user all reminders

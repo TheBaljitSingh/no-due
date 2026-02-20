@@ -5,7 +5,7 @@ export const getCustomers = async ({ page = 1, limit = 100 } = {}) => {
 };
 
 export const createCustomers = async (formData) => {
-    console.log("submitting the data:",formData)
+    console.log("submitting the data:", formData)
     const response = await api.post(`/v1/customers`, formData);
     return response.data;
 };
@@ -31,7 +31,7 @@ export const addDueToCustomer = async (customerId, data) => {
     return response.data;
 };
 
-export const addPaymentForCustomer = async (customerId,data) => {
+export const addPaymentForCustomer = async (customerId, data) => {
     const response = await api.post(`/v1/customers/${customerId}/add-payment`, data);
     return response.data;
 };
@@ -46,7 +46,7 @@ export const getCustomerTransactions = async (customerId) => {
     return response.data ?? [];
 };
 
-export const updatecustomer = async(id, updatedData)=>{
+export const updatecustomer = async (id, updatedData) => {
     console.log(id, updatedData);
     const response = await api.put(`/v1/customers/${id}`, updatedData);
     return response.data;

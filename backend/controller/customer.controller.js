@@ -1,126 +1,335 @@
 import Customer from "../model/customer.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
-import Transaction from "../model/transaction.model.js"
+import Transaction from "../model/transaction.model.js";
+import Reminder from "../model/reminder.model.js";
+import reminderService from "../services/reminder.service.js";
+import { getBeforeDueTemplate, getDueTodayTemplate, getOverdueTemplate, REMINDER_TEMPLATE_NAMES } from "../utils/reminder.templates.js";
+import PaymentTerm from "../model/paymentTerm.model.js";
+import User from "../model/user.model.js";
+
 
 export const createCustomer = async (req, res) => {
   try {
     const customerData = req.body;
-
-
     if (!customerData) {
       return new APIResponse(400, null, "Data is required").send(res);
     }
 
+    const userId = req.user._id;
+
+    // Get default payment term
+    const defaultPT = await PaymentTerm.findOne({
+      owner: null,
+      isDefault: true,
+      isActive: true
+    }).sort({ createdAt: -1 });
+
+    // ---------- BULK UPLOAD ----------
     if (Array.isArray(customerData)) {
-      const userId = req.user._id;
       let createdCount = 0;
       let updatedCount = 0;
       const results = [];
 
       for (const customer of customerData) {
-        // Ensure mobile number has country code
-        const mobile = customer.mobile?.toString().replace(/\D/g, ''); // sanitize
-        const formattedMobile = mobile.startsWith('91') ? mobile : `91${mobile}`;
+        const mobile = customer.mobile?.toString().replace(/\D/g, "");
+        const formattedMobile = mobile.startsWith("91") ? mobile : `91${mobile}`;
 
+        const dueAmount = Number(customer.amount) || 0;
+        const status = (customer?.status).toLowerCase();
 
-        // Check if customer already exists by mobile number
-        const existingCustomer = await Customer.findOne({
+        console.log("status", status);
+
+        const paymentTermData = customer.paymentTerm
+          ? await PaymentTerm.findById(customer.paymentTerm)
+          : null;
+
+        const creditDays =
+          paymentTermData?.creditDays ??
+          defaultPT?.creditDays ??
+          10;
+
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + creditDays);
+
+        let existingCustomer = await Customer.findOne({
           mobile: formattedMobile,
           CustomerOfComapny: userId
-        }).populate('paymentTerm');
+        });
 
-        // console.log(existingCustomer);
-
+        // ================= EXISTING CUSTOMER =================
         if (existingCustomer) {
-          // Customer exists - accumulate due
-          const dueAmount = Number(customer.due) || 0;
+          updatedCount++;
+
+          console.log("dueAmount", dueAmount);
 
           if (dueAmount > 0) {
-            // Calculate due date based on payment term
-            const creditDays = existingCustomer.paymentTerm?.creditDays ?? 0;
-            const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + creditDays);
+            let transaction;
 
-            // Create transaction for the new due
-            const transaction = await Transaction.create({
-              customerId: existingCustomer._id,
-              type: "DUE_ADDED",
-              amount: dueAmount,
-              paidAmount: 0,
-              paymentStatus: "PENDING",
-              dueDate,
-              metadata: {
-                note: customer.note || "Bulk upload due addition",
-                operatorId: userId
+            // ----------- PAID CASE -----------
+            if (status === "paid") {
+              transaction = await Transaction.create({
+                customerId: existingCustomer._id,
+                type: "PAYMENT",
+                amount: dueAmount,
+                paymentStatus: "PAID",
+                metadata: {
+                  note: customer.note || "Bulk upload payment",
+                  operatorId: userId
+                }
+              });
+              console.log("Transaction created:", transaction);
+
+              existingCustomer.status = "Paid";
+            }
+
+            // ----------- DUE / OVERDUE CASE -----------
+            else {
+              const paymentStatus =
+                status === "overdue" ? "OVERDUE" : "PENDING"; //pending for due
+
+              transaction = await Transaction.create({
+                customerId: existingCustomer._id,
+                type: "DUE_ADDED",
+                amount: dueAmount,
+                paidAmount: 0,
+                paymentStatus,
+                dueDate,
+                metadata: {
+                  note: customer.note || "Bulk upload due addition",
+                  operatorId: userId
+                }
+              });
+              console.log("Transaction created:", transaction);
+
+              existingCustomer.currentDue += dueAmount;
+              existingCustomer.status =
+                status === "overdue" ? "Overdue" : "Due";
+
+              // ----------- CREATE REMINDERS -----------
+              const offsets =
+                paymentTermData?.reminderOffsets ??
+                defaultPT?.reminderOffsets ??
+                [];
+
+              const userDoc = await User.findById(userId);
+              const companyName = userDoc?.companyName;
+
+              const effectiveOffsets = [...offsets];
+              if (status === "overdue" && !effectiveOffsets.some(o => o < 0)) {
+                effectiveOffsets.push(-1);
               }
-            });
 
-            console.log("transactikon created", transaction);
+              for (const offset of effectiveOffsets) {
+                const scheduledDate = new Date(dueDate);
+                scheduledDate.setDate(scheduledDate.getDate() - offset);
 
-            // Update customer's current due and last transaction
-            existingCustomer.currentDue += dueAmount;
+                let reminderType = "before_due";
+                if (offset === 0) reminderType = "due_today";
+                if (offset < 0) reminderType = "after_due";
+
+                // If overdue → only after_due reminders
+                if (status === "overdue" && reminderType !== "after_due")
+                  continue;
+
+                if (scheduledDate < new Date()) {
+                  scheduledDate.setTime(new Date().getTime() + 1000 * 60 * 5);
+                }
+
+                if (scheduledDate >= new Date()) {
+                  try {
+                    let templatePayload;
+
+                    if (reminderType === "before_due") {
+                      templatePayload = await getBeforeDueTemplate(
+                        existingCustomer.name,
+                        dueAmount,
+                        dueDate,
+                        companyName,
+                        userId
+                      );
+                    } else if (reminderType === "due_today") {
+                      templatePayload = await getDueTodayTemplate(
+                        existingCustomer.name,
+                        dueAmount,
+                        dueDate,
+                        companyName,
+                        userId
+                      );
+                    } else {
+                      templatePayload = await getOverdueTemplate(
+                        existingCustomer.name,
+                        dueAmount,
+                        dueDate,
+                        companyName,
+                        userId
+                      );
+                    }
+
+                    const remindercreated = await Reminder.create({
+                      customerId: existingCustomer._id,
+                      transactionId: transaction._id,
+                      reminderType,
+                      scheduledFor: scheduledDate,
+                      whatsappTemplate: {
+                        name: templatePayload?.templateName,
+                        language: templatePayload?.language
+                      },
+                      templateVariables: [
+                        existingCustomer.name,
+                        dueAmount.toString(),
+                        dueDate.toDateString()
+                      ],
+                      source: "auto"
+                    });
+                    console.log("Reminder created:", remindercreated);
+                  } catch (er) { console.log("Error creating reminder", er); }
+                }
+              }
+            }
+
             existingCustomer.lastTransaction = transaction._id;
-            existingCustomer.status = existingCustomer.status === "Overdue" ? "Overdue" : "Due";
-
-
-
-            //one doubt should i add reminder also???
-
-            // Update feedback if provided in upload (optional, but good for sync)
-            if (customer.feedback) existingCustomer.feedback = customer.feedback;
-
-            // Update other fields if provided (optional - decide if overwrite or keep)
-            // For now, let's keep existing details to avoid accidental overwrites of corrected data
-            if (customer.name) existingCustomer.name = customer.name;
-            if (customer.email) existingCustomer.email = customer.email;
-            if (customer.company) existingCustomer.company = customer.company;
-
             await existingCustomer.save();
           }
 
-          updatedCount++;
           results.push(existingCustomer);
-        } else {
-          // New customer - create record
+        }
 
-          const dueAmount = Number(customer.due) || 0;
-          const paymentTerm = customer.paymentTerm;
-
-
-          const newCustomerData = {
+        // ================= NEW CUSTOMER =================
+        else {
+          const newCustomer = await Customer.create({
             ...customer,
             mobile: formattedMobile,
-            CustomerOfComapny: userId
-          };
-          const newCustomer = await Customer.create(newCustomerData);
-
-          if (dueAmount > 0) {
-            //have to create transaction here
-            const creditDays = paymentTerm?.creditDays ?? 0;
-            const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + creditDays);
-
-            const transaction = await Transaction.create({
-              customerId: newCustomer._id,
-              type: "DUE_ADDED",
-              amount: dueAmount,
-              paidAmount: 0,
-              paymentStatus: "PENDING",
-              dueDate,
-              metadata: {
-                note: customer.note || "Bulk upload due addition",
-                operatorId: userId
-              }
-            });
-            newCustomer.lastTransaction = transaction._id;
-            newCustomer.currentDue = dueAmount;
-            newCustomer.status = customer.status == 'Due' ? 'Due' : '';
-            await newCustomer.save();
-          }
-          console.log("newCustomer", newCustomer);
+            CustomerOfComapny: userId,
+            currentDue: 0
+          });
 
           createdCount++;
+
+          if (dueAmount > 0) {
+            let transaction;
+
+            if (status === "paid") {
+              transaction = await Transaction.create({
+                customerId: newCustomer._id,
+                type: "PAYMENT",
+                amount: dueAmount,
+                paymentStatus: "PAID",
+                metadata: {
+                  note: customer.note || "Initial payment",
+                  operatorId: userId
+                }
+              });
+              console.log("Transaction created:", transaction);
+
+              newCustomer.status = "Paid";
+            } else {
+              const paymentStatus =
+                status === "overdue" ? "OVERDUE" : "PENDING";
+
+              transaction = await Transaction.create({
+                customerId: newCustomer._id,
+                type: "DUE_ADDED",
+                amount: dueAmount,
+                paidAmount: 0,
+                paymentStatus,
+                dueDate,
+                metadata: {
+                  note: customer.note || "Initial due",
+                  operatorId: userId
+                }
+              });
+              console.log("Transaction created:", transaction);
+
+              newCustomer.currentDue = dueAmount;
+              newCustomer.status =
+                status === "overdue" ? "Overdue" : "Due";
+
+              // ----------- CREATE REMINDERS -----------
+              const offsets =
+                paymentTermData?.reminderOffsets ??
+                defaultPT?.reminderOffsets ??
+                [];
+
+              const userDoc = await User.findById(userId);
+              const companyName = userDoc?.companyName;
+
+              const effectiveOffsets = [...offsets];
+              if (status === "overdue" && !effectiveOffsets.some(o => o < 0)) {
+                effectiveOffsets.push(-1);
+              }
+
+              for (const offset of effectiveOffsets) {
+                const scheduledDate = new Date(dueDate);
+                scheduledDate.setDate(scheduledDate.getDate() - offset);
+
+                let reminderType = "before_due";
+                if (offset === 0) reminderType = "due_today";
+                if (offset < 0) reminderType = "after_due";
+
+                if (status === "overdue" && reminderType !== "after_due")
+                  continue;
+
+                if (scheduledDate < new Date()) {
+                  scheduledDate.setTime(new Date().getTime() + 1000 * 60 * 5);
+                }
+
+                if (scheduledDate >= new Date()) {
+                  try {
+                    let templatePayload;
+
+                    if (reminderType === "before_due") {
+                      templatePayload = await getBeforeDueTemplate(
+                        newCustomer.name,
+                        dueAmount,
+                        dueDate,
+                        companyName,
+                        userId
+                      );
+                    } else if (reminderType === "due_today") {
+                      templatePayload = await getDueTodayTemplate(
+                        newCustomer.name,
+                        dueAmount,
+                        dueDate,
+                        companyName,
+                        userId
+                      );
+                    } else {
+                      templatePayload = await getOverdueTemplate(
+                        newCustomer.name,
+                        dueAmount,
+                        dueDate,
+                        companyName,
+                        userId
+                      );
+                    }
+
+                    const remindercreated = await Reminder.create({
+                      customerId: newCustomer._id,
+                      transactionId: transaction._id,
+                      reminderType,
+                      scheduledFor: scheduledDate,
+                      whatsappTemplate: {
+                        name: templatePayload?.templateName,
+                        language: templatePayload?.language
+                      },
+                      templateVariables: [
+                        newCustomer.name,
+                        dueAmount.toString(),
+                        dueDate.toDateString()
+                      ],
+                      source: "auto"
+                    });
+                    console.log("Reminder created:", remindercreated);
+                  } catch (er) { console.log("Error creating reminder", er); }
+                }
+              }
+            }
+
+            newCustomer.lastTransaction = transaction._id;
+            await newCustomer.save();
+          }
+
           results.push(newCustomer);
         }
       }
@@ -135,36 +344,186 @@ export const createCustomer = async (req, res) => {
             updated: updatedCount
           }
         },
-        `Bulk upload complete: ${createdCount} created, ${updatedCount} updated`
+        "Bulk upload completed successfully"
       ).send(res);
     }
 
-    // Handle single customer creation
-    customerData.CustomerOfComapny = req.user._id;
-    customerData.mobile = `91${customerData.mobile}`;
+    // -------- SINGLE CUSTOMER --------
+    // -------- SINGLE CUSTOMER --------
+    const mobile = customerData.mobile?.toString().replace(/\D/g, "");
+    const formattedMobile = mobile.startsWith("91") ? mobile : `91${mobile}`;
 
-    const newCustomer = new Customer(customerData);
-    await newCustomer.save();
+    const dueAmount = Number(customerData.amount) || 0;
+    const status = (customerData?.status || "").toLowerCase().trim();
 
-    return new APIResponse(201, newCustomer, "Customer created successfully").send(res);
+    const paymentTermData = customerData.paymentTerm
+      ? await PaymentTerm.findById(customerData.paymentTerm)
+      : null;
 
+    const creditDays =
+      paymentTermData?.creditDays ??
+      defaultPT?.creditDays ??
+      10;
+
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + creditDays);
+
+    const newCustomer = await Customer.create({
+      ...customerData,
+      mobile: formattedMobile,
+      CustomerOfComapny: userId,
+      currentDue: 0
+    });
+
+    let transaction = null;
+
+    if (dueAmount > 0) {
+      if (status === "paid") {
+        transaction = await Transaction.create({
+          customerId: newCustomer._id,
+          type: "PAYMENT",
+          amount: dueAmount,
+          paymentStatus: "PAID",
+          metadata: {
+            note: customerData.note || "Initial payment",
+            operatorId: userId
+          }
+        });
+
+        newCustomer.status = "Paid";
+      } else {
+        // DUE or OVERDUE
+        let paymentStatus = "PENDING";
+        if (status === "overdue") {
+          paymentStatus = "OVERDUE";
+        }
+
+        transaction = await Transaction.create({
+          customerId: newCustomer._id,
+          type: "DUE_ADDED",
+          amount: dueAmount,
+          paidAmount: 0,
+          paymentStatus,
+          dueDate,
+          metadata: {
+            note: customerData.note || "Initial due",
+            operatorId: userId
+          }
+        });
+
+        newCustomer.currentDue = dueAmount;
+        newCustomer.status =
+          status === "overdue" ? "Overdue" : "Due";
+
+        // ================= CREATE REMINDERS =================
+        const offsets =
+          paymentTermData?.reminderOffsets ??
+          defaultPT?.reminderOffsets ??
+          [];
+
+        const userDoc = await User.findById(userId);
+        const companyName = userDoc?.companyName;
+
+        const effectiveOffsets = [...offsets];
+        if (status === "overdue" && !effectiveOffsets.some(o => o < 0)) {
+          effectiveOffsets.push(-1);
+        }
+
+        for (const offset of effectiveOffsets) {
+          const scheduledDate = new Date(dueDate);
+          scheduledDate.setDate(scheduledDate.getDate() - offset);
+
+          let reminderType = "before_due";
+          if (offset === 0) reminderType = "due_today";
+          if (offset < 0) reminderType = "after_due";
+
+          // If overdue → only after_due reminders
+          if (status === "overdue" && reminderType !== "after_due")
+            continue;
+
+          if (scheduledDate < new Date()) {
+            scheduledDate.setTime(new Date().getTime() + 1000 * 60 * 5);
+          }
+
+          if (scheduledDate >= new Date()) {
+            try {
+              let templatePayload;
+
+              if (reminderType === "before_due") {
+                templatePayload = await getBeforeDueTemplate(
+                  newCustomer.name,
+                  dueAmount,
+                  dueDate,
+                  companyName,
+                  userId
+                );
+              } else if (reminderType === "due_today") {
+                templatePayload = await getDueTodayTemplate(
+                  newCustomer.name,
+                  dueAmount,
+                  dueDate,
+                  companyName,
+                  userId
+                );
+              } else {
+                templatePayload = await getOverdueTemplate(
+                  newCustomer.name,
+                  dueAmount,
+                  dueDate,
+                  companyName,
+                  userId
+                );
+              }
+
+              const remindercreated = await Reminder.create({
+                customerId: newCustomer._id,
+                transactionId: transaction._id,
+                reminderType,
+                scheduledFor: scheduledDate,
+                whatsappTemplate: {
+                  name: templatePayload?.templateName,
+                  language: templatePayload?.language
+                },
+                templateVariables: [
+                  newCustomer.name,
+                  dueAmount.toString(),
+                  dueDate.toDateString()
+                ],
+                source: "auto"
+              });
+              console.log("Reminder created:", remindercreated);
+            } catch (e) {
+              console.log("Error creating reminder", e);
+            }
+          }
+        }
+      }
+
+      newCustomer.lastTransaction = transaction._id;
+      await newCustomer.save();
+    }
+
+    return new APIResponse(
+      201,
+      newCustomer,
+      "Customer created successfully"
+    ).send(res);
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     if (error.name === "ValidationError") {
       const errors = {};
-
       Object.keys(error.errors).forEach((field) => {
         errors[field] = error.errors[field].message;
       });
-
       return new APIError(400, errors, "Validation Failed").send(res);
     }
 
-    return new APIError(500, error?.message, "Failed to create customer").send(res);
+    return new APIError(500, error.message).send(res);
   }
 };
+
 
 
 export const getCustomers = async (req, res) => {
@@ -243,7 +602,7 @@ export const deleteCustomers = async (req, res) => {
   try {
     const { customerId } = req.params;
 
-    const customer = await Customer.find({ customerId });
+    const customer = await Customer.findById(customerId);
 
     if (!customer) {
       return new APIResponse(404, null, "Customer not found").send(res);

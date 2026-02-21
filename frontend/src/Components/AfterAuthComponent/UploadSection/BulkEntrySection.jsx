@@ -93,11 +93,11 @@ const BulkEntrySection = ({ paymentTerms }) => {
     }
 
   }
-  const handleDownloadCSVFormat = async () => {
-   const link = document.createElement('a');
-    link.href = 'https://res.cloudinary.com/dzdt11nsx/raw/upload/v1771663588/Updated_Test_Data_d0br4m.xlsx';
+  const handleDownloadCSVFormat = () => {
+    const link = document.createElement('a');
+    link.href = 'https://res.cloudinary.com/dzdt11nsx/raw/upload/fl_attachment:BulkUploadFormat-nodue/v1771663588/Updated_Test_Data_d0br4m.xlsx';
     link.click();
-  }
+  };
   return (
     <div className='min-w-0 w-full'>
       <PageHeaders

@@ -151,13 +151,33 @@ export async function makePayment(req, res) {
     // THEN recalculate
     const updatedDue = await recalculateDue(dueTx._id);
     
-  const cus = await Customer.findByIdAndUpdate(
+    const customer = await Customer.findById(dueTx.customerId);
+
+    const newDue = customer.currentDue - amount;
+
+    let customerStatus;
+
+    if (newDue === 0) {
+      customerStatus = "Paid";
+    } else {
+      const today = new Date();
+
+      if (customer.dueDate && customer.dueDate < today) {
+        customerStatus = "Overdue";
+      } else {
+        customerStatus = "Due";
+      }
+    }
+
+    await Customer.findByIdAndUpdate(
       dueTx.customerId,
       {
         $inc: { currentDue: -amount },
-        $set: { lastTransaction: paymentTx._id }
-      },
-      { }
+        $set: {
+          lastTransaction: paymentTx[0]._id,
+          status: customerStatus
+        }
+      }
     );
 
     return new APIResponse(200, {

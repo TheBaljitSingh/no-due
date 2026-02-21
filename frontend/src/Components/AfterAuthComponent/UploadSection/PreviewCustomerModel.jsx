@@ -61,7 +61,7 @@ export default function PreviewCustomerModal({ data, setData, handleClose, setCo
 
   const dropdownFields = {
     gender: ["male", "female", "other"],
-    status: ["Paid", "Due", "Overdue", "Pending"]
+    status: ["Due", "Overdue", "Pending"]
   };
 
 

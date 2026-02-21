@@ -9,11 +9,6 @@ const customerSchema = new Schema({
         minlength: [3, "Name must be at least 3 characters long"],
         maxlength: [100, "Name can be at most 100 characters long"],
     },
-    company: {
-        type: String,
-        trim: true,
-        maxlength: [100, "Company name can be at most 100 characters long"],
-    },
     mobile: {
         type: String,
         trim: true,
@@ -39,15 +34,15 @@ const customerSchema = new Schema({
             message: "Please enter a valid email address!!"
         },
     },
-    currentDue: { 
-        type: Number, 
-        default: 0 ,
-         min: [0, "Due amount cannot be negative"],
+    currentDue: {
+        type: Number,
+        default: 0,
+        min: [0, "Due amount cannot be negative"],
     },
     lastTransaction: {
-         type: Schema.Types.ObjectId, ref: "Transaction", 
-         default: null ,
-         min: [0, "Overdue amount cannot be negative"],
+        type: Schema.Types.ObjectId, ref: "Transaction",
+        default: null,
+        min: [0, "Overdue amount cannot be negative"],
     },
     lastReminder: {
         type: Date,
@@ -60,9 +55,9 @@ const customerSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ["Paid", "Due", "Overdue", "Pending"],
+        enum: ["Paid", "Due", "Overdue"],
         default: "Due",
-        
+
     },
     gender: {
         type: String,

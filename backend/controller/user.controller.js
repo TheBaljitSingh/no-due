@@ -138,7 +138,7 @@ export const getAllTransaction = async (req, res) => {
         $match: {
           "customer.CustomerOfComapny": userId,
           type: "DUE_ADDED",
-          paymentStatus: { $ne: "PAID" }
+         // paymentStatus: { $ne: "PAID" } //for now adding the paid transaction also
         }
       },
       // Calculate remaining balance (virtual field isn't available in aggregation)
@@ -166,12 +166,12 @@ export const getAllTransaction = async (req, res) => {
           }
         }
       },
-      // Only show dues that haven't been fully paid
-      {
-        $match: {
-          remainingDue: { $gt: 0 }
-        }
-      },
+      // Only show dues that haven't been fully paid, but for now sending that dues also
+      // {
+      //   $match: {
+      //     remainingDue: { $gt: 0 }
+      //   }
+      // },
       // Group by customer to calculate accumulated total due
       {
         $group: {

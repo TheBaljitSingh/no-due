@@ -1,4 +1,4 @@
-import PaymentTerm from "../model/PaymentTerm.model.js";
+import PaymentTerm from "../model/paymentTerm.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 

@@ -73,6 +73,6 @@ paymentTermSchema.pre("save", function () {
   this.reminderOffsets.sort((a, b) => b - a);
 });
 
-const PaymentTerm = mongoose.model("PaymentTerm", paymentTermSchema);
 
-export default PaymentTerm;
+export default mongoose.models.PaymentTerm ||
+  mongoose.model("PaymentTerm", paymentTermSchema);

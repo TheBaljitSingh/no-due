@@ -3,7 +3,7 @@
 import { EllipsisVertical, IndianRupee, Pencil, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-export const ActionBadge = ({ onEdit, onDelete, onTransaction}) => {
+export const ActionBadge = ({ onEdit, onDelete, onTransaction }) => {
   const [actionOptions, setActionOptions] = useState(false);
   const menuRef = useRef(null);
   const verticalIconRef = useRef(null);
@@ -11,7 +11,7 @@ export const ActionBadge = ({ onEdit, onDelete, onTransaction}) => {
   // close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if(verticalIconRef.current && verticalIconRef.current.contains(event.target)){
+      if (verticalIconRef.current && verticalIconRef.current.contains(event.target)) {
         return;
       }
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -24,11 +24,11 @@ export const ActionBadge = ({ onEdit, onDelete, onTransaction}) => {
   }, []);
 
   return (
-    <div className="relative px-6 py-4 " 
- >
+    <div className="relative px-6 py-4 "
+    >
       {/* Three dot button */}
       <button
-      ref={verticalIconRef}
+        ref={verticalIconRef}
         // disabled={actionOptions}
         onClick={() => setActionOptions((prev) => !prev)}
         className="p-2 rounded-lg hover:bg-gray-200 transition-all outline-none"
@@ -53,7 +53,7 @@ export const ActionBadge = ({ onEdit, onDelete, onTransaction}) => {
 
           <button
             onClick={() => {
-              setActionOptions(false); 
+              setActionOptions(false);
               onDelete();
             }}
             className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
@@ -62,15 +62,15 @@ export const ActionBadge = ({ onEdit, onDelete, onTransaction}) => {
             Delete
           </button>
           <button
-          onClick={()=>{
-            // closing the action dropdowns
-            setActionOptions(false);
-            onTransaction()
-          }}
-          className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
+            onClick={() => {
+              // closing the action dropdowns
+              setActionOptions(false);
+              onTransaction()
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
           >
             <IndianRupee size={16} className="text-gray-600 inline-flex" />
-             All Transactions
+            All Transactions
           </button>
         </div>
       )}
@@ -78,26 +78,26 @@ export const ActionBadge = ({ onEdit, onDelete, onTransaction}) => {
   );
 };
 export const currency = (n) =>
-    Number(n || 0).toLocaleString("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-});
-  
+  Number(n || 0).toLocaleString("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  });
+
 export const formatDate = (d) =>
-    d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
-  
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
+
 export const StatusBadge = ({ value }) => {
-    const styles = {
-      Paid: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
-      Overdue: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
-      Pending: "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
-    };
-    return (
-      <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${styles[value] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}>
-        {value}
-      </span>
-    );
+  const styles = {
+    Paid: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
+    Overdue: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
+    Pending: "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
+  };
+  return (
+    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${styles[value] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}>
+      {value}
+    </span>
+  );
 };
 
 export const statusChip = (s) => {
@@ -112,13 +112,12 @@ export const statusChip = (s) => {
 
 export function TabButton({ active, onClick, children, icon }) {
   return (
-    <button 
-      onClick={onClick} 
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-        active 
-          ? "bg-green-50 text-green-700 border border-green-200" 
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${active
+          ? "bg-green-50 text-green-700 border border-green-200"
           : "text-gray-600 hover:bg-gray-50 border border-transparent"
-      }`}
+        }`}
     >
       {icon} {children}
     </button>
@@ -127,14 +126,13 @@ export function TabButton({ active, onClick, children, icon }) {
 
 export function IconBtn({ children, title, onClick, danger }) {
   return (
-    <button 
-      title={title} 
-      onClick={onClick} 
-      className={`p-2 rounded-lg transition-colors ${
-        danger 
-          ? "text-red-600 hover:bg-red-50" 
+    <button
+      title={title}
+      onClick={onClick}
+      className={`p-2 rounded-lg transition-colors ${danger
+          ? "text-red-600 hover:bg-red-50"
           : "text-gray-600 hover:bg-gray-100"
-      }`}
+        }`}
     >
       {children}
     </button>

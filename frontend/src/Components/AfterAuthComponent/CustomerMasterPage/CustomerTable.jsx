@@ -22,7 +22,7 @@ const CustomerTable = ({ search = "" }) => {
   const [totalCustomers, setTotalCustomers] = useState();
   const [debounceQuery, setDebounceQuery] = useState("");
   const [deletingId, setDeletingId] = useState(null);
-  const [currentCustomer, setCurrentCustomer] = useState([]);
+  const [currentCustomer, setCurrentCustomer] = useState(null);
   const [showEditMOdal, setShowEditModal] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletedCustomerId, setDeletedCustomerId] = useState();
@@ -62,23 +62,22 @@ const CustomerTable = ({ search = "" }) => {
     setPage(1);
   }, [debounceQuery]);
 
+  const fetchCustomers = async () => {
+    setLoading(true);
+    try {
+      const data = await getCustomers({ page, limit, search: debounceQuery });
+      setCustomers(data.data.customers);
+      setTotalPages(data.data.totalPages);
+      setTotalCustomers(data.data.total);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCustomers = async () => {
-      setLoading(true);
-      try {
-        const data = await getCustomers({ page, limit, search: debounceQuery });
-        setCustomers(data.data.customers);
-        setTotalPages(data.data.totalPages);
-        setTotalCustomers(data.data.total);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCustomers();
-
   }, [page, debounceQuery]);
 
 
@@ -124,10 +123,21 @@ const CustomerTable = ({ search = "" }) => {
       setDeletedCustomerId(deletingId); // to show the delete animation
       setTimeout(() => {
         const updatedCustomers = customers.filter(c => c._id !== deletingId);
-        setCustomers(updatedCustomers);
-        setTotalCustomers(prev => prev - 1);
+        const newTotalCount = totalCustomers - 1;
+        setTotalCustomers(newTotalCount);
+
+        if (updatedCustomers.length === 0 && newTotalCount > 0) {
+          // If the page is now empty but there are more customers
+          if (page > 1) {
+            setPage(prev => prev - 1);
+          } else {
+            // On page 1, manually refetch to bring items from next page
+            fetchCustomers();
+          }
+        } else {
+          setCustomers(updatedCustomers);
+        }
         setDeletingId(null);
-        // console.log(updatedCustomers);
 
       }, 300)
       toast.success("Customer deleted");

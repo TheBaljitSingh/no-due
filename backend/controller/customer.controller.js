@@ -5,8 +5,8 @@ import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/reminder.model.js";
 import reminderService from "../services/reminder.service.js";
 import { getBeforeDueTemplate, getDueTodayTemplate, getOverdueTemplate, REMINDER_TEMPLATE_NAMES } from "../utils/reminder.templates.js";
-import PaymentTerm from "../model/paymentTerm.model.js";
-import User from "../model/user.model.js";
+import PaymentTerm from "../model/PaymentTerm.model.js";
+import User from "../model/user.model.js";  
 
 
 export const createCustomer = async (req, res) => {

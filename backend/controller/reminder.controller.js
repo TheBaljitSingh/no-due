@@ -6,7 +6,7 @@ import reminderService from "../services/reminder.service.js";
 import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/reminder.model.js";
 import { formatDate } from "../utils/Helper.js"
-import PaymentTerm from "../model/paymentTerm.model.js";
+import PaymentTerm from "../model/PaymentTerm.model.js";
 import mongoose from "mongoose";
 import { REMINDER_TEMPLATE_NAMES } from "../utils/reminder.templates.js";
 

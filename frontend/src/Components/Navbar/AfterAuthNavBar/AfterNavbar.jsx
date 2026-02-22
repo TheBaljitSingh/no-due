@@ -4,20 +4,24 @@ import { Bell, CheckCheck, X } from "lucide-react";
 import { notificationData } from "../../../utils/constants";
 import LogoutModal from "../../auth/LogoutModal";
 import { useAuth } from "../../../context/AuthContext";
+import { socket } from "../../../socket/index.js";
+import notificationService from "../../../utils/service/notificationService";
+import { formatDate } from "../../../utils/AfterAuthUtils/Helpers";
+import { notificationUI } from "../../../utils/notificationUI/constants.js"
 
 const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, setIsProfileDropdownOpen }) => {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState(notificationData || []);
+  const [notifications, setNotifications] = useState([]);
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const unreadCount = useMemo(
-    () => items.filter((n) => !n.read).length,
-    [items]
+    () => notifications?.filter((n) => n.read === false || n.isRead === false).length,
+    [notifications]
   );
   const { user } = useAuth();
-  console.log(user);
+  // console.log(user);
   const fullName = user?.name || (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "") || "";
 
   useEffect(() => {
@@ -41,12 +45,57 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
     };
   }, [open]);
 
-  const markAllRead = () =>
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllRead = async () => {
+    try {
+      await notificationService.markAllRead();
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, read: true, isRead: true }))
+      );
+    } catch (error) {
+      console.error("Failed to mark notifications as read", error);
+    }
+  };
 
   // const user = {name:"Tanmay Singh", email:"tanmay@singh.com"}
   // const navigate = useNavigate();
 
+
+  // Fetch existing notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationService.getNotifications();
+        console.log("Fetched notifications:", response.data.notifications);
+        setNotifications(response.data.notifications);
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+      }
+    };
+
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      if (!socket.connected) {
+        socket.connect();
+      }
+
+      // Listen for new notifications
+      socket.on('new_notification', (data) => {
+        console.log("New real-time notification:", data);
+        setNotifications((prev) => [data, ...prev]);
+      });
+
+      // Cleanup on unmount or user change
+      return () => {
+        socket.off('new_notification');
+        // socket.disconnect(); // Keep socket if other parts use it
+      }
+    }
+  }, [user]);
 
 
   return (
@@ -66,7 +115,7 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
 
           {/* Right cluster */}
           <div className="flex items-center gap-4">
-            {/* Notifications */}
+            {/* Notifications --need to connect it with socket */}
             <div className="relative">
               <button
                 ref={buttonRef}
@@ -121,41 +170,49 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
 
                     {/* List */}
                     <div className="max-h-72 overflow-y-auto">
-                      {items.length === 0 ? (
+                      {notifications.length === 0 ? (
                         <div className="px-4 py-8 text-center text-sm text-gray-500">
                           You’re all caught up 🎉
                         </div>
                       ) : (
                         <ul className="divide-y divide-gray-100">
-                          {items.map((item, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition"
-                            >
-                              <div className="relative">
-                                <img
-                                  src={item.img}
-                                  alt={item.name}
-                                  className="w-10 h-10 rounded-full object-cover ring-1 ring-gray-200"
-                                />
-                                {!item.read && (
-                                  <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-white" />
-                                )}
-                              </div>
+                          {notifications.map((notif, idx) => {
+                            const isRead = notif.read !== undefined ? notif.read : notif.isRead;
+                            const title = notif.name || notif.title;
+                            const message = notif.msg || notif.message;
+                            const time = notif.time || formatDate(notif.createdAt);
+                            const img = notificationUI[notif.type]?.img || "https://cdn-icons-png.flaticon.com/512/9131/9131546.png"; // default img
 
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm text-gray-700">
-                                  <span className="font-semibold text-gray-900">
-                                    {item.name}
-                                  </span>
-                                  <span className="text-gray-600">: {item.msg}</span>
-                                </p>
-                                <div className="mt-1 text-xs text-gray-500">
-                                  {item.time}
+                            return (
+                              <li
+                                key={notif._id || idx}
+                                className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition"
+                              >
+                                <div className="relative">
+                                  <img
+                                    src={img}
+                                    alt={title}
+                                    className="w-10 h-10 p-0.5 rounded-full object-cover ring-1 ring-gray-200"
+                                  />
+                                  {!isRead && (
+                                    <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-white" />
+                                  )}
                                 </div>
-                              </div>
-                            </li>
-                          ))}
+
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm text-gray-700">
+                                    <span className="font-semibold text-gray-900">
+                                      {title}
+                                    </span>
+                                    <span className="text-gray-600">: {message}</span>
+                                  </p>
+                                  <div className="mt-1 text-xs text-gray-500">
+                                    {time}
+                                  </div>
+                                </div>
+                              </li>
+                            );
+                          })}
                         </ul>
                       )}
                     </div>

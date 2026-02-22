@@ -293,8 +293,8 @@ class ReminderService {
         const tx = reminder.transactionId;
         // console.log("tx", tx);
 
-        if (!tx || tx?.paymentStatus === "PAID") {
-          //if already paid then cancelling the rminder for future
+        if (!tx || tx?.paymentStatus === "PAID" || tx?.commitmentStatus === "LOOP_BROKEN") {
+          //if already paid or loop broken then cancelling the rminder for future
           reminder.status = "cancelled";
           reminder.cancelledAt = new Date();
           await reminder.save();

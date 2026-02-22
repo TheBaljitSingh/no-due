@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import SideBar from "../Components/Navbar/AfterAuthNavBar/SideBar";
 import AfterNavbar from "../Components/Navbar/AfterAuthNavBar/AfterNavbar";
+import { socket } from "../socket/index.js";
+import { toast } from "react-toastify";
 //
 
 const AfterAuthLayout = () => {
@@ -18,12 +20,12 @@ const AfterAuthLayout = () => {
   }, [location.pathname]);
 
 
-   const closeProfileDropdown = () => {
+  const closeProfileDropdown = () => {
     setIsProfileDropdownOpen(false);
   };
 
-  const handleCollapse = ()=>{
-    setIsCollapsed(prev=>{
+  const handleCollapse = () => {
+    setIsCollapsed(prev => {
       const newState = !prev;
       localStorage.setItem('sidebar-collapsed', newState);
       return newState;
@@ -32,42 +34,71 @@ const AfterAuthLayout = () => {
 
 
   useEffect(() => {
-  const handleMouseClick = (e) => {
-    if (profileRef.current && !profileRef.current.contains(e.target)) {
-      // setIsProfileDropdownOpen(false);
-      closeProfileDropdown();
+    const handleMouseClick = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        // setIsProfileDropdownOpen(false);
+        closeProfileDropdown();
+      }
+    };
+
+    window.addEventListener("mousedown", handleMouseClick, false); //event propogation
+
+    return () => {
+      window.removeEventListener("mousedown", handleMouseClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      //on mobile make it false
+      setIsCollapsed(false);
     }
-  };
 
-  window.addEventListener("mousedown", handleMouseClick, false); //event propogation
+  })
 
-  return () => {
-    window.removeEventListener("mousedown", handleMouseClick);
-  };
-}, []);
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
 
-useEffect(()=>{
-  if(window.innerWidth<768){
-    //on mobile make it false
-    setIsCollapsed(false);
-  }
-})
+    const handleFeedbackUpdate = (data) => {
+      console.log("[Global Socket] Feedback update received:", data);
+      toast.info(`Feedback from ${data.customerName || data.mobile}: "${data.feedback}"`,
+        {
+          toastId: data.messageId,
+          containerId: "stackbar",
+          position: "bottom-right",
+          autoClose: 5000,
+          className:
+            "bg-white border-t-4 border-green-500 shadow-2xl rounded-none md:rounded-lg min-w-[320px] md:min-w-[450px]",
+          bodyClassName: "text-gray-800 font-medium",
+          progressClassName: "bg-green-500",
+        }
+      );
+    };
 
-useLayoutEffect(()=>{
-  
+    socket.on("feedback_updated", handleFeedbackUpdate);
+
+    return () => {
+      socket.off("feedback_updated", handleFeedbackUpdate);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+
     const isSidebarCollapsed = localStorage.getItem('sidebar-collapsed');
-    if(isSidebarCollapsed!==null && window.innerWidth>425){
-      setIsCollapsed(isSidebarCollapsed==='true') // using according to the localstorage
+    if (isSidebarCollapsed !== null && window.innerWidth > 425) {
+      setIsCollapsed(isSidebarCollapsed === 'true') // using according to the localstorage
     }
-  
-})
+
+  })
 
 
 
   return (
-   <div className="flex h-screen overflow-hidden">
-    {/* Sidebar wrapper: fixed height, not scrollable */}
-  
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar wrapper: fixed height, not scrollable */}
+
       {/* Sidebar inner scroll area: overflow-y-auto */}
       <div className="h-full sidebar-scroll overflow-visible z-50 ">
         <SideBar
@@ -77,26 +108,26 @@ useLayoutEffect(()=>{
         />
       </div>
 
-    {/* MAIN CONTENT AREA (scrollable) */}
-    <div className="flex flex-col flex-1 overflow-y-auto sidebar-scroll min-w-0">
+      {/* MAIN CONTENT AREA (scrollable) */}
+      <div className="flex flex-col flex-1 overflow-y-auto sidebar-scroll min-w-0">
 
-      {/* Navbar */}
-      <header className="sticky top-0 z-30 mt-10 md:mt-0 bg-white shadow-sm ">
-        <AfterNavbar
-          profileRef={profileRef}
-          isProfileDropdownOpen={isProfileDropdownOpen}
-          setIsProfileDropdownOpen={setIsProfileDropdownOpen}
-        />
-      </header>
+        {/* Navbar */}
+        <header className="sticky top-0 z-30 mt-10 md:mt-0 bg-white shadow-sm ">
+          <AfterNavbar
+            profileRef={profileRef}
+            isProfileDropdownOpen={isProfileDropdownOpen}
+            setIsProfileDropdownOpen={setIsProfileDropdownOpen}
+          />
+        </header>
 
-      {/* Page Content */}
-      <main className="p-4 md:p-8 w-full">
-        <div className="max-w-7xl mx-auto">
-          <Outlet/>
-        </div>
-      </main>
+        {/* Page Content */}
+        <main className="p-4 md:p-8 w-full">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
-  </div>
   );
 };
 

@@ -3,7 +3,12 @@ import mongoose from "mongoose";
 const whatsappSessionSchema = new mongoose.Schema({
   mobile: {
     type: String,
-    unique: true,
+    index: true
+  },
+  merchantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
     index: true
   },
   state: {
@@ -20,12 +25,13 @@ const whatsappSessionSchema = new mongoose.Schema({
   },
   expiresAt: {
     type: Date,
-    require: true
+    required: true
   }
 });
 
-
+// Compound index for multi-tenancy
+whatsappSessionSchema.index({ mobile: 1, merchantId: 1 }, { unique: true });
+// TTL index
 whatsappSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
 
 export default mongoose.model("WhatsappSession", whatsappSessionSchema);

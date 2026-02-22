@@ -7,6 +7,7 @@ import { getOrCreateSession, updateSession, getValidSession } from "../../servic
 import whatsappSessionModel from "../../model/whatsappSession.model.js";
 import whatsappMessage from "../../model/whatsappMessage.modal.js";
 import Customer from "../../model/customer.model.js";
+import User from "../../model/user.model.js";
 
 export const handleWhatsappEvent = async (payload) => {
   console.log('webhook received from the user');
@@ -32,10 +33,30 @@ export const handleWhatsappEvent = async (payload) => {
 
 
   const rawMsg = entry?.changes?.[0]?.value?.messages?.[0];
+  const metadata = entry?.changes?.[0]?.value?.metadata;
+  const recipientPhoneId = metadata?.phone_number_id;
 
-  // Get merchant credentials from customer
-  const customer = await Customer.findOne({ mobile: intent.from }).populate('CustomerOfComapny');
-  const merchant = customer?.CustomerOfComapny;
+  if (!recipientPhoneId) {
+    console.warn("[Webhook] Missing phone_number_id in metadata");
+    return;
+  }
+
+  // 1. Find the merchant (User) who owns this phone number
+  const merchant = await User.findOne({ "whatsapp.phoneNumberId": recipientPhoneId });
+  if (!merchant) {
+    console.error(`[Webhook] No merchant found for phoneNumberId: ${recipientPhoneId}`);
+    return;
+  }
+
+  // 2. Find the customer belonging to this merchant with this mobile number
+  const customer = await Customer.findOne({
+    mobile: intent.from,
+    CustomerOfComapny: merchant._id
+  });
+
+  if (!customer) {
+    console.warn(`[Webhook] Customer ${intent.from} not found in merchant ${merchant.email}'s list.`);
+  }
 
   const mercantCredentials = {
     accessToken: merchant?.whatsapp?.accessToken,
@@ -52,7 +73,7 @@ export const handleWhatsappEvent = async (payload) => {
 
   console.log("printing the intent: ", intent);
 
-  if (intent.context?.id && intent.type === "BUTTON" ) {
+  if (intent.context?.id && intent.type === "BUTTON") {
     const existingResponse = await whatsappMessage.findOne({
       responseToMessageId: intent.context.id,
       "metadata.type": { $in: ["BUTTON", "LIST"] }
@@ -98,24 +119,24 @@ export const handleWhatsappEvent = async (payload) => {
   if (intent.type === "TEXT" && ["hi", "hello"].includes(intent.text.toLowerCase())) {
 
     //i have to initialize the session
-    const session = await getOrCreateSession(intent.from);
+    const session = await getOrCreateSession(intent.from, merchant._id);
 
     //will send menu from pre defined templates 
     return sendMainMenu(intent.from, mercantCredentials);
   } else if (intent.type === "LIST" || intent.type === "BUTTON") {
     // List & Button action routing seprately
-    routeAction(intent, mercantCredentials);
+    routeAction(intent, mercantCredentials, merchant);
   }
 };
 
-const routeAction = async (intent, mercantCredentials) => {
+const routeAction = async (intent, mercantCredentials, merchant) => {
   const { actionId, from } = intent;
 
   //have to update the action Id to use it like chat bot
   console.log(`User ${from} selected action Id : ${actionId}`);
 
   // const session = await whatsappSessionModel.findOne({ mobile: from });
-  const session = await getValidSession(from);
+  const session = await getValidSession(from, merchant._id);
 
 
   switch (actionId) {
@@ -128,8 +149,8 @@ const routeAction = async (intent, mercantCredentials) => {
       //check my current due
 
       if (session) {
-        await updateSession(intent.from, { state: "CHECK_CURRENT_DUE" });
-        const response = await getCurrentDue({ from });
+        await updateSession(intent.from, merchant._id, { state: "CHECK_CURRENT_DUE" });
+        const response = await getCurrentDue({ from, merchantId: merchant._id });
         if (response.success) {
           if (mercantCredentials.accessToken && mercantCredentials.phoneNumberId) {
             await whatsappService.sendTextMessage({
@@ -161,9 +182,9 @@ Just type *Hi* to restart your conversation👋 `;
     case "MINI_STATEMENT":
       console.log("Processing MINI_STATEMENT");
       if (session) {
-        await updateSession(intent.from, { state: "MINI_STATEMENT" });
+        await updateSession(intent.from, merchant._id, { state: "MINI_STATEMENT" });
 
-        const customer = await Customer.findOne({ mobile: from });
+        const customer = await Customer.findOne({ mobile: from, CustomerOfComapny: merchant._id });
         if (customer) {
           // sendMiniStatement independently fetches last 5 dues + their payments
           await whatsappService.sendMiniStatement({
@@ -207,7 +228,8 @@ Just type *Hi* to restart your conversation👋 `;
         await updateTransactionStatus({
           from,
           actionId,
-          contextId: intent.context?.id // Pass the context ID (wamid of original message)
+          contextId: intent.context?.id,
+          merchantId: merchant._id
         });
       } catch (error) {
         console.error("Error processing whatsapp response:", error);

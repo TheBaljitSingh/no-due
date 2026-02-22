@@ -6,7 +6,7 @@ import Reminder from "../model/reminder.model.js";
 import reminderService from "../services/reminder.service.js";
 import { getBeforeDueTemplate, getDueTodayTemplate, getOverdueTemplate, REMINDER_TEMPLATE_NAMES } from "../utils/reminder.templates.js";
 import PaymentTerm from "../model/PaymentTerm.model.js";
-import User from "../model/user.model.js";  
+import User from "../model/user.model.js";
 
 
 export const createCustomer = async (req, res) => {
@@ -567,8 +567,9 @@ export const getCustomersById = async (req, res) => {
   try {
     //only users's customer should be queried
     const { customerId } = req.params;
+    const userId = req.user._id;
 
-    const customer = await Customer.findById(customerId);
+    const customer = await Customer.findOne({ _id: customerId, CustomerOfComapny: userId });
     if (!customer) {
       return new APIResponse(404, null, `No customer found for this Id ${customerId}`).send(res);
     }
@@ -606,14 +607,15 @@ export const updateCustomer = async (req, res) => {
 export const deleteCustomers = async (req, res) => {
   try {
     const { customerId } = req.params;
+    const userId = req.user._id;
 
-    const customer = await Customer.findById(customerId);
+    const customer = await Customer.findOne({ _id: customerId, CustomerOfComapny: userId });
 
     if (!customer) {
       return new APIResponse(404, null, "Customer not found").send(res);
     }
 
-    const result = await Customer.findByIdAndDelete(customerId);
+    const result = await Customer.deleteOne({ _id: customerId, CustomerOfComapny: userId });
 
     return new APIResponse(200, result, `Customer with this Id: ${customerId} is deleted`,).send(res);
 

@@ -4,12 +4,10 @@ import whatsappService from "./whatsapp.service.js"; // Importing service for se
 import notificationService from "./notification.service.js";
 
 
-export const getCurrentDue = async ({ from }) => {
+export const getCurrentDue = async ({ from, merchantId }) => {
   console.log(from);
   try {
-    // const { Customer } = await import("../model/customer.model.js");
-
-    const customer = await Customer.findOne({ mobile: from });
+    const customer = await Customer.findOne({ mobile: from, CustomerOfComapny: merchantId });
 
     if (!customer) {
       return { text: "Customer not found.", success: false };
@@ -27,12 +25,12 @@ export const getCurrentDue = async ({ from }) => {
 
 import Reminder from "../model/reminder.model.js";
 
-export const updateTransactionStatus = async ({ from, actionId, contextId }) => {
-  console.log("contextId",contextId);
+export const updateTransactionStatus = async ({ from, actionId, contextId, merchantId }) => {
+  console.log("contextId", contextId);
   console.log(`Updating Transaction Status for ${from}, Action: ${actionId}, ContextId: ${contextId}`);
 
   try {
-    const customer = await Customer.findOne({ mobile: from }).populate('CustomerOfComapny');
+    const customer = await Customer.findOne({ mobile: from, CustomerOfComapny: merchantId }).populate('CustomerOfComapny');
     if (!customer) {
       console.error(`Customer not found for mobile: ${from}`);
       return;

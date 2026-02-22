@@ -53,6 +53,10 @@ const customerSchema = new Schema({
         trim: true,
         maxlength: [500, "Feedback can be at most 500 characters long"],
     },
+    lastInteraction: {
+        type: Date,
+        default: null,
+    },
     status: {
         type: String,
         enum: ["Paid", "Due", "Overdue"],

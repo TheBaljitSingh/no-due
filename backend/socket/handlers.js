@@ -14,6 +14,7 @@ export default function registerSocketHandlers(io, socket) {
         console.log(`[Socket] User marked notification ${notificationId} as read.`);
     });
 
+
     socket.on("disconnect", () => {
         console.log("Socket disconnected:", socket.id);
     });

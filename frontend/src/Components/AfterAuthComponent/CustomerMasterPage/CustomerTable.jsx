@@ -10,6 +10,7 @@ import EditCustomerModal from "./EditCustomerModal.jsx"
 import ConfirmModal from "./ConfirmModal.jsx"
 import TransactionHistoryModal from "./TransactionHistoryModal.jsx"
 import { useNavigate } from 'react-router-dom';
+import { socket } from '../../../socket/index.js';
 
 
 const CustomerTable = ({ search = "" }) => {
@@ -33,6 +34,7 @@ const CustomerTable = ({ search = "" }) => {
 
 
   useEffect(() => {
+    console.log("customers", customers);
     const handleMouseClick = (e) => {
       if (!showEditMOdal || !showTransactionModal) return;
 
@@ -79,6 +81,21 @@ const CustomerTable = ({ search = "" }) => {
   useEffect(() => {
     fetchCustomers();
   }, [page, debounceQuery]);
+
+  //for the socket data
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+    socket.on('feedback_updated', (data) => {
+      // Update UI state here
+      setCustomers(prev => prev.map(c => c.mobile === data.mobile ? { ...c, feedback: data?.feedback } : c));
+    });
+    return () => {
+      // socket.off('feedback_updated');
+      // socket.disconnect(); // Keep socket if other parts use it
+    };
+  }, []);
 
 
   const handleEditCustomer = (customer) => {
@@ -394,7 +411,7 @@ const CustomerTable = ({ search = "" }) => {
 
   return (
     <div className="hidden md:block rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ">
-      <div className=" ">
+      <div className="overflow-x-auto ">
         {/* removed overflow-x-auto just for action button functionality */}
         <table className="w-full text-left text-sm ">
           <thead className="bg-gray-50 border-b border-gray-200">

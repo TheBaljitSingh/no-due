@@ -119,7 +119,7 @@ const TransactionHistoryDuePage = () => {
 
             {!showAddTransactionModal && (
                 <div className="space-y-4">
-                    <div className="hidden md:block rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="block md:block rounded-lg border border-gray-200 bg-white shadow-sm  overflow-hidden overflow-x-auto md:overflow-x-visible">
                         {showTransactionModal && currentCustomer && (
                             <TransactionHistoryModal
                                 customer={currentCustomer}
@@ -135,7 +135,7 @@ const TransactionHistoryDuePage = () => {
                             />
                         )}
 
-                        <table className="w-full text-left text-sm">
+                        <table className="min-w-wax w-full text-left text-sm">
                             <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th className="w-10"></th>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, Copy, AlertCircle, Filter, History } from "lucide-react";
+import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, Copy, AlertCircle, Filter, History, Loader2 } from "lucide-react";
 import { MOCK_REMINDERS, TEMPLATES } from "../../utils/constants";
 import { currency2, formatDate, IconBtn, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
@@ -12,6 +12,8 @@ import ConfirmModal from "../../Components/AfterAuthComponent/CustomerMasterPage
 
 
 export default function ReminderManagement() {
+
+  const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("pending");
   const [q, setQ] = useState("");
   const [bulk, setBulk] = useState(new Set());
@@ -53,10 +55,10 @@ export default function ReminderManagement() {
       }
 
       const res = await getAllReminders(filters);
-      console.log(res);
+      // console.log(res);
       const output = res.data.data;
 
-      console.log("output.data", output.data);
+      // console.log("output.data", output.data);
       setData(output.data || []);
       setPagination(prev => ({ ...prev, ...output.meta }));
 
@@ -70,8 +72,24 @@ export default function ReminderManagement() {
     }
   }, [pagination.page, pagination.limit, tab]);
 
+  
+
   useEffect(() => {
-    fetchReminders();
+     
+    async function run(){
+      try {
+        setLoading(true);
+        // await new Promise(resolve=>setTimeout(resolve, 3000)); testing
+        await fetchReminders();
+      } catch (error) {
+        console.log(error);
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    run();
+    
   }, [fetchReminders]);
 
   const normalizeData = useMemo(() => {
@@ -120,7 +138,7 @@ export default function ReminderManagement() {
 
 
   const handleSubmit = async (data) => {
-    console.log("submitted", data);
+    // console.log("submitted", data);
     const { userId, templateName, mode, scheduleDate, transactionId, variables } = data;
 
     if (mode === 'schedule') {
@@ -150,7 +168,7 @@ export default function ReminderManagement() {
       apiData.variables = variables
       try {
         const response = await sendReminderNow(apiData);
-        console.log(response);
+        // console.log(response);
         toast.success("reminder sent!");
         setOpenNew(false);
 
@@ -173,7 +191,7 @@ export default function ReminderManagement() {
 
       const res = await deleteReminder(id);
 
-      console.log(res);
+      // console.log(res);
 
       if (res?.success) {
         toast.success("Reminder deleted successfully");
@@ -206,6 +224,14 @@ export default function ReminderManagement() {
     setDrawer(null);
   };
 
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[60vh]">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+            </div>
+        );
+    }
 
 
 
@@ -387,7 +413,7 @@ export default function ReminderManagement() {
                         <IconBtn title="History" onClick={() => setAuditCustomer(r.customer)}> <History className="w-4 h-4" /> </IconBtn>
                         <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-4 h-4" /></IconBtn>
                         <IconBtn title="Delete" danger onClick={() =>{ 
-                          console.log(r)
+                          // console.log(r)
                           setConfirmOpen(true) 
                           setToBeDeletedReminder(r.id)}} ><Trash2 className="w-4 h-4" /></IconBtn>
                       </div>

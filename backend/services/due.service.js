@@ -1,6 +1,8 @@
 import Customer from "../model/customer.model.js";
 import Transaction from "../model/transaction.model.js";
 import whatsappService from "./whatsapp.service.js"; // Importing service for sending statement
+import notificationService from "./notification.service.js";
+
 
 export const getCurrentDue = async ({ from }) => {
   console.log(from);
@@ -26,10 +28,11 @@ export const getCurrentDue = async ({ from }) => {
 import Reminder from "../model/reminder.model.js";
 
 export const updateTransactionStatus = async ({ from, actionId, contextId }) => {
+  console.log("contextId",contextId);
   console.log(`Updating Transaction Status for ${from}, Action: ${actionId}, ContextId: ${contextId}`);
 
   try {
-    const customer = await Customer.findOne({ mobile: from });
+    const customer = await Customer.findOne({ mobile: from }).populate('CustomerOfComapny');
     if (!customer) {
       console.error(`Customer not found for mobile: ${from}`);
       return;
@@ -52,71 +55,32 @@ export const updateTransactionStatus = async ({ from, actionId, contextId }) => 
       }
     }
 
-    // 2. Fallback: Oldest pending due
     if (!transaction) {
-      console.log("Fallback to oldest pending due");
-      transaction = await Transaction.findOne(searchCriteria).sort({ dueDate: 1 });
-    }
-
-    if (!transaction) {
-      console.log(`No pending due found for customer ${customer._id}`);
-      // Maybe reply "You have no pending dues"?
+      console.log(`No pending due found for customer for this action ${actionId} and contextId ${contextId} and customerId ${customer._id}`);
+      //because i will catch the user response from the sended template message's list buttons
       return;
     }
 
     const now = new Date();
     let updates = {};
+    let notificationMsg = "";
 
     switch (actionId) {
-      // case "PAY_TODAY": // "I will pay today"
-      case "I will pay today": // "I will pay today"
+      case "I will pay today":
+        transaction.excuseCount = (transaction.excuseCount || 0) + 1;
         updates = {
           commitmentStatus: "COMMITTED_TODAY",
-          expectedPaymentDate: now, // Set to today
+          expectedPaymentDate: now,
           reminderPausedUntil: new Date(now.getTime() + 24 * 60 * 60 * 1000), // +24 hours
         };
-
-        break;
-/*
-case "PAID_TODAY": // "Paid today"
-updates = {
-  commitmentStatus: "PAID_AWAITING_CONFIRMATION",
-  // Pause all reminders immediately (Done via reminderPausedUntil indefinitely or check commitmentStatus)
-  // Let's set a long pause or handle it in reminder service to skip if status is PAID_AWAITING_CONFIRMATION
-  reminderPausedUntil: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // Pause for 7 days significantly or until verified
-};
-// Notify user/account owner to verify payment
-console.log(`NOTIFY OWNER: Customer ${customer.name} claims to have paid.`);
-try {
-  // Re-fetch transaction with operator populated
-  const detailedTx = await Transaction.findById(transaction._id).populate("metadata.operatorId");
-  const ownerMobile = detailedTx?.metadata?.operatorId?.phoneNumber;
-  
-  if (ownerMobile) {
-            const message = `Action Required: Customer ${customer.name} (${customer.mobile}) has marked their due of ₹${transaction.amount} as PAID today. Please verify.`;
-            // Get merchant credentials
-            const populatedCustomer = await Customer.findOne({ mobile: from }).populate('CustomerOfComapny');
-            const merchant = populatedCustomer?.CustomerOfComapny;
-            
-            if (merchant?.whatsapp?.accessToken && merchant?.whatsapp?.phoneNumberId) {
-              await whatsappService.sendTextMessage({
-                to: ownerMobile,
-                text: message,
-                accessToken: merchant.whatsapp.accessToken,
-                phoneNumberId: merchant.whatsapp.phoneNumberId
-              });
-              console.log(`Notification sent to owner ${ownerMobile}`);
-            } else {
-              console.error("Merchant WhatsApp credentials not configured");
-          }
+        if (transaction.excuseCount >= 3) {
+          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly saying 'I will pay today' (Excuse #${transaction.excuseCount}). please contact manually.`;
+          updates.commitmentStatus = "LOOP_BROKEN";
         }
-      } catch (notifyErr) {
-        console.error("Failed to notify owner:", notifyErr);
-      }
-      break;
-      
-      */
-      case "I will pay within a week": // "I will pay within a week"
+        break;
+
+      case "I will pay within a week":
+        transaction.excuseCount = (transaction.excuseCount || 0) + 1;
         const nextWeek = new Date(now);
         nextWeek.setDate(nextWeek.getDate() + 7);
         updates = {
@@ -124,32 +88,30 @@ try {
           expectedPaymentDate: nextWeek,
           reminderPausedUntil: nextWeek,
         };
+        if (transaction.excuseCount >= 2) {
+          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly promising to pay 'within a week' (Excuse #${transaction.excuseCount}). please contact manually.`;
+          updates.commitmentStatus = "LOOP_BROKEN";
+        }
         break;
 
-      case "I will pay soon": // "I will pay soon"
+      case "I will pay soon":
+        transaction.excuseCount = (transaction.excuseCount || 0) + 1;
         updates = {
           commitmentStatus: "PAYING_SOON",
-          reminderPausedUntil: new Date(now.getTime() + 72 * 60 * 60 * 1000), // +72 hours
+          reminderPausedUntil: new Date(now.getTime() + 42 * 60 * 60 * 1000), // +42 hours
         };
+        if (transaction.excuseCount >= 2) {
+          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly saying 'I will pay soon' (Excuse #${transaction.excuseCount}). please contact manually.`;
+          updates.commitmentStatus = "LOOP_BROKEN";
+        }
         break;
-      
+
       case "Need statement":
         updates = {
           commitmentStatus: "STATEMENT_REQUESTED",
           reminderPausedUntil: new Date(now.getTime() + 48 * 60 * 60 * 1000), // +48 hours
         };
-        break;
-
-      case "MINI_STATEMENT": // MENU options
-      console.log("mini statement is called\n");
-        // updates = {
-        //   commitmentStatus: "STATEMENT_REQUESTED",
-        //   reminderPausedUntil: new Date(now.getTime() + 48 * 60 * 60 * 1000), // +48 hours
-        // };
-
-        console.log(`SEND STATEMENT to ${from} for Transaction ${transaction._id}`);
-
-        
+        notificationMsg = `Customer ${customer.name} (${customer.mobile}) has requested a statement for their due of ₹${transaction.amount}.`;
         break;
 
       default:
@@ -160,13 +122,32 @@ try {
     // Apply updates
     Object.assign(transaction, updates);
     transaction.lastCustomerActionAt = now;
-
     await transaction.save();
     console.log(`Transaction ${transaction._id} updated with ${JSON.stringify(updates)}`);
 
+    // Send notification if message generated
+    if (notificationMsg) {
 
+      // Also save to internal notification system
+      try {
+        //notification should be created only on loop break or customer demanded the the statements
+        const createdNotification = await notificationService.createNotification({
+          userId: customer.CustomerOfComapny._id,
+          relatedCustomerId: customer._id,
+          title: actionId === "Need statement" ? "Statement Requested" : "Reminder Loop Broken",
+          message: notificationMsg,
+          type: actionId === "Need statement" ? "statement_request_alert" : "excuse_alert"
+        });
+        if (createdNotification) {
+          console.log(`[Notification created]: for this action (${actionId})`);
+        }
+      } catch (dbNotifyErr) {
+        console.error("Failed to save database notification:", dbNotifyErr);
+      }
+    }
 
   } catch (error) {
     console.error("Error in updateTransactionStatus:", error);
   }
 };
+

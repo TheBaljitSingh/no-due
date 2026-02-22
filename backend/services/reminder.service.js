@@ -26,7 +26,14 @@ class ReminderService {
     try {
       const transaction = await Transaction
         .findById(transactionId)
-        .populate("customerId")
+        .populate({
+          path: "customerId",
+          populate: {
+            path: 'paymentTerm'
+          }
+        })
+
+        console.log("transaction:\n", transaction);
 
       if (!transaction) throw new Error("Transaction not found");
       if (transaction.type !== "DUE_ADDED") {
@@ -34,15 +41,11 @@ class ReminderService {
       }
       if (transaction.paymentStatus === "PAID") return;
 
-      const customer = await Customer
-        .findById(transaction.customerId._id)
-        .populate("paymentTerm");
+      // console.log("payment term:\n", transaction.customerId?.paymentTerm);
 
-      console.log("payment term:\n", customer?.paymentTerm);
+      if (!transaction.customerId?.paymentTerm) return;
 
-      if (!customer?.paymentTerm) return;
-
-      for (const offset of customer.paymentTerm.reminderOffsets) {
+      for (const offset of transaction?.customerId?.paymentTerm?.reminderOffsets) {
         const scheduledFor = new Date(transaction.dueDate);
         scheduledFor.setDate(scheduledFor.getDate() - offset);
         scheduledFor.setHours(9, 0, 0, 0);
@@ -55,16 +58,16 @@ class ReminderService {
             : REMINDER_TYPES.BEFORE_DUE;
 
         const exists = await Reminder.findOne({
-          transactionId: transaction._id,
+          transactionId: transaction?._id,
           reminderType,
           scheduledFor,
         })
 
         if (exists) continue;
 
-        await Reminder.create(
+        return await Reminder.create(
           [{
-            customerId: customer._id,
+            customerId: transaction?.customerId._id,
             transactionId: transaction._id,
             reminderType,
             whatsappTemplate: {
@@ -75,7 +78,7 @@ class ReminderService {
               language: "en",
             },
             templateVariables: [
-              customer.name,
+              transaction.customerId.name,
               transaction.amount.toString(),
               formatDate(transaction.dueDate), // Pass formatted date string
             ],
@@ -85,6 +88,7 @@ class ReminderService {
           }],
 
         );
+        console.log("resofrem",resofrem)
       }
 
 
@@ -293,8 +297,8 @@ class ReminderService {
         const tx = reminder.transactionId;
         // console.log("tx", tx);
 
-        if (!tx || tx?.paymentStatus === "PAID") {
-          //if already paid then cancelling the rminder for future
+        if (!tx || tx?.paymentStatus === "PAID" || tx?.commitmentStatus === "LOOP_BROKEN") {
+          //if already paid or loop broken then cancelling the rminder for future
           reminder.status = "cancelled";
           reminder.cancelledAt = new Date();
           await reminder.save();

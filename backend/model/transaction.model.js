@@ -32,7 +32,7 @@ const TransactionSchema = new Schema(
     // Status of a DUE (not payment)
     paymentStatus: {
       type: String,
-      enum: ["PENDING", "PARTIAL", "PAID","OVERDUE"],
+      enum: ["PENDING", "PARTIAL", "PAID", "OVERDUE"],
       default: function () {
         return this.type === "DUE_ADDED" ? "PENDING" : undefined;
       },
@@ -42,21 +42,25 @@ const TransactionSchema = new Schema(
     dueDate: {
       type: Date,
     },
-    expectedPaymentDate:{
-      type:Date,
-    },
-    commitmentStatus:{
-      type: String,
-      enum:[ "NONE","COMMITTED_TODAY","COMMITTED_THIS_WEEK","PAYING_SOON","PAID_AWAITING_CONFIRMATION","STATEMENT_REQUESTED"],
-      default:"NONE",
-      index:true
-    },
-    reminderPausedUntil:{
+    expectedPaymentDate: {
       type: Date,
-      index:true
     },
-    lastCustomerActionAt:{
+    commitmentStatus: {
+      type: String,
+      enum: ["NONE", "COMMITTED_TODAY", "COMMITTED_THIS_WEEK", "PAYING_SOON", "PAID_AWAITING_CONFIRMATION", "STATEMENT_REQUESTED", "LOOP_BROKEN"],
+      default: "NONE",
+      index: true
+    },
+    reminderPausedUntil: {
+      type: Date,
+      index: true
+    },
+    lastCustomerActionAt: {
       type: Date
+    },
+    excuseCount: {
+      type: Number,
+      default: 0
     },
     // PAYMENT → which due it is paying
     linkedDueTransaction: {
@@ -71,10 +75,11 @@ const TransactionSchema = new Schema(
       operatorId: { type: Schema.Types.ObjectId, ref: "User" },
     },
   },
-  { timestamps: true,
-    toJSON: { virtuals: true },  
-    toObject: { virtuals: true }, 
-   }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
 

@@ -49,26 +49,26 @@ export const handleWhatsappEvent = async (payload) => {
 
 
   // Check for duplicate response to the same message// need to verify this one
-  if (intent.context?.id) {
+
+  console.log("printing the intent: ", intent);
+
+  if (intent.context?.id && intent.type === "BUTTON" ) {
     const existingResponse = await whatsappMessage.findOne({
       responseToMessageId: intent.context.id,
-      "metadata.type": "Button"
+      "metadata.type": { $in: ["BUTTON", "LIST"] }
     });
 
     if (existingResponse) {
-      console.log(existingResponse);
       console.warn(`[Audit] Duplicate response blocked. Message ${intent.context.id} already responded to.`);
       return;
     }
   }
 
-  //if there is not session then send msg to start session
-
   // Audit Log Inbound
   await whatsappAuditService.logMessage({
     mobile: intent.from,
     direction: "INBOUND",
-    type: intent.type === "LIST" ? "interactive" : "text",
+    type: intent.type === "LIST" ? "interactive" : (intent.type === "BUTTON" ? "button" : "text"),
     text: intent.text || intent.actionId,
     whatsappMessageId: rawMsg?.id,
     status: "received",

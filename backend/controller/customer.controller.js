@@ -25,6 +25,8 @@ export const createCustomer = async (req, res) => {
       isActive: true
     }).sort({ createdAt: -1 });
 
+    console.log(defaultPT);
+
     // ---------- BULK UPLOAD ----------
     if (Array.isArray(customerData)) {
       let createdCount = 0;
@@ -40,9 +42,10 @@ export const createCustomer = async (req, res) => {
 
         console.log("status", status);
 
+        //this will store info of payment term - have to check 
         const paymentTermData = customer.paymentTerm
           ? await PaymentTerm.findById(customer.paymentTerm)
-          : null;
+          : defaultPT; // have to take default payment term if not provided
 
         const creditDays =
           paymentTermData?.creditDays ??
@@ -54,7 +57,8 @@ export const createCustomer = async (req, res) => {
 
         let existingCustomer = await Customer.findOne({
           mobile: formattedMobile,
-          CustomerOfComapny: userId
+          CustomerOfComapny: userId,
+          paymentTerm: paymentTermData?._id
         });
 
         // ================= EXISTING CUSTOMER =================
@@ -201,7 +205,8 @@ export const createCustomer = async (req, res) => {
             ...customer,
             mobile: formattedMobile,
             CustomerOfComapny: userId,
-            currentDue: 0
+            currentDue: 0,
+            paymentTerm: paymentTermData?._id
           });
 
           createdCount++;

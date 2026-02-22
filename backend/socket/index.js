@@ -1,34 +1,52 @@
 import { Server } from "socket.io";
 import registerSocketHandlers from "./handlers.js"
+import cookieParser from "cookie-parser";
+import { sessionMiddleware } from "../config/sessionConfig.js";
+import passport from "../utils/passportSetup/passportSetup.js";
 
 let ioInstance;
 
-export function initSocket(server){
+export function initSocket(server) {
     const io = new Server(server, {
-        cors:{
-            origin:"http://localhost:5173",
-            methods:["*"],
+        cors: {
+            origin: process.env.CLIENT_BASE_URL,
+            methods: ["*"],
             credentials: true
         }
-}) // have to check cors later
+    }) // have to check cors later
     ioInstance = io;
 
-    io.on("connection", (socket)=>{
+    // Middleware to wrap express middleware for Socket.io
+    const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
+    //formatted in (req,res,next)
+
+    // Use common express middleware
+    io.use(wrap(cookieParser()));
+    io.use(wrap(sessionMiddleware));
+    io.use(wrap(passport.initialize()));
+    io.use(wrap(passport.session()));
+
+    // Verify authentication
+    io.use((socket, next) => {
+        if (socket.request.user) {
+            next();
+        } else {
+            console.log("[Socket] Connection rejected: Unauthenticated");
+            next(new Error("unauthorized"));
+        }
+    });
+
+    io.on("connection", (socket) => {
+        console.log(`[Socket] New connection: ${socket.id}`);
+
         socket.emit("welcome", {
-            // id:'id121',
-            text:"Welcome to the socket server",
-            // // time:new Date(),
-            // direction:"incomming",
-
+            text: "Welcome to the socket server",
         });
-        registerSocketHandlers(io, socket);//you have to write other events there
 
-        // console.log("socket rooms:",socket.rooms);
+        registerSocketHandlers(io, socket);
 
-
-        //for disconnect
-        socket.on("disconnect", ()=>{
-            console.log("user socket disconnected");
+        socket.on("disconnect", () => {
+            console.log(`[Socket] User disconnected: ${socket.id}`);
         })
     });
 
@@ -36,11 +54,11 @@ export function initSocket(server){
 
 }
 
-export function getIo(){
-    if(!ioInstance){
+export function getIo() {
+    if (!ioInstance) {
         throw new Error("Socket.io not initialized");
 
     }
     return ioInstance;
-    
+
 }

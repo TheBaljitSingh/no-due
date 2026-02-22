@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import CustomerPicker from "./CustomerPicker";
 import { getAllcustomers } from "../../utils/service/customerService";
-import {getAllconversations} from "../../utils/service/whatsappService.js"
+import { getAllconversations } from "../../utils/service/whatsappService.js"
 import ChatHeader from "./chat/ChatHeader";
 import ChatInput from "./chat/ChatInput"
 import ChatMessages from "./chat/ChatMessage"
 import EmptyChatState from "./chat/EmplyChatState"
 import { io } from "socket.io-client";
-import {whatsappReply, getChatHistory} from "../../utils/service/whatsappService.js"
-import {useAuth} from ".././../context/AuthContext.jsx"
+import { whatsappReply, getChatHistory } from "../../utils/service/whatsappService.js"
+import { useAuth } from ".././../context/AuthContext.jsx"
 import { toast } from "react-toastify";
 
 export default function WhatsappChats() {
@@ -17,9 +17,9 @@ export default function WhatsappChats() {
   const [customers, setCustomers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const CHAT_UI = {  OPEN: "open", MINIMIZED: "minimized", CLOSED: "closed",};
+  const CHAT_UI = { OPEN: "open", MINIMIZED: "minimized", CLOSED: "closed", };
   const [chatUI, setChatUI] = useState(CHAT_UI.CLOSED);
-  const {user} = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     async function loadCustomers() {
@@ -30,8 +30,8 @@ export default function WhatsappChats() {
         const customerList = data?.data;
         console.log(customerList);
         setCustomers(customerList);
-        
-        
+
+
       } catch (error) {
         console.error("Failed to load customers", error);
         setCustomers([]);
@@ -83,12 +83,12 @@ export default function WhatsappChats() {
     try {
       //api later
       const payload = {};
-      payload.to=currentCustomerRef.current.mobile;
+      payload.to = currentCustomerRef.current.mobile;
       //later add context reply
-      payload.text=text;
+      payload.text = text;
       console.log(payload);
       const replyRes = await whatsappReply(payload);
-      console.log("replyRes",replyRes);
+      console.log("replyRes", replyRes);
 
     } catch (err) {
       console.error(err);
@@ -121,32 +121,32 @@ export default function WhatsappChats() {
   }
 
 
-function markAsRead(mobile){
-  //._id
-  //here customerId is mobile
-  const socket = socketRef.current;
+  function markAsRead(mobile) {
+    //._id
+    //here customerId is mobile
+    const socket = socketRef.current;
 
-  socket.emit("mark_read", mobile);
+    socket.emit("mark_read", mobile);
 
-  setCustomers(prev=> prev && prev.map(c=>c.mobile===mobile?{...c, unreadCount:0}:c));
-}
-
-const handleOnCustomerSelect = (customer) => {
-  console.log("customer",customer)
-
-    //on customer change client should leave current customer room
-  if(currentCustomerRef.current){
-    socketRef.current.emit("leave_customer_chat", currentCustomerRef.current._id);
+    setCustomers(prev => prev && prev.map(c => c.mobile === mobile ? { ...c, unreadCount: 0 } : c));
   }
 
-  if (currentCustomerRef.current && customer._id === currentCustomerRef.current._id && chatUI==='open') return;
-  currentCustomerRef.current = customer;
-  console.log(currentCustomerRef.current)
-  setMessages([]);
-  
-  setChatUI(CHAT_UI.OPEN);
-  markAsRead(customer?.mobile);
-};
+  const handleOnCustomerSelect = (customer) => {
+    console.log("customer", customer)
+
+    //on customer change client should leave current customer room
+    if (currentCustomerRef.current) {
+      socketRef.current.emit("leave_customer_chat", currentCustomerRef.current._id);
+    }
+
+    if (currentCustomerRef.current && customer._id === currentCustomerRef.current._id && chatUI === 'open') return;
+    currentCustomerRef.current = customer;
+    console.log(currentCustomerRef.current)
+    setMessages([]);
+
+    setChatUI(CHAT_UI.OPEN);
+    markAsRead(customer?.mobile);
+  };
 
 
   useEffect(() => {
@@ -162,44 +162,42 @@ const handleOnCustomerSelect = (customer) => {
       console.log("Welcome:", d);
     })
 
-    socket.emit("join_user", {userId:user?._id}) // it will join global user room
-
     socket.on("new_message", (msg) => {
-      console.log("new_message",msg);
-      setMessages((prev) => [...prev, {id:msg.messageId, text:msg.text, timestamp: msg.timestamp}]);
+      console.log("new_message", msg);
+      setMessages((prev) => [...prev, { id: msg.messageId, text: msg.text, timestamp: msg.timestamp }]);
       //mark that read
       markAsRead(msg.mobile)
     });
 
-   socket.on("new_message_preview", (data) => {
-     setCustomers(prev =>
-      prev.map(c => {
-        //if not matching the customer from comming data then return as it is
-        if (c.mobile !== data.mobile) return c;
+    socket.on("new_message_preview", (data) => {
+      setCustomers(prev =>
+        prev.map(c => {
+          //if not matching the customer from comming data then return as it is
+          if (c.mobile !== data.mobile) return c;
 
-        const isActive =
-          currentCustomerRef.current &&
-          currentCustomerRef.current.mobile === data.mobile;
-        //now matching customer with comming data then update only count if it is Active
-        return {
-          ...c,
-          lastMessage: data.text,
-          updatedAt: new Date().toISOString(),
-          unreadCount: isActive
-            ? c.unreadCount
-            : (c.unreadCount || 0) + 1,
-        };
-      })
-    );
-});
+          const isActive =
+            currentCustomerRef.current &&
+            currentCustomerRef.current.mobile === data.mobile;
+          //now matching customer with comming data then update only count if it is Active
+          return {
+            ...c,
+            lastMessage: data.text,
+            updatedAt: new Date().toISOString(),
+            unreadCount: isActive
+              ? c.unreadCount
+              : (c.unreadCount || 0) + 1,
+          };
+        })
+      );
+    });
 
-  socket.on("message_failed", data=>{
-    console.log("message failed comming");
-    toast.error(data?.message);
-  })
+    socket.on("message_failed", data => {
+      console.log("message failed comming");
+      toast.error(data?.message);
+    })
 
 
-    
+
 
     return () => {
       socket.disconnect();
@@ -215,33 +213,33 @@ const handleOnCustomerSelect = (customer) => {
         <CustomerPicker items={customers} onSelect={handleOnCustomerSelect} selected={currentCustomerRef} />
       </div>
 
- {/* RIGHT: Chat Area */}
-    {chatUI !== CHAT_UI.CLOSED && (
-      <div
-        className={`
+      {/* RIGHT: Chat Area */}
+      {chatUI !== CHAT_UI.CLOSED && (
+        <div
+          className={`
           fixed right-8 bottom-6 rounded-xl shadow-lg flex flex-col
           transition-all duration-300 ease-in-out
           ${chatUI === CHAT_UI.MINIMIZED
-            ? "w-80 h-14"
-            : "w-1/2 h-[calc(100vh-8.5rem)]"}
+              ? "w-80 h-14"
+              : "w-1/2 h-[calc(100vh-8.5rem)]"}
         `}
-      >
-        <ChatHeader
-          customer={currentCustomerRef.current}
-          onClose={() => setChatUI(CHAT_UI.CLOSED)}
-          onMinimize={() => setChatUI(CHAT_UI.MINIMIZED)}
-          onExpand={()=>setChatUI(CHAT_UI.OPEN)}
-          isMinimized={chatUI === CHAT_UI.MINIMIZED}
-        />
+        >
+          <ChatHeader
+            customer={currentCustomerRef.current}
+            onClose={() => setChatUI(CHAT_UI.CLOSED)}
+            onMinimize={() => setChatUI(CHAT_UI.MINIMIZED)}
+            onExpand={() => setChatUI(CHAT_UI.OPEN)}
+            isMinimized={chatUI === CHAT_UI.MINIMIZED}
+          />
 
-        {chatUI === CHAT_UI.OPEN && (
-          <>
-            <ChatMessages messages={messages} loading={loading} />
-            <ChatInput onSend={handleSendMessage} />
-          </>
-        )}
-      </div>
-    )}
+          {chatUI === CHAT_UI.OPEN && (
+            <>
+              <ChatMessages messages={messages} loading={loading} />
+              <ChatInput onSend={handleSendMessage} />
+            </>
+          )}
+        </div>
+      )}
 
 
     </div>

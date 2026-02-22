@@ -311,10 +311,21 @@ export const notificationData = [
     img: "https://cdn-icons-png.flaticon.com/512/9131/9131529.png",
   },
   {
-    name: "Accounts Department",
-    msg: "New reminder added for invoice settlement due on Oct 25.",
-    time: "10 minutes ago",
-    img: "https://cdn-icons-png.flaticon.com/512/4359/4359963.png",
+  _id: "699aa4440253fe6c099dcb53",
+  userId: "698a896b111de54710752297",
+  relatedCustomerId: {
+  _id: "6999705e40abdceddad3cc6a",
+  name: "Baljit singh",
+  mobile: "918709548015"
+  },
+  title: "Statement Requested",
+  message: "Customer Baljit singh (918709548015) has requested a statement for their due of ₹333.",
+  type: "system_alert",
+  isRead: false,
+  isDeleted: false,
+  createdAt: "2026-02-22T06:37:56.624Z",
+  updatedAt: "2026-02-22T06:37:56.624Z",
+  __v: 0
   },
   {
     name: "Document Manager",

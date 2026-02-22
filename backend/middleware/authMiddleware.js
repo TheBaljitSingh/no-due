@@ -1,4 +1,5 @@
 export const isAuthenticated = (req, res, next) => {
+  //it it exist then only call isAuthenticated()
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
   }

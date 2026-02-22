@@ -78,10 +78,12 @@ export async function addDue(req, res) {
       metadata: { note, invoiceId, operatorId: req.user?.id }
     }], { });
 
-  
+  console.log("tx",tx[0]._id);
 
     
     const reminders= await reminderService.createForDue({ transactionId: tx[0]._id });
+
+    console.log("reminder is created for this txn:",reminders[0]?._id);
 
     customer.currentDue += amount;
     customer.lastTransaction = tx[0]._id;

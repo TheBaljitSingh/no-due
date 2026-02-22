@@ -5,6 +5,7 @@ import reminderRoutes from "./reminder.routes.js"
 import paymentTermRoutes from './paymentTerm.routes.js';
 import whatsappRoutes from "./whatsapp.routes.js"
 import whatsappWebhookRoutes from "./whatsappWebhookRoutes.routes.js"
+import notificationRoutes from "./notification.routes.js"
 
 const routes = (app) => {
   app.use('/api/v1/customers', customerRoutes);
@@ -16,6 +17,7 @@ const routes = (app) => {
   app.use('/api/v1/payment-terms', paymentTermRoutes);
   app.use("/api/v1/whatsapp", whatsappRoutes);
   app.use("/", whatsappWebhookRoutes);
+  app.use("/api/v1/notifications", notificationRoutes);
 }
 
 export default routes;

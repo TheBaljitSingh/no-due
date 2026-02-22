@@ -52,7 +52,7 @@ const CustomerTable = ({ search = "" }) => {
   // Debounce: wait 500ms after the user stops typing before hitting the backend
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebounceQuery(search);
+      setDebounceQuery(search); // here debounding logic is implemented
     }, 500);
     return () => clearTimeout(timer);
   }, [search]);

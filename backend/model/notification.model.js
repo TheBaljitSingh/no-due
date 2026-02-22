@@ -22,7 +22,7 @@ const notificationSchema = new Schema({
     },
     type: {
         type: String,
-        enum: ["excuse_alert", "overdue_alert", "high_risk_alert", "system_alert"],
+        enum: ["statement_request_alert", "excuse_alert", "overdue_alert", "high_risk_alert", "system_alert"],
         default: "system_alert" // doubt
     },
     isRead: {

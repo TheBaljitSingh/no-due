@@ -12,6 +12,7 @@ import connectDB from './database/databaseConfig.js';
 
 import jobForReminder from "./utils/cronJob/job.js";
 import { corsMiddleware } from './config/corsConfig.js';
+import {initSocket} from "./socket/index.js"
 
 const PORT = process.env.PORT || 8383;
 
@@ -25,7 +26,7 @@ const startServer = async () => {
         const { default: app } = await import('./config/express.config.js');
 
         const server = http.createServer(app);
-        // initSocket(server); //confirm await will work here or not?
+        initSocket(server); 
 
         await jobForReminder();
 

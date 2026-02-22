@@ -70,7 +70,7 @@ const customerSchema = new Schema({
         required: true,
     },
     paymentTerm: {
-        type: Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'PaymentTerm',
         default: null,
     },

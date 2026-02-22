@@ -1,4 +1,6 @@
 import Notification from "../model/notification.model.js";
+import { getIo } from "../socket/index.js";
+
 
 class NotificationService {
     async createNotification({ userId, relatedCustomerId, title, message, type, metadata = {} }) {
@@ -13,8 +15,14 @@ class NotificationService {
             });
             console.log(`[Notification Service] Created ${type} for User ${userId}`);
 
-            // TODO: In future, trigger Socket.io event here
-            // this.io.to(userId.toString()).emit('new_notification', notification);
+            // Emit Socket.io event for real-time update
+            try {
+                const io = getIo();
+                io.to(userId.toString()).emit('new_notification', notification);
+                console.log(`[Socket] Emitted new_notification to room ${userId}`);
+            } catch (ioErr) {
+                console.warn("[Notification Service] Socket emission failed:", ioErr.message);
+            }
 
             return notification;
         } catch (error) {
@@ -29,8 +37,8 @@ class NotificationService {
             .populate('relatedCustomerId', 'name mobile');
     }
 
-    async countNotifications(userId){
-        return await Notification.countDocuments({ userId, isRead: false, isDeleted:false });
+    async countNotifications(userId) {
+        return await Notification.countDocuments({ userId, isRead: false, isDeleted: false });
     }
 
     async markAllRead(userId) {

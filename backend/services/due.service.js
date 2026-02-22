@@ -73,8 +73,8 @@ export const updateTransactionStatus = async ({ from, actionId, contextId }) => 
           expectedPaymentDate: now,
           reminderPausedUntil: new Date(now.getTime() + 24 * 60 * 60 * 1000), // +24 hours
         };
-        if (transaction.excuseCount >= 2) {
-          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly saying 'I will pay today' (Excuse #${transaction.excuseCount}). Loop broken, please contact manually.`;
+        if (transaction.excuseCount >= 3) {
+          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly saying 'I will pay today' (Excuse #${transaction.excuseCount}). please contact manually.`;
           updates.commitmentStatus = "LOOP_BROKEN";
         }
         break;
@@ -89,7 +89,7 @@ export const updateTransactionStatus = async ({ from, actionId, contextId }) => 
           reminderPausedUntil: nextWeek,
         };
         if (transaction.excuseCount >= 2) {
-          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly promising to pay 'within a week' (Excuse #${transaction.excuseCount}). Loop broken, please contact manually.`;
+          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly promising to pay 'within a week' (Excuse #${transaction.excuseCount}). please contact manually.`;
           updates.commitmentStatus = "LOOP_BROKEN";
         }
         break;
@@ -98,10 +98,10 @@ export const updateTransactionStatus = async ({ from, actionId, contextId }) => 
         transaction.excuseCount = (transaction.excuseCount || 0) + 1;
         updates = {
           commitmentStatus: "PAYING_SOON",
-          reminderPausedUntil: new Date(now.getTime() + 72 * 60 * 60 * 1000), // +72 hours
+          reminderPausedUntil: new Date(now.getTime() + 42 * 60 * 60 * 1000), // +42 hours
         };
         if (transaction.excuseCount >= 2) {
-          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly saying 'I will pay soon' (Excuse #${transaction.excuseCount}). Loop broken, please contact manually.`;
+          notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly saying 'I will pay soon' (Excuse #${transaction.excuseCount}). please contact manually.`;
           updates.commitmentStatus = "LOOP_BROKEN";
         }
         break;
@@ -136,7 +136,7 @@ export const updateTransactionStatus = async ({ from, actionId, contextId }) => 
           relatedCustomerId: customer._id,
           title: actionId === "Need statement" ? "Statement Requested" : "Reminder Loop Broken",
           message: notificationMsg,
-          type: actionId === "Need statement" ? "system_alert" : "excuse_alert"
+          type: actionId === "Need statement" ? "statement_request_alert" : "excuse_alert"
         });
         if (createdNotification) {
           console.log(`[Notification created]: for this action (${actionId})`);

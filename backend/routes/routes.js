@@ -17,7 +17,7 @@ const routes = (app) => {
   app.use('/api/v1/payment-terms', paymentTermRoutes);
   app.use("/api/v1/whatsapp", whatsappRoutes);
   app.use("/", whatsappWebhookRoutes);
-  app.use("/api/v1/notification", notificationRoutes);
+  app.use("/api/v1/notifications", notificationRoutes);
 }
 
 export default routes;

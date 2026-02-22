@@ -33,7 +33,7 @@ class ReminderService {
           }
         })
 
-        console.log("transaction:\n", transaction);
+      console.log("transaction:\n", transaction);
 
       if (!transaction) throw new Error("Transaction not found");
       if (transaction.type !== "DUE_ADDED") {
@@ -88,7 +88,7 @@ class ReminderService {
           }],
 
         );
-        console.log("resofrem",resofrem)
+        console.log("resofrem", resofrem)
       }
 
 
@@ -304,6 +304,10 @@ class ReminderService {
           await reminder.save();
           continue;
         }
+
+        // [very important]
+
+        //if you want to still schedule then you have  to use tx?.commitmentStatus==='loop_broken' and schedule soruce is manual i have to add this flag here
 
         // Check if reminders are paused for this transaction
         if (tx.reminderPausedUntil && new Date(tx.reminderPausedUntil) > new Date()) {

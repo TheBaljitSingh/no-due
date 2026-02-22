@@ -8,6 +8,7 @@ import whatsappSessionModel from "../../model/whatsappSession.model.js";
 import whatsappMessage from "../../model/whatsappMessage.modal.js";
 import Customer from "../../model/customer.model.js";
 import User from "../../model/user.model.js";
+import { getIo } from "../../socket/index.js";
 
 export const handleWhatsappEvent = async (payload) => {
   console.log('webhook received from the user');
@@ -99,19 +100,31 @@ export const handleWhatsappEvent = async (payload) => {
 
   // updating  the customer master table only it it is button as im sending buttons in the template
   if (intent.type === 'BUTTON') {
-    try {
+    if (customer) {
       const feedbackText = intent.text || intent.actionId || "Interaction received";
-      await Customer.findOneAndUpdate(
-        { mobile: intent.from },
+      await Customer.findByIdAndUpdate(
+        customer._id,
         {
           feedback: feedbackText,
           lastInteraction: new Date()
         }
       );
 
-      console.log("updated the status of message received");
-    } catch (err) {
-      console.error("Error updating customer feedback:", err);
+      // Emit live update via socket to the specific merchant's room
+      try {
+        const io = getIo();
+        io.to(merchant._id.toString()).emit("feedback_updated", {
+          feedback: feedbackText,
+          mobile: intent.from,
+          customerName: customer.name,
+          messageId: rawMsg?.id // used to prevent duplicate toasts in frontend
+        });
+        console.log(`[Socket] Emitted feedback_updated to merchant ${merchant._id}`);
+      } catch (error) {
+        console.error("Error emitting feedback update:", error);
+      }
+    } else {
+      console.warn(`[Webhook] Skipping feedback update: Customer with mobile ${intent.from} not found.`);
     }
   }
 

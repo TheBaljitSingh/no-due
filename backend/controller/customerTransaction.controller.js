@@ -63,7 +63,7 @@ export async function addDue(req, res) {
     }
 
     const creditDays = customer.paymentTerm?.creditDays ?? 0;
-    console.log("creditDays",creditDays);
+    console.log("creditDays", creditDays);
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + creditDays);
 
@@ -76,25 +76,27 @@ export async function addDue(req, res) {
       paymentStatus: "PENDING",
       dueDate,
       metadata: { note, invoiceId, operatorId: req.user?.id }
-    }], { });
+    }], {});
 
-  console.log("tx",tx[0]._id);
+    console.log("tx", tx[0]._id);
 
-    
-    const reminders= await reminderService.createForDue({ transactionId: tx[0]._id });
 
-    console.log("reminder is created for this txn:",reminders[0]?._id);
+    const reminders = await reminderService.createForDue({ transactionId: tx[0]._id });
+
+    if (reminders && reminders.length > 0) {
+      console.log("reminder is created for this txn:", reminders[0]?._id);
+    }
 
     customer.currentDue += amount;
     customer.lastTransaction = tx[0]._id;
     customer.status = customer.status === "Overdue" ? "Overdue" : "Due";
-  await customer.save();
+    await customer.save();
 
 
 
-  const remainingDue = customer.currentDue; // to show in client side UI
+    const remainingDue = customer.currentDue; // to show in client side UI
 
-    return new APIResponse(201,{ transaction: {  ...tx[0].toObject(), remainingDue  } }).send(res);
+    return new APIResponse(201, { transaction: { ...tx[0].toObject(), remainingDue } }).send(res);
 
   } catch (err) {
     console.error("Error in addDue:", err);
@@ -106,6 +108,7 @@ export async function addDue(req, res) {
 export async function makePayment(req, res) {
   //i have to also update the reminder money?
   const { dueTransactionId } = req.body;
+  console.log("dueTransactionId", dueTransactionId);
   let { amount, note } = req.body;
   try {
     amount = Number(amount);
@@ -116,6 +119,8 @@ export async function makePayment(req, res) {
     const dueTx = await Transaction
       .findById(dueTransactionId)
 
+    console.log("dueTx", dueTx);
+
     if (!dueTx || dueTx.type !== "DUE_ADDED") {
       return new APIError(400, "Invalid due transaction").send(res);
     }
@@ -124,10 +129,14 @@ export async function makePayment(req, res) {
       return new APIError(400, "This due is already fully paid").send(res);
     }
 
-    const remaining = dueTx.amount - dueTx.paidAmount;
-    if (amount > remaining) {
+    const totalRemainingDue = dueTx.amount - dueTx.paidAmount;
+    console.log("remaining", totalRemainingDue);
+    if (amount > totalRemainingDue) {
       return new APIError(400, "Payment exceeds remaining due").send(res);
     }
+
+    const currentRemainingDue = totalRemainingDue - amount; //for this txn
+    console.log("remainingDue", currentRemainingDue);
 
     // create payment FIRST
     const paymentTx = await Transaction.create([{
@@ -136,23 +145,29 @@ export async function makePayment(req, res) {
       amount,
       linkedDueTransaction: dueTx._id,
       metadata: { note, operatorId: req.user?.id }
-    }], { });
+    }], {});
 
-    if(paymentTx){
-      //if new payment is created then update the reminder accordingly with amount
-      await Reminder.updateMany(
-        {"transactionId": new mongoose.Types.ObjectId(dueTransactionId)},
-        {
-        $set:{
-          "templateVariables.1":Number(paymentTx[0].amount),
-          transactionId: new mongoose.Types.ObjectId(paymentTx[0]._id)
-        }
-      });
-    }
+    console.log("PaymentTx", paymentTx);
 
     // THEN recalculate
     const updatedDue = await recalculateDue(dueTx._id);
-    
+
+    // Update reminders with the fresh remaining balance from the database
+    const finalRemainingDue = updatedDue.amount - updatedDue.paidAmount;
+
+    if (paymentTx && paymentTx.length > 0 && finalRemainingDue > 0) {
+      console.log("Updating reminders with new remaining balance:", finalRemainingDue);
+      const result = await Reminder.updateMany(
+        { "transactionId": dueTx._id },
+        {
+          $set: {
+            "templateVariables.1": String(finalRemainingDue)
+          }
+        }
+      );
+      console.log("reminder updated result", result);
+    }
+
     const customer = await Customer.findById(dueTx.customerId);
 
     const newDue = customer.currentDue - amount;

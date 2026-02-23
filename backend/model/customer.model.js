@@ -40,7 +40,7 @@ const customerSchema = new Schema({
         min: [0, "Due amount cannot be negative"],
     },
     lastTransaction: {
-        type: Schema.Types.ObjectId, ref: "Transaction",
+        type: Types.ObjectId, ref: "Transaction",
         default: null,
         min: [0, "Overdue amount cannot be negative"],
     },
@@ -74,7 +74,7 @@ const customerSchema = new Schema({
         required: true,
     },
     paymentTerm: {
-        type: Schema.Types.ObjectId,
+        type: Types.ObjectId,
         ref: 'PaymentTerm',
         default: null,
     },

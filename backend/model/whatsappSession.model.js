@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 const whatsappSessionSchema = new mongoose.Schema({
   mobile: {
@@ -6,7 +6,7 @@ const whatsappSessionSchema = new mongoose.Schema({
     index: true
   },
   merchantId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Types.ObjectId,
     ref: "User",
     required: true,
     index: true

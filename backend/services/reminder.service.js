@@ -45,6 +45,7 @@ class ReminderService {
 
       if (!transaction.customerId?.paymentTerm) return;
 
+      const createdReminders = [];
       for (const offset of transaction?.customerId?.paymentTerm?.reminderOffsets) {
         const scheduledFor = new Date(transaction.dueDate);
         scheduledFor.setDate(scheduledFor.getDate() - offset);
@@ -65,9 +66,10 @@ class ReminderService {
 
         if (exists) continue;
 
-        return await Reminder.create(
+        //don't immediatly return 
+        const res = await Reminder.create(
           [{
-            customerId: transaction?.customerId._id,
+            customerId: transaction?.customerId?._id || transaction?.customerId,
             transactionId: transaction._id,
             reminderType,
             whatsappTemplate: {
@@ -88,9 +90,12 @@ class ReminderService {
           }],
 
         );
-        console.log("resofrem", resofrem)
+        if (res && res.length > 0) {
+          createdReminders.push(res[0]);
+        }
       }
 
+      return createdReminders;
 
     } catch (err) {
       console.log(err);
@@ -107,6 +112,7 @@ class ReminderService {
       .populate({ path: "metadata.operatorId", select: "companyName" });
 
     if (!transaction) throw new Error("Transaction not found");
+    if (!transaction.customerId) throw new Error("Customer not found for this transaction");
     if (transaction.type !== "DUE_ADDED") {
       throw new Error("Invalid transaction");
     }
@@ -116,7 +122,7 @@ class ReminderService {
 
 
     const reminder = await Reminder.create({
-      customerId: transaction.customerId._id,
+      customerId: transaction.customerId?._id || transaction.customerId,
       transactionId,
       reminderType: REMINDER_TYPES.DUE_TODAY, // Defaulting types might need adjustment based on date but caller usually decides templateName
       whatsappTemplate: { name: templateName, language: "en" },
@@ -210,6 +216,7 @@ class ReminderService {
       .populate("customerId");
 
     if (!transaction) throw new Error("Transaction not found");
+    if (!transaction.customerId) throw new Error("Customer not found for this transaction");
 
     if (transaction.type !== "DUE_ADDED") {
       throw new Error("Only dues can have reminders");
@@ -249,7 +256,7 @@ class ReminderService {
     }
 
     return Reminder.create({
-      customerId: transaction.customerId._id,
+      customerId: transaction.customerId?._id || transaction.customerId,
       transactionId,
       reminderType,
       whatsappTemplate: {
@@ -287,7 +294,7 @@ class ReminderService {
       });
 
 
-    console.log("will process this reminder", reminders);
+    console.log(`will process ${reminders.length} reminders`);
 
 
     for (const reminder of reminders) {
@@ -296,7 +303,7 @@ class ReminderService {
         const tx = reminder.transactionId;
         // console.log("tx", tx);
 
-        if (!tx || tx?.paymentStatus === "PAID" || tx?.commitmentStatus === "LOOP_BROKEN") {
+        if (!tx || !tx.customerId || tx?.paymentStatus === "PAID" || tx?.commitmentStatus === "LOOP_BROKEN") {
           //if already paid or loop broken then cancelling the rminder for future
           reminder.status = "cancelled";
           reminder.cancelledAt = new Date();
@@ -324,15 +331,26 @@ class ReminderService {
         });
 
 
-        if (!canSend){
+        if (!canSend) {
           console.log("recenty sended reminder, in cooldown can't send reminders")
           continue;
 
-        } 
+        }
 
         // Fetch credentials from Customer -> User first to get merchant ID
-        const customer = await Customer.findById(reminder.customerId._id || reminder.customerId).populate('CustomerOfComapny');
+        const targetCustomerId = reminder.customerId?._id || reminder.customerId;
+        if (!targetCustomerId) {
+          console.error(`[Reminder Service] Reminder ${reminder._id} has no customerId`);
+          continue;
+        }
+
+        const customer = await Customer.findById(targetCustomerId).populate('CustomerOfComapny');
         const merchant = customer?.CustomerOfComapny;
+
+        if (!customer) {
+          console.error(`[Reminder Service] Customer ${targetCustomerId} not found for reminder ${reminder._id}`);
+          throw new Error("Customer not found");
+        }
 
         if (!merchant || !merchant.whatsapp || !merchant.whatsapp.accessToken) {
           console.error(`[Reminder Service] No WhatsApp credentials for customer ${customer._id}`);
@@ -374,7 +392,7 @@ class ReminderService {
           await reminder.save();
 
           //same here updating lastReminder for this user
-          await Customer.findByIdAndUpdate(reminder.customerId._id, {
+          await Customer.findByIdAndUpdate(targetCustomerId, {
             lastReminder: reminder.sentAt
           });
         } else {
@@ -416,7 +434,7 @@ class ReminderService {
       if (exists) continue;
 
       await Reminder.create({
-        customerId: tx.customerId._id,
+        customerId: tx.customerId?._id || tx.customerId,
         transactionId: tx._id,
         reminderType: REMINDER_TYPES.AFTER_DUE,
         whatsappTemplate: {

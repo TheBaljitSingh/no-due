@@ -3,7 +3,7 @@ import mongoose, { Schema, Types } from "mongoose";
 const reminderSchema = new Schema(
   {
     customerId: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "Customer",
       required: true,
       index: true
@@ -11,7 +11,7 @@ const reminderSchema = new Schema(
 
     // reference to transaction / due entry
     transactionId: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "Transaction",
       required: true,
       index: true

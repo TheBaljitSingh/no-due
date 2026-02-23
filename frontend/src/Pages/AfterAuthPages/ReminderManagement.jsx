@@ -72,24 +72,24 @@ export default function ReminderManagement() {
     }
   }, [pagination.page, pagination.limit, tab]);
 
-  
+
 
   useEffect(() => {
-     
-    async function run(){
+
+    async function run() {
       try {
         setLoading(true);
         // await new Promise(resolve=>setTimeout(resolve, 3000)); testing
         await fetchReminders();
       } catch (error) {
         console.log(error);
-      }finally{
+      } finally {
         setLoading(false);
       }
     }
 
     run();
-    
+
   }, [fetchReminders]);
 
   const normalizeData = useMemo(() => {
@@ -101,7 +101,7 @@ export default function ReminderManagement() {
         company: "-", // not present yet
       },
 
-      dueAmount: r?.transactionId?.amount || 0, // have to add here that specific due amount
+      dueAmount: r.templateVariables?.[1] || r?.transactionId?.amount || 0,
 
       sendAt: r.scheduledFor,
 
@@ -126,6 +126,8 @@ export default function ReminderManagement() {
       );
     });
   }, [normalizeData, q]);
+
+  console.log("filtered", filtered);
 
   const toggleBulk = (id) => {
     setBulk((prev) => {
@@ -225,13 +227,13 @@ export default function ReminderManagement() {
   };
 
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-[60vh]">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
-            </div>
-        );
-    }
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+      </div>
+    );
+  }
 
 
 
@@ -412,10 +414,11 @@ export default function ReminderManagement() {
                       <div className="inline-flex items-center gap-0.5">
                         <IconBtn title="History" onClick={() => setAuditCustomer(r.customer)}> <History className="w-4 h-4" /> </IconBtn>
                         <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-4 h-4" /></IconBtn>
-                        <IconBtn title="Delete" danger onClick={() =>{ 
+                        <IconBtn title="Delete" danger onClick={() => {
                           // console.log(r)
-                          setConfirmOpen(true) 
-                          setToBeDeletedReminder(r.id)}} ><Trash2 className="w-4 h-4" /></IconBtn>
+                          setConfirmOpen(true)
+                          setToBeDeletedReminder(r.id)
+                        }} ><Trash2 className="w-4 h-4" /></IconBtn>
                       </div>
                     </td>
                   </tr>
@@ -465,7 +468,7 @@ export default function ReminderManagement() {
       {openNew && <ScheduleOrSendReminderModal open={openNew} onClose={() => setOpenNew(false)} onSubmit={handleSubmit} />}
       {drawer && <EditDrawer reminder={drawer} onClose={() => setDrawer(null)} onDeleteSuccess={handleDrawerDeleteSuccess} onRescheduleSuccess={handleDrawerRescheduleSuccess} />}
       {auditCustomer && <AuditDrawer customer={auditCustomer} onClose={() => setAuditCustomer(null)} />}
-      {confirmOpen &&   <ConfirmModal open={confirmOpen} onClose={() => { setConfirmOpen(false); setToBeDeletedReminder(null);  }} onConfirm={() => handleDeleteReminder(toBedeletedReminder)} message="Are you sure you want to delete this reminder?"/>}
+      {confirmOpen && <ConfirmModal open={confirmOpen} onClose={() => { setConfirmOpen(false); setToBeDeletedReminder(null); }} onConfirm={() => handleDeleteReminder(toBedeletedReminder)} message="Are you sure you want to delete this reminder?" />}
     </div>
   );
 }

@@ -3,12 +3,12 @@ import mongoose, { Schema, Types } from "mongoose";
 const notificationSchema = new Schema({
 
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Types.ObjectId,
         ref: "User",
         required: true
     },
     relatedCustomerId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Types.ObjectId,
         ref: "Customer",
         required: true
     },

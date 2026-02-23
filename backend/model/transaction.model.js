@@ -3,7 +3,7 @@ import mongoose, { Schema, Types } from "mongoose";
 const TransactionSchema = new Schema(
   {
     customerId: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "Customer",
       required: true,
       index: true,
@@ -64,7 +64,7 @@ const TransactionSchema = new Schema(
     },
     // PAYMENT → which due it is paying
     linkedDueTransaction: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "Transaction",
       default: null,
     },
@@ -72,7 +72,7 @@ const TransactionSchema = new Schema(
     metadata: {
       note: String,
       invoiceId: String,
-      operatorId: { type: Schema.Types.ObjectId, ref: "User" },
+      operatorId: { type: Types.ObjectId, ref: "User" },
     },
   },
   {

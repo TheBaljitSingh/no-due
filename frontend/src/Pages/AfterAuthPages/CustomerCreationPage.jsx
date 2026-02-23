@@ -93,7 +93,10 @@ const CustomerCreationPage = ({ paymentTerms }) => {
       setFormData(initialFormData); // reset form
     } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message || error?.message || "Failed to create customer");
+      const errors = error?.response?.data?.errors;
+      const firstErrorMessage = errors? Object.values(errors)[0]: null;
+
+      toast.error(firstErrorMessage || "Failed to create customer");
     } finally {
       setLoading(false);
     }

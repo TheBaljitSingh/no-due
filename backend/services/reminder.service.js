@@ -287,8 +287,7 @@ class ReminderService {
       });
 
 
-    // console.log("will process this reminder", reminders);
-
+    console.log("will process this reminder", reminders);
 
 
     for (const reminder of reminders) {
@@ -324,9 +323,12 @@ class ReminderService {
           reminderType: reminder.reminderType,
         });
 
-        if (!canSend) continue;
 
+        if (!canSend){
+          console.log("recenty sended reminder, in cooldown can't send reminders")
+          continue;
 
+        } 
 
         // Fetch credentials from Customer -> User first to get merchant ID
         const customer = await Customer.findById(reminder.customerId._id || reminder.customerId).populate('CustomerOfComapny');

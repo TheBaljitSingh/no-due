@@ -211,7 +211,7 @@ const CustomerTable = ({ search = "" }) => {
       if (!initialKeys.includes('feedback')) {
         initialKeys.push('feedback');
       }
-      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction'].includes(row)); // keys array will be stored
+      const headers = initialKeys.filter(row => !['__v', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction', 'lastInteraction'].includes(row)); // keys array will be stored
 
       // Convert headers to CSV row
       const csvRows = [headers.join(",")]; // keystring
@@ -301,7 +301,7 @@ const CustomerTable = ({ search = "" }) => {
       if (!initialKeys.includes('feedback')) {
         initialKeys.push('feedback');
       }
-      const tableColumns = initialKeys.filter(row => !['_id', '__v', 'email', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction'].includes(row));// array of headers
+      const tableColumns = initialKeys.filter(row => !['_id', '__v', 'email', 'CustomerOfComapny', 'createdAt', 'updatedAt', 'lastTransaction', 'lastInteraction'].includes(row));// array of headers
 
 
       const tableRows = [];  //rows according to headers

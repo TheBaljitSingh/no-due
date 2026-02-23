@@ -240,12 +240,13 @@ export default function LoginModal({ open, onClose }) {
             Continue with Google
           </button>
 
-          <div className="relative w-full my-6">
-            <div className="border-t border-gray-300 w-full"></div>
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-sm text-gray-500">
-              OR
-            </span>
-          </div>
+          <div className="flex items-center my-6">
+          <div className="flex-1 border-t border-gray-300"></div>
+          <span className="px-4 text-sm text-gray-500 bg-white">
+            OR
+          </span>
+          <div className="flex-1 border-t border-gray-300"></div>
+        </div>
 
 
           {isSignUp && (

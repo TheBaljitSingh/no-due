@@ -382,7 +382,7 @@ export default function LoginModal({ open, onClose }) {
           )}
 
           {err && typeof err === "string" && (
-            <p className="text-sm text-red-600">{err}</p>
+            <p className="text-sm font-normal text-red-600">{err}</p>
           )}
 
           {!isSignUp && (

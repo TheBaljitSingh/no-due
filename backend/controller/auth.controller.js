@@ -66,7 +66,8 @@ export const localLogin = (req, res) => {
       return new APIError(500, ['Authentication failed', err.message]).send(res);
     }
     if (!user) {
-      return new APIError(401, [info?.message || 'User Not Found']).send(res);
+      console.log("info", info); //not returning exact message
+      return new APIError(401, ['Invalid Credentials']).send(res);
     }
     const rememberMe = !!req.body.rememberMe;
     const lastLogin = Date.now();

@@ -85,7 +85,7 @@ const TransactionSchema = new Schema(
 
 TransactionSchema.pre("save", function () {
   if (this.type === "PAYMENT" && !this.linkedDueTransaction) {
-    return next(new Error("PAYMENT must reference a due transaction"));
+    throw new Error("PAYMENT must reference a due transaction");
   }
 
   if (this.type !== "DUE_ADDED") {

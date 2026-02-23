@@ -69,7 +69,7 @@ export default function LoginModal({ open, onClose }) {
       // LAST NAME
       case "lastName":
         if (!value) return "Last name is required.";
-        if (value.length < 2) return "Last name must be at least 2 characters.";
+        if (value.length < 1) return "Last name must be at least 1 characters.";
         if (!/^[a-zA-Z ]+$/.test(value))
           return "Last name should contain only letters.";
         return "";
@@ -207,22 +207,22 @@ export default function LoginModal({ open, onClose }) {
       role="dialog"
       onMouseDown={onClose}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm " />
 
       <div
         ref={dialogRef}
-        className="relative z-10 w-full max-w-md rounded-lg bg-white p-8 shadow-xl"
+        className="relative z-10 w-full max-w-md rounded-lg bg-red-400 bg-white p-8 shadow-xl "
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Logo Area */}
-        <div className="mb-6 text-center">
+        <div className="mb-6 text-center ">
           <div className={`mx-auto ${isSignUp ? 'hidden' : 'flex'} h-32 w-32 items-center justify-center rounded-full `}>
             <img src='https://res.cloudinary.com/dzdt11nsx/image/upload/v1770710830/logo_s59z23.png' alt="" />
           </div>
           <h2 className="text-2xl font-normal text-gray-800">
             {isSignUp ? "Create your Account" : "Sign in"}
           </h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm font-semibold text-gray-600">
             {isSignUp ? "to continue to our service" : "to continue to your account"}
           </p>
         </div>
@@ -262,10 +262,10 @@ export default function LoginModal({ open, onClose }) {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') submit(e);
                   }}
-                  className="w-full rounded border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
+                  className="w-full font-semibold rounded border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
                   placeholder="First name"
                 />
-                {err.firstName && <p className="text-xs text-red-600">{err.firstName}</p>}
+                {err.firstName && <p className="text-xs font-normal text-red-600">{err.firstName}</p>}
 
               </div>
               <div className="flex-1">
@@ -276,10 +276,10 @@ export default function LoginModal({ open, onClose }) {
                     setLastName(e.target.value);
                     setErr(prev => ({ ...prev, lastName: validateField("lastName", e.target.value) }));
                   }}
-                  className="w-full rounded border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
+                  className="w-full font-semibold rounded border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
                   placeholder="Last name"
                 />
-                {err.lastName && <p className="text-xs text-red-600">{err.lastName}</p>}
+                {err.lastName && <p className="text-xs font-normal text-red-600">{err.lastName}</p>}
 
               </div>
 
@@ -301,10 +301,10 @@ export default function LoginModal({ open, onClose }) {
                       setPhoneNumber(e.target.value);
                       setErr(prev => ({ ...prev, phoneNumber: validateField("phoneNumber", e.target.value) }));
                     }}
-                    className="w-full rounded border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
+                    className="w-full font-semibold rounded border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
                     placeholder="Phone Number"
                   />
-                  {err.phoneNumber && <p className="text-xs text-red-600">{err.phoneNumber}</p>}
+                  {err.phoneNumber && <p className="text-xs font-normal text-red-600">{err.phoneNumber}</p>}
 
                 </div>
 
@@ -313,7 +313,7 @@ export default function LoginModal({ open, onClose }) {
             )
           }
 
-          <div>
+          <div className="flex flex-col gap-2">
             <input
               type="email"
               value={email}
@@ -321,13 +321,13 @@ export default function LoginModal({ open, onClose }) {
                 setEmail(e.target.value);
                 setErr(prev => ({ ...prev, email: validateField("email", e.target.value) }));
               }}
-              className="w-full rounded border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
+              className="w-full font-semibold rounded border font-semibold border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
               placeholder="Email"
             />
-            {err.email && <p className="text-xs text-red-600">{err.email}</p>}
+            {err.email && <p className="text-xs font-normal text-red-600 min-h-[16px]">{err.email}</p>}
 
           </div>
-          <div className="relative">
+          <div className="relative flex flex-col gap-2">
             <input
               type={showPw ? "text" : "password"}
               value={pw}
@@ -335,22 +335,25 @@ export default function LoginModal({ open, onClose }) {
                 setPw(e.target.value);
                 setErr(prev => ({ ...prev, password: validateField("password", e.target.value) }));
               }}
-              className="w-full rounded border border-gray-300 px-4 py-3 pr-16 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
+              className="w-full font-semibold rounded border font-semibold border-gray-300 px-4 py-3 pr-16 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
               placeholder="Password"
-            />
-            {err.password && <p className="text-xs text-red-600">{err.password}</p>}
+              />
+
 
             <button
               type="button"
               onClick={() => setShowPw((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-teal-600 hover:underline"
-            >
+              className="absolute right-3 top-4 item-center text-xs font-medium text-teal-600"
+              >
               {showPw ? "HIDE" : "SHOW"}
             </button>
+
+          {err.password &&isSignUp  && <p className="text-xs font-normal text-red-600 min-h-[16px]">{err.password}</p>}
           </div>
 
+
           {isSignUp && (
-            <div className="relative">
+            <div className="relative flex flex-col gap-2">
               <input
                 type={showConfirmPw ? "text" : "password"}
                 value={confirmPw}
@@ -358,18 +361,22 @@ export default function LoginModal({ open, onClose }) {
                   setConfirmPw(e.target.value);
                   setErr(prev => ({ ...prev, confirmPw: validateField("confirmPw", e.target.value, pw) }));
                 }}
-                className="w-full rounded border border-gray-300 px-4 py-3 pr-16 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
+                className="w-full font-semibold rounded border border-gray-300 px-4 py-3 pr-16 text-sm outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
                 placeholder="Confirm password"
               />
-              {err.confirmPw && <p className="text-xs text-red-600">{err.confirmPw}</p>}
 
               <button
                 type="button"
                 onClick={() => setShowConfirmPw((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-teal-600 hover:underline"
+                className="absolute right-3 top-3.5  text-xs font-medium text-teal-600"
               >
                 {showConfirmPw ? "HIDE" : "SHOW"}
               </button>
+
+                {/* <div className="flex flex-col"> */}
+                {err.confirmPw && <p className="text-xs font-normal text-red-600 min-h-[16px]">{err.confirmPw}</p>}
+                {/* </div> */}
+
             </div>
           )}
 
@@ -379,17 +386,17 @@ export default function LoginModal({ open, onClose }) {
 
           {!isSignUp && (
             <div className="text-right">
-              <a href="#" className="text-sm font-medium text-teal-600 hover:underline">
+              <a href="#" className="text-sm font-medium text-teal-600">
                 Forgot password?
               </a>
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3 pt-4">
+          <div className="flex items-center justify-between gap-3 ">
             <button
               type="button"
               onClick={toggleMode}
-              className="text-sm font-medium text-teal-600 hover:underline"
+              className="text-sm font-medium text-teal-600 hover:text-blue-700"
             >
               {isSignUp ? "Sign in instead" : "Create account"}
             </button>

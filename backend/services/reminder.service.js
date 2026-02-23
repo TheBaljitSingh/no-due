@@ -325,16 +325,21 @@ class ReminderService {
         }
 
         // prevent sending same reminder type again within cooldown window
-        const canSend = await canSendReminder({
+        const cooldownMs = 24 * 60 * 60 * 1000;
+        const { canSend, recent } = await canSendReminder({
           transactionId: tx._id,
           reminderType: reminder.reminderType,
+          cooldownMs
         });
 
-
         if (!canSend) {
-          console.log("recenty sended reminder, in cooldown can't send reminders")
+          console.log(`Reminder in cooldown. Last sent at ${recent.sentAt}. Rescheduling.`);
+          // Reschedule to 1 minute after the cooldown expires
+          const nextAllowed = new Date(recent.sentAt.getTime() + cooldownMs + 60000);
+          reminder.scheduledFor = nextAllowed;
+          reminder.status = "rescheduled";
+          await reminder.save();
           continue;
-
         }
 
         // Fetch credentials from Customer -> User first to get merchant ID

@@ -24,13 +24,15 @@ export default function ScheduleOrSendReminderModal({
   const [mode, setMode] = useState("schedule"); // 'schedule' | 'now'
   const [scheduleDate, setScheduleDate] = useState("");
   const [template, setTemplate] = useState(""); // Will be auto-selected based on due date
+  const [dueDate, setDate] = useState('');
 
   // User's configured template names
   const [configuredTemplates, setConfiguredTemplates] = useState({
-    beforeDue: '',
-    dueToday: '',
-    overdue: ''
+    beforeDue: 'interactive_before_due',
+    dueToday: 'interactive_due_today',
+    overdue: 'interactive_overdue'
   });
+
 
   // ----------------------------------
   // CONSTANTS: 3 Default Templates
@@ -58,6 +60,7 @@ export default function ScheduleOrSendReminderModal({
   // EFFECTS: Fetch user's configured templates
   // ----------------------------------
   useEffect(() => {
+
     const fetchConfiguredTemplates = async () => {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/whatsapp/template-config`, {
@@ -83,9 +86,12 @@ export default function ScheduleOrSendReminderModal({
 
     console.log("configuredTemplates", configuredTemplates);
 
-    if (selectedTransaction && configuredTemplates) {
+    if (selectedTransaction && configuredTemplates  ) { // removed this part && configuredTemplates
       const dueDate = new Date(selectedTransaction.dueDate);
       const today = new Date();
+
+      console.log("due data", dueDate);
+      console.log("due data",dueDate);
 
       // Normalize dates to compare only date part (not time)
       dueDate.setHours(0, 0, 0, 0);
@@ -94,13 +100,13 @@ export default function ScheduleOrSendReminderModal({
       let autoTemplate;
       if (dueDate > today) {
         // Due date is in the future - use configured beforeDue template
-        autoTemplate = configuredTemplates.beforeDue || "nodue_before_due_1";
+        autoTemplate =  configuredTemplates?.beforeDue?.name  ||'interactive_before_due';
       } else if (dueDate.getTime() === today.getTime()) {
         // Due date is today - use configured dueToday template
-        autoTemplate = configuredTemplates.dueToday || "nodue_due_today_1";
+        autoTemplate = configuredTemplates?.dueToday?.name ||'interactive_due_today'; 
       } else {
         // Due date has passed (overdue) - use configured overdue template
-        autoTemplate = configuredTemplates.overdue || "nodue_overdue_1";
+        autoTemplate = configuredTemplates?.overdue?.name || 'interactive_overdue';
       }
 
       setTemplate(autoTemplate);
@@ -407,12 +413,15 @@ export default function ScheduleOrSendReminderModal({
         )}
 
         {/* Template */}
+
+        {scheduleDate && <>
+        
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">
             Template
           </label>
 
-          <select
+          {/* <select
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
             className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
@@ -423,7 +432,10 @@ export default function ScheduleOrSendReminderModal({
                 {tmpl.label}
               </option>
             ))}
-          </select>
+          </select> */}
+          <p className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" >
+            {template}
+          </p>
         </div>
 
         {/* Preview */}
@@ -444,6 +456,10 @@ export default function ScheduleOrSendReminderModal({
             </div>
           </div>
         </div>
+
+</>}
+
+
 
       </div>
     )}

@@ -92,11 +92,24 @@ const CustomerCreationPage = ({ paymentTerms }) => {
       toast.success("Customer created successfully");
       setFormData(initialFormData); // reset form
     } catch (error) {
-      console.log(error);
       const errors = error?.response?.data?.errors;
-      const firstErrorMessage = errors? Object.values(errors)[0]: null;
+      if (errors) {
+        const formattedErrors = Object.entries(errors).map(([field, message]) => {
+          if (message.includes("Cast to ObjectId failed")) {
+            return "Please select a valid payment term";
+          }
 
-      toast.error(firstErrorMessage || "Failed to create customer");
+          if (message.includes("is not a valid enum value")) {
+            return `Please select a valid ${field}`;
+          }
+
+          return message; // fallback
+        });
+
+        toast.error(formattedErrors[0]); // show first error
+      } else {
+        toast.error("Failed to create customer");
+      }
     } finally {
       setLoading(false);
     }

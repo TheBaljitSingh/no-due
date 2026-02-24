@@ -300,8 +300,14 @@ class ReminderService {
     for (const reminder of reminders) {
       // console.log(reminder);
       try {
-        const tx = reminder.transactionId;
+        let tx = reminder.transactionId; // it will store the linkedDueTransaction
+        // tx have linkedDueTransaction (Id), if it is null then it is the due transaction
         // console.log("tx", tx);
+        //there is not use of this, because i'm not updating the transaction of reminder while manking payment
+        const linkedDueTransaction = await Transaction.findById(tx.linkedDueTransaction);
+        if(linkedDueTransaction){
+          tx = linkedDueTransaction;
+        }
 
         if (!tx || !tx.customerId || tx?.paymentStatus === "PAID" || tx?.commitmentStatus === "LOOP_BROKEN") {
           //if already paid or loop broken then cancelling the rminder for future

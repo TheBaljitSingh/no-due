@@ -154,17 +154,29 @@ export async function makePayment(req, res) {
 
     // Update reminders with the fresh remaining balance from the database
     const finalRemainingDue = updatedDue.amount - updatedDue.paidAmount;
+    console.log("finalRemainingDue", finalRemainingDue);
 
-    if (paymentTx && paymentTx.length > 0 && finalRemainingDue > 0) {
+    if (paymentTx && paymentTx.length > 0 ) {
       console.log("Updating reminders with new remaining balance:", finalRemainingDue);
-      const result = await Reminder.updateMany(
+
+      let result='';
+      if(finalRemainingDue===0){
+        //delete the reminder
+        result=await Reminder.deleteMany({ "transactionId": paymentTx[0]._id });
+      }else if(finalRemainingDue>0){
+        // update the amount 
+        result=await Reminder.updateMany(
         { "transactionId": dueTx._id },
         {
           $set: {
-            "templateVariables.1": String(finalRemainingDue)
+            "templateVariables.1": String(finalRemainingDue),
+            // "transactionId": paymentTx[0]._id
+
           }
         }
       );
+      }
+
       console.log("reminder updated result", result);
     }
 

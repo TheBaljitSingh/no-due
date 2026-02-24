@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { User, Mail, Phone, Building2, MapPin, Globe, Shield, Eye, EyeOff, Save, Crown, CreditCard, QrCode, LogOut, CheckCircle2, User2 } from "lucide-react";
+import { User, Mail, Phone, Building2, MapPin, Globe, Shield, Eye, EyeOff, Save, Crown, CreditCard, QrCode, LogOut, CheckCircle2, User2, Check } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { toast } from "react-toastify";
 import { updateUser, updatePassword } from "../../utils/service/userService.js";
@@ -181,11 +181,18 @@ export default function UserProfile() {
                 <p className="text-sm text-gray-600">Manage your profile and preferences</p>
               </div>
             </div>
+            {user.whatsapp.status!='connected' ?
+              <div className="flex items-center gap-3">
+              <Link to="/nodue/settings/whatsapp" className="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                Connect WhatsApp Account
+              </Link>
+            </div>:
             <div className="flex items-center gap-3">
               <Link to="/nodue/settings/whatsapp" className="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                <LogOut className="w-4 h-4" /> Connect WhatsApp Account
+               WhatsApp Account Connected <Check /> 
               </Link>
             </div>
+            }
           </div>
         </div>
       </div>

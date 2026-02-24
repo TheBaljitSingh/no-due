@@ -436,7 +436,7 @@ const CustomerTable = ({ search = "" }) => {
                     {c.email}
                   </a>) : "No email added"}
                 </td> */}
-                <td className="px-2 py-4 whitespace-nowrap text-gray-700 align-middle">{c.mobile}</td>
+                <td className="px-2 py-4 whitespace-nowrap text-gray-700 align-middle">{`+91 ${c.mobile.slice(2,5)} ${c.mobile.slice(5,8)} ${c.mobile.slice(8,12)}`}</td>
                 <td className="px-2 py-4 font-medium text-gray-900">{currency(c.currentDue)}</td>
                 {/* <td className="px-2 py-4 font-medium text-red-600">{currency(c.lastTransaction)}</td> */}
                 <td className="px-2 py-4 whitespace-nowrap text-gray-700">{formatDate(c.lastReminder)}</td>

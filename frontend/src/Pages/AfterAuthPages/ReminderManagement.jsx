@@ -7,7 +7,7 @@ import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/E
 import AuditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/AuditDrawer";
 import { deleteReminder, getAllReminders, scheduleReminder, sendReminderNow } from "../../utils/service/reminderService.js"
 import ScheduleOrSendReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/ScheduleOrSendReminderModal.jsx";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import ConfirmModal from "../../Components/AfterAuthComponent/CustomerMasterPage/ConfirmModal.jsx";
 
 

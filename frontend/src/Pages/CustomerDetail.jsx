@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { addDueToCustomer, addPaymentForCustomer, editCustomerDue, getCustomerById, getCustomerTransactions } from "../utils/service/customerService";
+import {
+  addDueToCustomer,
+  addPaymentForCustomer,
+  editCustomerDue,
+  getCustomerById,
+  getCustomerTransactions,
+} from "../utils/service/customerService";
+import CustomerDetailSkeleton from "./CustomerDetailSkeleton";
 
 export default function CustomerDetail() {
   const { id } = useParams(); // expects route like /customers/:id
@@ -37,9 +44,18 @@ export default function CustomerDetail() {
   const handleAddBill = async (e) => {
     e.preventDefault();
     try {
-      const data = await addDueToCustomer(id, { amount: Number(form.amount), note: form.note });
-      setCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
-      setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
+      const data = await addDueToCustomer(id, {
+        amount: Number(form.amount),
+        note: form.note,
+      });
+      setCustomer((c) => ({
+        ...c,
+        currentDue: data.data?.currentDue || data.currentDue,
+      }));
+      setTransactions((t) => [
+        data.data?.transaction || data.transaction,
+        ...t,
+      ]);
       setShowAddBill(false);
       setForm({ amount: "", note: "" });
     } catch (err) {
@@ -50,9 +66,18 @@ export default function CustomerDetail() {
   const handlePayment = async (e) => {
     e.preventDefault();
     try {
-      const data = await addPaymentForCustomer(id, { amount: Number(form.amount), note: form.note });
-      setCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
-      setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
+      const data = await addPaymentForCustomer(id, {
+        amount: Number(form.amount),
+        note: form.note,
+      });
+      setCustomer((c) => ({
+        ...c,
+        currentDue: data.data?.currentDue || data.currentDue,
+      }));
+      setTransactions((t) => [
+        data.data?.transaction || data.transaction,
+        ...t,
+      ]);
       setShowPay(false);
       setForm({ amount: "", note: "" });
     } catch (err) {
@@ -63,9 +88,18 @@ export default function CustomerDetail() {
   const handleEditDue = async (e) => {
     e.preventDefault();
     try {
-      const data = await editCustomerDue(id, { correctedDue: Number(form.amount), note: form.note });
-      setCustomer(c => ({ ...c, currentDue: data.data?.currentDue || data.currentDue }));
-      setTransactions(t => [data.data?.transaction || data.transaction, ...t]);
+      const data = await editCustomerDue(id, {
+        correctedDue: Number(form.amount),
+        note: form.note,
+      });
+      setCustomer((c) => ({
+        ...c,
+        currentDue: data.data?.currentDue || data.currentDue,
+      }));
+      setTransactions((t) => [
+        data.data?.transaction || data.transaction,
+        ...t,
+      ]);
       setShowEdit(false);
       setForm({ amount: "", note: "" });
     } catch (err) {
@@ -73,22 +107,40 @@ export default function CustomerDetail() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <CustomerDetailSkeleton />;
   if (!customer) return <div>No customer found</div>;
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-semibold">{customer.name || customer.fullName || "Customer"}</h2>
+      <h2 className="text-2xl font-semibold">
+        {customer.name || customer.fullName || "Customer"}
+      </h2>
       <p className="text-sm text-gray-600">{customer.email}</p>
       <div className="mt-4">
         <div className="text-lg">
-          Current Due: <strong>₹{Number(customer.currentDue || 0).toFixed(2)}</strong>
+          Current Due:{" "}
+          <strong>₹{Number(customer.currentDue || 0).toFixed(2)}</strong>
         </div>
 
         <div className="mt-3 space-x-2">
-          <button onClick={() => setShowAddBill(true)} className="px-3 py-1 bg-blue-600 text-white rounded">Add Bill</button>
-          <button onClick={() => setShowPay(true)} className="px-3 py-1 bg-green-600 text-white rounded">Record Payment</button>
-          <button onClick={() => setShowEdit(true)} className="px-3 py-1 bg-yellow-500 text-white rounded">Edit Due</button>
+          <button
+            onClick={() => setShowAddBill(true)}
+            className="px-3 py-1 bg-blue-600 text-white rounded"
+          >
+            Add Bill
+          </button>
+          <button
+            onClick={() => setShowPay(true)}
+            className="px-3 py-1 bg-green-600 text-white rounded"
+          >
+            Record Payment
+          </button>
+          <button
+            onClick={() => setShowEdit(true)}
+            className="px-3 py-1 bg-yellow-500 text-white rounded"
+          >
+            Edit Due
+          </button>
         </div>
       </div>
 
@@ -106,14 +158,18 @@ export default function CustomerDetail() {
             </tr>
           </thead>
           <tbody>
-            {transactions.map(tx => (
+            {transactions.map((tx) => (
               <tr key={tx._id} className="border-t">
                 <td className="p-2">{tx.type}</td>
                 <td className="p-2">₹{Number(tx.amount).toFixed(2)}</td>
                 <td className="p-2">₹{Number(tx.previousDue).toFixed(2)}</td>
                 <td className="p-2">₹{Number(tx.newDue).toFixed(2)}</td>
-                <td className="p-2">{new Date(tx.createdAt).toLocaleString()}</td>
-                <td className="p-2">{(tx.metadata && tx.metadata.note) || "-"}</td>
+                <td className="p-2">
+                  {new Date(tx.createdAt).toLocaleString()}
+                </td>
+                <td className="p-2">
+                  {(tx.metadata && tx.metadata.note) || "-"}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -123,13 +179,38 @@ export default function CustomerDetail() {
       {/* Add Bill Modal */}
       {showAddBill && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30">
-          <form className="bg-white p-6 rounded shadow" onSubmit={handleAddBill}>
+          <form
+            className="bg-white p-6 rounded shadow"
+            onSubmit={handleAddBill}
+          >
             <h4 className="text-lg mb-2">Add Bill (Increase Due)</h4>
-            <input className="border p-2 w-full mb-2" placeholder="Amount" type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} />
-            <textarea className="border p-2 w-full mb-2" placeholder="Note" value={form.note} onChange={e => setForm({...form, note: e.target.value})} />
+            <input
+              className="border p-2 w-full mb-2"
+              placeholder="Amount"
+              type="number"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            />
+            <textarea
+              className="border p-2 w-full mb-2"
+              placeholder="Note"
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+            />
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowAddBill(false)} className="px-3 py-1">Cancel</button>
-              <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">Add</button>
+              <button
+                type="button"
+                onClick={() => setShowAddBill(false)}
+                className="px-3 py-1"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-3 py-1 bg-blue-600 text-white rounded"
+              >
+                Add
+              </button>
             </div>
           </form>
         </div>
@@ -138,13 +219,38 @@ export default function CustomerDetail() {
       {/* Payment Modal */}
       {showPay && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30">
-          <form className="bg-white p-6 rounded shadow" onSubmit={handlePayment}>
+          <form
+            className="bg-white p-6 rounded shadow"
+            onSubmit={handlePayment}
+          >
             <h4 className="text-lg mb-2">Record Payment</h4>
-            <input className="border p-2 w-full mb-2" placeholder="Amount" type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} />
-            <textarea className="border p-2 w-full mb-2" placeholder="Note" value={form.note} onChange={e => setForm({...form, note: e.target.value})} />
+            <input
+              className="border p-2 w-full mb-2"
+              placeholder="Amount"
+              type="number"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            />
+            <textarea
+              className="border p-2 w-full mb-2"
+              placeholder="Note"
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+            />
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowPay(false)} className="px-3 py-1">Cancel</button>
-              <button type="submit" className="px-3 py-1 bg-green-600 text-white rounded">Pay</button>
+              <button
+                type="button"
+                onClick={() => setShowPay(false)}
+                className="px-3 py-1"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-3 py-1 bg-green-600 text-white rounded"
+              >
+                Pay
+              </button>
             </div>
           </form>
         </div>
@@ -153,13 +259,38 @@ export default function CustomerDetail() {
       {/* Edit Due Modal */}
       {showEdit && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30">
-          <form className="bg-white p-6 rounded shadow" onSubmit={handleEditDue}>
+          <form
+            className="bg-white p-6 rounded shadow"
+            onSubmit={handleEditDue}
+          >
             <h4 className="text-lg mb-2">Edit Due (Correction)</h4>
-            <input className="border p-2 w-full mb-2" placeholder="Corrected Due" type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} />
-            <textarea className="border p-2 w-full mb-2" placeholder="Note" value={form.note} onChange={e => setForm({...form, note: e.target.value})} />
+            <input
+              className="border p-2 w-full mb-2"
+              placeholder="Corrected Due"
+              type="number"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            />
+            <textarea
+              className="border p-2 w-full mb-2"
+              placeholder="Note"
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+            />
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowEdit(false)} className="px-3 py-1">Cancel</button>
-              <button type="submit" className="px-3 py-1 bg-yellow-500 text-white rounded">Save</button>
+              <button
+                type="button"
+                onClick={() => setShowEdit(false)}
+                className="px-3 py-1"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-3 py-1 bg-yellow-500 text-white rounded"
+              >
+                Save
+              </button>
             </div>
           </form>
         </div>

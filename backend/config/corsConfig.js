@@ -3,7 +3,7 @@ import cors from "cors";
 export const corsMiddleware = () => {
   const allowedOrigins = (process.env.CLIENT_BASE_URL || "")
     .split(",")
-    .map(origin => origin.trim())
+    .map((origin) => origin.trim())
     .filter(Boolean);
 
   return cors({
@@ -22,6 +22,6 @@ export const corsMiddleware = () => {
 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 };

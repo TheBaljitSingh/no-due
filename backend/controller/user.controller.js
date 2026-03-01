@@ -2,15 +2,18 @@ import Transaction from "../model/transaction.model.js";
 import User from "../model/user.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
+import axios from "axios";
 
 const generateAvatar = async (fname, lname) => {
   try {
     // Make a request to DiceBear API
-    const response = await axios.get(`https://api.dicebear.com/5.x/initials/svg?seed=${fname} ${lname}`);
-    
+    const response = await axios.get(
+      `https://api.dicebear.com/5.x/initials/svg?seed=${fname} ${lname}`,
+    );
+
     // Get the SVG content from the response
     const avatarSvg = response.data;
-    
+
     return avatarSvg;
   } catch (error) {
     console.error("Error generating avatar:", error);
@@ -20,17 +23,29 @@ const generateAvatar = async (fname, lname) => {
 export const registerUser = async (req, res) => {
   const userData = req.body;
   try {
+    const existingUser = await User.findOne({ email: userData.email });
+    if (existingUser) {
+      return new APIError(400, ["User already exists"]).send(res);
+    }
     const avatar = await generateAvatar(userData?.fname, userData?.lname); // Generate an avatar
     const savedUser = await User.create(userData);
     savedUser.profileImageUrl = avatar;
     await savedUser.save();
-    
-    return new APIResponse(201, { user: savedUser }, 'User registered successfully').send(res);
-  } catch (err) {
-    console.error('Error registering user:', err);
-    return new APIError(500, ['User registration failed', err.message]).send(res);
-  }
+    savedUser.password = undefined;
+    savedUser.createdAt = undefined;
+    savedUser.updatedAt = undefined;
 
+    return new APIResponse(
+      201,
+      { user: savedUser },
+      "User registered successfully",
+    ).send(res);
+  } catch (err) {
+    console.error("Error registering user:", err);
+    return new APIError(500, ["User registration failed", err.message]).send(
+      res,
+    );
+  }
 };
 
 export const updateUser = async (req, res) => {
@@ -41,7 +56,7 @@ export const updateUser = async (req, res) => {
     const existingProfile = await User.findById(userId);
 
     if (!existingProfile) {
-      return new APIError(404, ['Profile not found']).send(res);
+      return new APIError(404, ["Profile not found"]).send(res);
     }
 
     // Prevent emptying fields once filled
@@ -50,13 +65,13 @@ export const updateUser = async (req, res) => {
       "GSTNumber",
       "fullName",
       "phoneNumber",
-      "email"
+      "email",
     ];
 
-    protectedFields.forEach(field => {
+    protectedFields.forEach((field) => {
       if (
-        existingProfile[field] &&       // already has value in db
-        (!updates[field] || updates[field].trim() === "")  // trying to empty it
+        existingProfile[field] && // already has value in db
+        (!updates[field] || updates[field].trim() === "") // trying to empty it
       ) {
         updates[field] = existingProfile[field]; // keep old value
       }
@@ -65,10 +80,14 @@ export const updateUser = async (req, res) => {
     const updatedProfile = await User.findOneAndUpdate(
       { _id: userId },
       updates,
-      { new: true }
+      { new: true },
     );
 
-    return new APIResponse(200, { profile: updatedProfile }, 'Profile updated successfully').send(res);
+    return new APIResponse(
+      200,
+      { profile: updatedProfile },
+      "Profile updated successfully",
+    ).send(res);
   } catch (error) {
     console.error("Profile update error:", error);
     return new APIError(500, [error.message]).send(res);
@@ -82,38 +101,41 @@ export const updatePassword = async (req, res) => {
 
     // Validate input
     if (!currentPassword || !newPassword) {
-      return new APIError(400, ['Current password and new password are required']).send(res);
+      return new APIError(400, [
+        "Current password and new password are required",
+      ]).send(res);
     }
 
     // Get user with password field
-    const user = await User.findById(userId).select('+password');
+    const user = await User.findById(userId).select("+password");
 
     if (!user) {
-      return new APIError(404, ['User not found']).send(res);
+      return new APIError(404, ["User not found"]).send(res);
     }
 
     // Check if user has a password (might be Google OAuth user)
     if (!user.password) {
-      return new APIError(400, ['Cannot update password for OAuth users']).send(res);
+      return new APIError(400, ["Cannot update password for OAuth users"]).send(
+        res,
+      );
     }
 
     // Verify current password
     const isPasswordCorrect = await user.comparePassword(currentPassword);
     if (!isPasswordCorrect) {
-      return new APIError(401, ['Current password is incorrect']).send(res);
+      return new APIError(401, ["Current password is incorrect"]).send(res);
     }
 
     // Update password
     user.password = newPassword;
     await user.save();
 
-    return new APIResponse(200, {}, 'Password updated successfully').send(res);
+    return new APIResponse(200, {}, "Password updated successfully").send(res);
   } catch (error) {
     console.error("Password update error:", error);
     return new APIError(500, [error.message]).send(res);
   }
 };
-
 
 export const getAllTransaction = async (req, res) => {
   try {
@@ -129,8 +151,8 @@ export const getAllTransaction = async (req, res) => {
           from: "customers",
           localField: "customerId",
           foreignField: "_id",
-          as: "customer"
-        }
+          as: "customer",
+        },
       },
       { $unwind: "$customer" },
       // Match only this company’s customers and pending dues
@@ -138,33 +160,35 @@ export const getAllTransaction = async (req, res) => {
         $match: {
           "customer.CustomerOfComapny": userId,
           type: "DUE_ADDED",
-         // paymentStatus: { $ne: "PAID" } //for now adding the paid transaction also
-        }
+          // paymentStatus: { $ne: "PAID" } //for now adding the paid transaction also
+        },
       },
       // Calculate remaining balance (virtual field isn't available in aggregation)
       {
         $addFields: {
           remainingDue: {
-            $subtract: [
-              "$amount",
-              { $ifNull: ["$paidAmount", 0] }
-            ]
+            $subtract: ["$amount", { $ifNull: ["$paidAmount", 0] }],
           },
           overdueByDay: {
             $cond: {
-              if: { $and: [{ $gt: [new Date(), "$dueDate"] }, { $ne: ["$dueDate", null] }] },
+              if: {
+                $and: [
+                  { $gt: [new Date(), "$dueDate"] },
+                  { $ne: ["$dueDate", null] },
+                ],
+              },
               then: {
                 $ceil: {
                   $divide: [
                     { $subtract: [new Date(), "$dueDate"] },
-                    1000 * 60 * 60 * 24
-                  ]
-                }
+                    1000 * 60 * 60 * 24,
+                  ],
+                },
               },
-              else: 0
-            }
-          }
-        }
+              else: 0,
+            },
+          },
+        },
       },
       // Only show dues that haven't been fully paid, but for now sending that dues also
       // {
@@ -191,24 +215,24 @@ export const getAllTransaction = async (req, res) => {
               dueDate: "$dueDate",
               createdAt: "$createdAt",
               note: "$metadata.note",
-              overdueByDay: { $ifNull: ["$overdueByDay", 0] }
-            }
-          }
-        }
+              overdueByDay: { $ifNull: ["$overdueByDay", 0] },
+            },
+          },
+        },
       },
       // Sort by the latest transaction in the group
       {
         $addFields: {
-          latestTxAt: { $max: "$transactions.createdAt" }
-        }
+          latestTxAt: { $max: "$transactions.createdAt" },
+        },
       },
-      { $sort: { latestTxAt: -1 } }
+      { $sort: { latestTxAt: -1 } },
     ];
 
     // Get total count of unique customers (groups)
     const countResult = await Transaction.aggregate([
       ...baseAggregation,
-      { $count: "total" }
+      { $count: "total" },
     ]);
     const totalGroups = countResult.length > 0 ? countResult[0].total : 0;
 
@@ -216,7 +240,7 @@ export const getAllTransaction = async (req, res) => {
     const transactions = await Transaction.aggregate([
       ...baseAggregation,
       { $skip: skip },
-      { $limit: limit }
+      { $limit: limit },
     ]);
 
     return new APIResponse(
@@ -227,12 +251,11 @@ export const getAllTransaction = async (req, res) => {
           totalGroups,
           currentPage: page,
           totalPages: Math.ceil(totalGroups / limit),
-          limit
-        }
+          limit,
+        },
       },
-      "Transactions fetched successfully"
+      "Transactions fetched successfully",
     ).send(res);
-
   } catch (error) {
     console.error("Transaction fetch error:", error);
     return new APIError(500, [error.message]).send(res);

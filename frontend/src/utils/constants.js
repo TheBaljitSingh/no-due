@@ -6,128 +6,171 @@ export const siteAnalysis = [
 
 export const PricingModel = [
   {
-    name: 'Free',
+    name: "Free",
     pricing: 0,
-    description: 'Get an experience on what we have to offer',
+    description: "Get an experience on what we have to offer",
     features: ["Up to 5 WhatsApp messages", "Basic analytics", "introduction"],
-    current: true
-
+    current: true,
   },
   {
-    name: 'Starter',
+    name: "Starter",
     pricing: 499,
-    description: 'Perfect for small businesses and freelancers',
-    features: ["Up to 100 WhatsApp messages", "Basic voice call automation", "5 custom templates", "Email support", "Basic analytics"],
-    current: false
+    description: "Perfect for small businesses and freelancers",
+    features: [
+      "Up to 100 WhatsApp messages",
+      "Basic voice call automation",
+      "5 custom templates",
+      "Email support",
+      "Basic analytics",
+    ],
+    current: false,
   },
   {
-    name: 'Growth',
+    name: "Growth",
     pricing: 999,
-    description: 'Most popular for growing businesses',
-    features: ["Up to 500 WhatsApp messages", "Advanced voice automation", "Unlimited custom templates", "Priority support", "Advanced analytics", "API integrations", "Custom branding"],
-    current: false
+    description: "Most popular for growing businesses",
+    features: [
+      "Up to 500 WhatsApp messages",
+      "Advanced voice automation",
+      "Unlimited custom templates",
+      "Priority support",
+      "Advanced analytics",
+      "API integrations",
+      "Custom branding",
+    ],
+    current: false,
   },
   {
-    name: 'Business',
+    name: "Business",
     pricing: 1999,
-    description: 'For established businesses with high volume',
-    features: ["Up to 2,000 WhatsApp messages", "AI-powered voice calls", "Unlimited everything", "24/7 phone support", "Enterprise analytics", "CRM integrations", "White-label solution", "Dedicated account manager"],
-    current: false
+    description: "For established businesses with high volume",
+    features: [
+      "Up to 2,000 WhatsApp messages",
+      "AI-powered voice calls",
+      "Unlimited everything",
+      "24/7 phone support",
+      "Enterprise analytics",
+      "CRM integrations",
+      "White-label solution",
+      "Dedicated account manager",
+    ],
+    current: false,
   },
   {
-    name: 'Enterprise',
-    description: 'Tailored solutions for large organizations',
-    features: ["Unlimited messages", "Custom AI training", "Multi-language support", "On-premise deployment", "SLA guarantees", "Custom integrations", "Enterprise security", "Training & onboarding"],
-    current: false
-  }
-]
+    name: "Enterprise",
+    description: "Tailored solutions for large organizations",
+    features: [
+      "Unlimited messages",
+      "Custom AI training",
+      "Multi-language support",
+      "On-premise deployment",
+      "SLA guarantees",
+      "Custom integrations",
+      "Enterprise security",
+      "Training & onboarding",
+    ],
+    current: false,
+  },
+];
 
-export const getCurrentPlan = PricingModel.find(price => price.current === true)
+export const getCurrentPlan = PricingModel.find(
+  (price) => price.current === true,
+);
 
 export const reasons = [
   {
-    reason: 'Manual follow-ups take hours',
-    description: 'Your team spends countless hours chasing payments instead of growing your business'
+    reason: "Manual follow-ups take hours",
+    description:
+      "Your team spends countless hours chasing payments instead of growing your business",
   },
   {
-    reason: 'Customers ignore reminders',
-    description: 'Traditional emails and calls are easily overlooked or forgotten'
+    reason: "Customers ignore reminders",
+    description:
+      "Traditional emails and calls are easily overlooked or forgotten",
   },
   {
-    reason: 'Staff costs increase',
-    description: 'Hiring more people to handle payment follow-ups drains your resources'
+    reason: "Staff costs increase",
+    description:
+      "Hiring more people to handle payment follow-ups drains your resources",
   },
   {
-    reason: 'Cash flow suffers',
-    description: 'Late payments create cash flow issues that impact your business growth'
-  }
-]
+    reason: "Cash flow suffers",
+    description:
+      "Late payments create cash flow issues that impact your business growth",
+  },
+];
 
 export const features = [
   {
-    feature: 'WhatsApp Reminders',
-    description: 'Automated, personalized WhatsApp messages that customers actually read and respond to'
+    feature: "WhatsApp Reminders",
+    description:
+      "Automated, personalized WhatsApp messages that customers actually read and respond to",
   },
   {
-    feature: 'Voice Call Automation',
-    description: 'AI-powered voice calls that follow up politely and professionally on your behalf'
+    feature: "Voice Call Automation",
+    description:
+      "AI-powered voice calls that follow up politely and professionally on your behalf",
   },
   {
-    feature: 'Custom Templates',
-    description: 'Pre-built message templates that you can customize for your business tone and style'
+    feature: "Custom Templates",
+    description:
+      "Pre-built message templates that you can customize for your business tone and style",
   },
   {
-    feature: 'Dashboard & Reports',
-    description: 'Real-time analytics showing payment recovery rates, customer responses, and ROI'
-  }
-]
-
+    feature: "Dashboard & Reports",
+    description:
+      "Real-time analytics showing payment recovery rates, customer responses, and ROI",
+  },
+];
 
 export const SidebarFeatures = [
-
   {
     name: "Customer Master",
     icon: "CustomerIcon",
     // path: "customer-master"
-    children: [{
-      name: "All Customer",
-      icon: "CustomerIcon",
-      path: 'customer-master'
-    },
-    {
-      name: "Upload or Add Customer",
-      icon: "UploadIcon",
-      path: "upload-center"
-    },
-    {
-      name: "All Transaction History",
-      icon: "TransactionIcon",
-      path: "transactions"
-    }
-    ]
+    children: [
+      {
+        name: "All Customer",
+        icon: "CustomerIcon",
+        path: "customer-master",
+      },
+      {
+        name: "Upload or Add Customer",
+        icon: "UploadIcon",
+        path: "upload-center",
+      },
+      {
+        name: "All Transaction History",
+        icon: "TransactionIcon",
+        path: "transactions",
+      },
+    ],
   },
   {
     name: "Reminder",
     icon: "ReminderIcon",
-    children: [{
-      name: "Reminder Management",
-      icon: 'ReminderIcon',
-      path: "reminder-management"
-    }, {
-      name: "Templates",
-      icon: "BookIcon",
-      path: "reminder-templates"
-    }, {
-      name: "Reminder History",
-      icon: "HistoryIcon",
-      path: "reminder-history"
-    }
-    ]
+    children: [
+      {
+        name: "Reminder Management",
+        icon: "ReminderIcon",
+        path: "reminder-management",
+      },
+      {
+        name: "Templates",
+        icon: "BookIcon",
+        path: "reminder-templates",
+      },
+      {
+        name: "Reminder History",
+        icon: "HistoryIcon",
+        path: "reminder-history",
+      },
+    ],
   },
   {
     name: "Payment Term",
     icon: "ClipboardClock",
-    path: "payment-reminder"
+    path: "payment-reminder",
   },
 
   // {
@@ -135,14 +178,13 @@ export const SidebarFeatures = [
   //   icon:"FaWhatsapp",
   //   path:"whatsapp-chat"
   // }
-
-]
+];
 
 export const SideBarCTC = [
   {
     name: "Subscription & Billing",
     icon: "SubscriptionIcon",
-    path: "subscriptions"
+    path: "subscriptions",
   },
   // {
   //     name: "Documentation",
@@ -152,11 +194,20 @@ export const SideBarCTC = [
   {
     name: "Help",
     icon: "HelpIcon",
-    path: "help"
+    path: "help",
   },
-]
+];
 
-export const TableHeaders = ["Customer Id", "Customer Name", "Phone Number", "Due", "LastReminder", "Status", "Last Reaction", "Actions"]
+export const TableHeaders = [
+  "Id",
+  "Customer Name",
+  "Phone Number",
+  "Due",
+  "LastReminder",
+  "Status",
+  "Last Reaction",
+  "Actions",
+];
 
 export const seedCustomers = [
   {
@@ -170,7 +221,7 @@ export const seedCustomers = [
     lastReminder: "2025-10-10",
     feedback: "Will pay in 3 days",
     status: "Overdue",
-    gender: "male"
+    gender: "male",
   },
   {
     id: "CUST-1002",
@@ -183,7 +234,7 @@ export const seedCustomers = [
     lastReminder: "2025-10-13",
     feedback: "Paid",
     status: "Paid",
-    gender: "male"
+    gender: "male",
   },
   {
     id: "CUST-1003",
@@ -196,7 +247,7 @@ export const seedCustomers = [
     lastReminder: "2025-10-12",
     feedback: "No response",
     status: "Pending",
-    gender: "female"
+    gender: "female",
   },
   {
     id: "CUST-1004",
@@ -209,7 +260,7 @@ export const seedCustomers = [
     lastReminder: "2025-10-09",
     feedback: "Requested invoice",
     status: "Pending",
-    gender: "male"
+    gender: "male",
   },
   {
     id: "CUST-1005",
@@ -222,14 +273,18 @@ export const seedCustomers = [
     lastReminder: "2025-10-15",
     feedback: "Call back tomorrow",
     status: "Overdue",
-    gender: "female"
+    gender: "female",
   },
 ];
 
 export const MOCK_REMINDERS = [
   {
     id: "RM-101",
-    customer: { id: "CUST-1001", name: "Arjun Mehta", company: "Mehta Traders" },
+    customer: {
+      id: "CUST-1001",
+      name: "Arjun Mehta",
+      company: "Mehta Traders",
+    },
     channel: ["whatsapp"],
     dueAmount: 75000,
     status: "scheduled",
@@ -239,7 +294,11 @@ export const MOCK_REMINDERS = [
   },
   {
     id: "RM-102",
-    customer: { id: "CUST-1003", name: "Neha Agarwal", company: "Agarwal Logistics" },
+    customer: {
+      id: "CUST-1003",
+      name: "Neha Agarwal",
+      company: "Agarwal Logistics",
+    },
     channel: ["voice", "whatsapp"],
     dueAmount: 54000,
     status: "sent",
@@ -249,7 +308,11 @@ export const MOCK_REMINDERS = [
   },
   {
     id: "RM-103",
-    customer: { id: "CUST-1005", name: "Riya Verma", company: "Verma Chemicals" },
+    customer: {
+      id: "CUST-1005",
+      name: "Riya Verma",
+      company: "Verma Chemicals",
+    },
     channel: ["voice"],
     dueAmount: 88000,
     status: "failed",
@@ -292,16 +355,15 @@ export const TEMPLATES = {
   },
 };
 
-
-export const CustomerNames = seedCustomers.map(customer => ({
+export const CustomerNames = seedCustomers.map((customer) => ({
   id: customer.id,
   name: customer.name,
-  gender: customer.gender
+  gender: customer.gender,
 }));
 
 export const CustomerDetailsMap = (name) => {
-  return seedCustomers.find(customer => customer.name === name);
-}
+  return seedCustomers.find((customer) => customer.name === name);
+};
 
 export const notificationData = [
   {
@@ -311,21 +373,22 @@ export const notificationData = [
     img: "https://cdn-icons-png.flaticon.com/512/9131/9131529.png",
   },
   {
-  _id: "699aa4440253fe6c099dcb53",
-  userId: "698a896b111de54710752297",
-  relatedCustomerId: {
-  _id: "6999705e40abdceddad3cc6a",
-  name: "Baljit singh",
-  mobile: "918709548015"
-  },
-  title: "Statement Requested",
-  message: "Customer Baljit singh (918709548015) has requested a statement for their due of ₹333.",
-  type: "system_alert",
-  isRead: false,
-  isDeleted: false,
-  createdAt: "2026-02-22T06:37:56.624Z",
-  updatedAt: "2026-02-22T06:37:56.624Z",
-  __v: 0
+    _id: "699aa4440253fe6c099dcb53",
+    userId: "698a896b111de54710752297",
+    relatedCustomerId: {
+      _id: "6999705e40abdceddad3cc6a",
+      name: "Baljit singh",
+      mobile: "918709548015",
+    },
+    title: "Statement Requested",
+    message:
+      "Customer Baljit singh (918709548015) has requested a statement for their due of ₹333.",
+    type: "system_alert",
+    isRead: false,
+    isDeleted: false,
+    createdAt: "2026-02-22T06:37:56.624Z",
+    updatedAt: "2026-02-22T06:37:56.624Z",
+    __v: 0,
   },
   {
     name: "Document Manager",

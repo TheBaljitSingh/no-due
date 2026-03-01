@@ -1,51 +1,52 @@
-import validator from 'validator';
-import bcrypt from 'bcryptjs';
+import validator from "validator";
+import bcrypt from "bcryptjs";
 import mongoose, { Schema, Types } from "mongoose";
 
-
-const addressSchema = new Schema({
+const addressSchema = new Schema(
+  {
     street: {
-        type: String,
-        trim: true,
-        maxlength: [100, "Street can be at most 100 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [100, "Street can be at most 100 characters long"],
     },
     city: {
-        type: String,
-        trim: true,
-        maxlength: [50, "City can be at most 50 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [50, "City can be at most 50 characters long"],
     },
     state: {
-        type: String,
-        trim: true,
-        maxlength: [50, "State can be at most 50 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [50, "State can be at most 50 characters long"],
     },
     pinCode: {
-        type: String,
-        trim: true,
-        maxlength: [10, "Pin code can be at most 10 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [10, "Pin code can be at most 10 characters long"],
     },
     country: {
-        type: String,
-        trim: true,
-        maxlength: [50, "Country can be at most 50 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [50, "Country can be at most 50 characters long"],
     },
-},
-    { _id: false });
+  },
+  { _id: false },
+);
 
-const whatsappSchema = new Schema({
-
+const whatsappSchema = new Schema(
+  {
     provider: {
-        type: String,
-        default: "meta"
+      type: String,
+      default: "meta",
     },
     status: {
-        type: String,
-        enum: ['not_connected', 'connected', 'pending'],
-        default: 'not_connected'
+      type: String,
+      enum: ["not_connected", "connected", "pending"],
+      default: "not_connected",
     },
     setupStatus: {
-        type: String,
-        enum: ['PENDING', 'COMPLETED', 'FAILED'],
+      type: String,
+      enum: ["PENDING", "COMPLETED", "FAILED"],
     },
     wabaId: String,
     phoneNumberId: String,
@@ -53,154 +54,158 @@ const whatsappSchema = new Schema({
     businessProfileId: String, // Meta Business Portfolio ID
     sharedWabaId: String, // If using On-Behalf-Of flow
     reminderTemplates: {
-        beforeDue: {
-            name: { type: String, default: '' },
-            language: { type: String, default: 'en' }
-        },
-        dueToday: {
-            name: { type: String, default: '' },
-            language: { type: String, default: 'en' }
-        },
-        overdue: {
-            name: { type: String, default: '' },
-            language: { type: String, default: 'en' }
-        }
-    }
-}, { _id: false });
+      beforeDue: {
+        name: { type: String, default: "" },
+        language: { type: String, default: "en" },
+      },
+      dueToday: {
+        name: { type: String, default: "" },
+        language: { type: String, default: "en" },
+      },
+      overdue: {
+        name: { type: String, default: "" },
+        language: { type: String, default: "en" },
+      },
+    },
+  },
+  { _id: false },
+);
 
-const userSchema = new Schema({
+const userSchema = new Schema(
+  {
     fname: {
-        type: String,
-        trim: true,
-        minLength: [2, 'enter a valid first name'],
-        validate: {
-            validator: function (v) {
-                return /^[a-zA-Z]+$/.test(v);
-            },
-            message: 'First name should contain only alphabets',
-        }
+      type: String,
+      trim: true,
+      minLength: [2, "enter a valid first name"],
+      validate: {
+        validator: function (v) {
+          return /^[a-zA-Z]+$/.test(v);
+        },
+        message: "First name should contain only alphabets",
+      },
     },
     lname: {
-        type: String,
-        trim: true,
-        minLength: [2, 'enter a valid last name'],
-        validate: {
-            validator: function (v) {
-                return /^[a-zA-Z]+$/.test(v);
-            },
-            message: 'Last name should contain only alphabets',
-        }
+      type: String,
+      trim: true,
+      minLength: [1, "enter a valid last name"],
+      validate: {
+        validator: function (v) {
+          return /^[a-zA-Z]+$/.test(v);
+        },
+        message: "Last name should contain only alphabets",
+      },
     },
     email: {
-        type: String,
-        required: [true, "Email is required"],
-        unique: [true, "Email must be unique"],
-        trim: true,
-        lowercase: true,
-        minlength: [5, "Email must be at least 5 characters long"],
-        maxlength: [255, "Email can be at most 255 characters long"],
-        validate: {
-            validator: function (v) {
-                return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v);
-            },
-            message: "Please enter a valid email address!!"
+      type: String,
+      required: [true, "Email is required"],
+      unique: [true, "Email must be unique"],
+      trim: true,
+      lowercase: true,
+      minlength: [5, "Email must be at least 5 characters long"],
+      maxlength: [255, "Email can be at most 255 characters long"],
+      validate: {
+        validator: function (v) {
+          return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v);
         },
+        message: "Please enter a valid email address!!",
+      },
     },
     password: {
-        type: String,
-        select: false,
-        trim: true,
-        validate: {
-            validator: function (value) {
-                return validator.isStrongPassword(value, {
-                    minLength: 8,
-                    minLowercase: 1,
-                    minUppercase: 1,
-                    minNumbers: 1,
-                    minSymbols: 1,
-                });
-            },
-            message:
-                'Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.',
+      type: String,
+      select: false,
+      trim: true,
+      validate: {
+        validator: function (value) {
+          return validator.isStrongPassword(value, {
+            minLength: 8,
+            minLowercase: 1,
+            minUppercase: 1,
+            minNumbers: 1,
+            minSymbols: 1,
+          });
         },
+        message:
+          "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+      },
     },
     googleId: {
-        type: String,
-        unique: false,//as local users will have the same id field
+      type: String,
+      unique: false, //as local users will have the same id field
     },
     phoneNumber: {
-        type: String,
-        trim: true,
-        validate: {
-            validator: function (v) {
-                return /^(\+\d{1,3}[- ]?)?\d{10}$/.test(v); // +91-9876543210 or 9876543210
-            },
-            message: props => `${props.value} is not a valid phone number!`
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return /^(\+\d{1,3}[- ]?)?\d{10}$/.test(v); // +91-9876543210 or 9876543210
         },
-        maxlength: 15,
-        minlength: 10
+        message: (props) => `${props.value} is not a valid phone number!`,
+      },
+      maxlength: 15,
+      minlength: 10,
     },
     website: {
-        type: String,
-        trim: true,
-        validate: {
-            validator: function (v) {
-                return /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(\/[\w-./?%&=]*)?$/.test(v);
-            },
-            message: props => `${props.value} is not a valid URL!`
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(\/[\w-./?%&=]*)?$/.test(v);
         },
-        maxlength: 2048,
+        message: (props) => `${props.value} is not a valid URL!`,
+      },
+      maxlength: 2048,
     },
     profileImageUrl: {
-        type: String,
-        default: function () {
-            return `https://ui-avatars.com/api/?name=${encodeURIComponent(this.name)}&background=random`;
-        }
+      type: String,
+      default: function () {
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(this.name)}&background=random`;
+      },
     },
     companyName: {
-        type: String,
-        trim: true,
-        maxlength: [100, "Company name can be at most 100 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [100, "Company name can be at most 100 characters long"],
     },
     GSTNumber: {
-        type: String,
-        trim: true,
-        maxlength: [15, "GST Number can be at most 15 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [15, "GST Number can be at most 15 characters long"],
     },
     address: addressSchema,
     timezone: {
-        type: String,
-        trim: true,
-        maxlength: [50, "Timezone can be at most 50 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [50, "Timezone can be at most 50 characters long"],
     },
     language: {
-        type: String,
-        trim: true,
-        maxlength: [50, "Language can be at most 50 characters long"],
+      type: String,
+      trim: true,
+      maxlength: [50, "Language can be at most 50 characters long"],
     },
     subscriptionPlan: {
-        type: Types.ObjectId,
-        ref: 'SubscriptionPlan',
+      type: Types.ObjectId,
+      ref: "SubscriptionPlan",
     },
-    whatsapp: whatsappSchema,
+    whatsapp: { type: whatsappSchema, default: () => ({}) },
+    twoFA: {
+      enabled: { type: Boolean, default: false },
+      secret: { type: String, select: false },
+      backupCodes: { type: [String], select: false },
+      enabledAt: { type: Date },
+    },
+  },
+  { timestamps: true },
+);
 
-}, { timestamps: true });
-
-userSchema.pre('save', async function () {
-    if (!this.isModified('password') || !this.password) return next();
-    try {
-        const salt = bcrypt.genSaltSync(10);
-        this.password = bcrypt.hashSync(this.password, salt);
-        return;
-    } catch (err) {
-        return next(err);
-    }
+userSchema.pre("save", async function () {
+  if (!this.isModified("password") || !this.password) return;
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;

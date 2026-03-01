@@ -1,9 +1,14 @@
 import React, { use, useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import PaymentReminderTemplateCreationModel from "../../Components/AfterAuthComponent/PaymentReminder/PaymentReminderTemplateCreationModel";
-import { createPaymentTerms, deletePaymentTerms, getUserPaymentTerms, updatePaymentTerms } from "../../utils/service/paymentTermService"
-import { toast } from "react-toastify";
-import { useAuth } from "../../context/AuthContext"
+import {
+  createPaymentTerms,
+  deletePaymentTerms,
+  getUserPaymentTerms,
+  updatePaymentTerms,
+} from "../../utils/service/paymentTermService";
+import toast from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext";
 
 export default function PaymentReminder() {
   const [globalTerms, setGlobalTerms] = useState([]);
@@ -12,13 +17,11 @@ export default function PaymentReminder() {
   const [editingTerm, setEditingTerm] = useState();
   const [deletePaymentTerm, setPaymentTerm] = useState();
 
-  const [showTemplateCreationModal, setShowTemplateCreationModal] = useState(false);
+  const [showTemplateCreationModal, setShowTemplateCreationModal] =
+    useState(false);
   const templateCreationRef = useRef();
 
-
   useEffect(() => {
-
-
     async function fetchUserTemplate() {
       try {
         //api should be protected by auth middleware that only user can fetch thair template and default provided by nodue
@@ -27,19 +30,13 @@ export default function PaymentReminder() {
 
         setGlobalTerms(templates.filter((t) => t.owner === null)); //have to verify
         setCustomTerms(templates.filter((t) => t.owner === user._id));
-
-
       } catch (error) {
         console.log(error);
       }
     }
 
     fetchUserTemplate();
-
   }, []);
-
-
-
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -61,49 +58,35 @@ export default function PaymentReminder() {
     };
   }, [showTemplateCreationModal]);
 
-
-
-
-
-
-  const handleCreationSubmit = async (payload) => { // dout can i make it async?
+  const handleCreationSubmit = async (payload) => {
+    // dout can i make it async?
     console.log("payload", payload);
 
     try {
-
       if (editingTerm) {
         const res = await updatePaymentTerms(editingTerm._id, payload);
 
-        setCustomTerms(prev =>
-          prev.map(t =>
-            t._id === editingTerm._id ? res.data.paymentTerm : t
-          )
-
+        setCustomTerms((prev) =>
+          prev.map((t) =>
+            t._id === editingTerm._id ? res.data.paymentTerm : t,
+          ),
         );
         toast.success("Payment term updated");
-
       } else {
-
         const res = await createPaymentTerms(payload);
 
         //have to update the res
-        setCustomTerms((prev) => ([
-          ...prev,
-          res.data.paymentTerm
-        ]));
+        setCustomTerms((prev) => [...prev, res.data.paymentTerm]);
         toast.success("Payment term created");
       }
 
       setEditingTerm(null);
       setShowTemplateCreationModal(false);
-
     } catch (error) {
       console.log(error);
       toast.error("Operation failed");
-
     }
-
-  }
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this payment term?")) return;
@@ -111,7 +94,7 @@ export default function PaymentReminder() {
     try {
       await deletePaymentTerms(id);
 
-      setCustomTerms(prev => prev.filter(t => t._id !== id));
+      setCustomTerms((prev) => prev.filter((t) => t._id !== id));
       toast.success("Payment term deleted");
     } catch (error) {
       console.error(error);
@@ -124,13 +107,10 @@ export default function PaymentReminder() {
     setShowTemplateCreationModal(true);
   };
 
-
   return (
     <div className="p-6 space-y-6">
       {/* Page Title */}
-      <h2 className="text-xl font-semibold text-gray-800">
-        Payment Terms
-      </h2>
+      <h2 className="text-xl font-semibold text-gray-800">Payment Terms</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Global / Default Terms */}
@@ -145,9 +125,7 @@ export default function PaymentReminder() {
                 key={term._id}
                 className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 hover:shadow-sm transition"
               >
-                <div className="font-medium text-gray-800">
-                  {term.name}
-                </div>
+                <div className="font-medium text-gray-800">{term.name}</div>
 
                 <div className="text-sm text-gray-500 mt-1">
                   Credit Days: {term.creditDays}
@@ -189,11 +167,14 @@ export default function PaymentReminder() {
                   className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 flex justify-between"
                 >
                   <div>
-                    <div className="font-medium text-gray-800">
-                      {term.name}
-                    </div>
+                    <div className="font-medium text-gray-800">{term.name}</div>
                     <div className="text-sm text-gray-500">
-                      Reminders: {term.reminderOffsets.map((d, index) => `${d}${term.reminderOffsets.length - 1 == index ? '' : ','}`)} days before
+                      Reminders:{" "}
+                      {term.reminderOffsets.map(
+                        (d, index) =>
+                          `${d}${term.reminderOffsets.length - 1 == index ? "" : ","}`,
+                      )}{" "}
+                      days before
                     </div>
                   </div>
                   <div className="flex gap-3 text-sm">
@@ -211,23 +192,23 @@ export default function PaymentReminder() {
                       Delete
                     </button>
                   </div>
-
-
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-      {showTemplateCreationModal &&
+      {showTemplateCreationModal && (
         <div ref={templateCreationRef}>
-          <PaymentReminderTemplateCreationModel editingTerm={editingTerm} handleClose={() => {
-            setShowTemplateCreationModal(false),
-              setEditingTerm(null);
-          }} handleSubmit={handleCreationSubmit} />
-
+          <PaymentReminderTemplateCreationModel
+            editingTerm={editingTerm}
+            handleClose={() => {
+              (setShowTemplateCreationModal(false), setEditingTerm(null));
+            }}
+            handleSubmit={handleCreationSubmit}
+          />
         </div>
-      }
+      )}
     </div>
   );
 }

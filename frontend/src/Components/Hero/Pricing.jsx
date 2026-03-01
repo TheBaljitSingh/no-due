@@ -1,18 +1,37 @@
 // Pricing.jsx
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PricingModel } from "../../utils/constants";
 
-// ----- Card -----
-const PricingCard = ({ plan, popular = false, currency = "₹" }) => {
+gsap.registerPlugin(ScrollTrigger);
+
+// ─── Card ─────────────────────────────────────────────────────────────────────
+const PricingCard = ({ plan, popular = false, currency = "₹", index }) => {
   const hasPrice = typeof plan.pricing === "number";
 
   return (
-    <article
+    <motion.article
+      initial={{ opacity: 0, y: 60, scale: 0.9 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{
+        duration: 0.55,
+        delay: index * 0.1,
+        ease: [0.34, 1.56, 0.64, 1],
+      }}
+      whileHover={{
+        y: -6,
+        scale: 1.02,
+        transition: { duration: 0.22, ease: "easeOut" },
+      }}
       className={[
         "relative rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm",
-        "hover:shadow-md hover:-translate-y-0.5 transition-all",
+        "transition-shadow duration-300 hover:shadow-lg cursor-default",
         popular ? "outline-2 outline-teal-500" : "",
       ].join(" ")}
+      style={{ willChange: "transform, opacity" }}
     >
       {popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -44,7 +63,10 @@ const PricingCard = ({ plan, popular = false, currency = "₹" }) => {
 
         <ul className="mb-6 space-y-2 text-left">
           {plan.features.map((f, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+            <li
+              key={i}
+              className="flex items-start gap-2 text-sm text-slate-700"
+            >
               <svg
                 aria-hidden="true"
                 className="mt-0.5 h-4 w-4 flex-none text-green-600"
@@ -64,10 +86,7 @@ const PricingCard = ({ plan, popular = false, currency = "₹" }) => {
           {hasPrice ? (
             <a
               href="#book-demo"
-              className={[
-                "inline-flex w-full items-center justify-center rounded-xl",
-                "bg-gradient-to-r from-blue-400 to-teal-600 p-[2px]",
-              ].join(" ")}
+              className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-400 to-teal-600 p-[2px]"
             >
               <span className="w-full rounded-[10px] bg-white px-4 py-2 text-sm font-semibold text-slate-900 text-center">
                 Start free trial
@@ -83,30 +102,77 @@ const PricingCard = ({ plan, popular = false, currency = "₹" }) => {
           )}
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 };
 
-// ----- Grid -----
+// ─── Grid ─────────────────────────────────────────────────────────────────────
 const Pricing = () => {
+  const sectionRef = useRef(null);
+  const headingRef = useRef(null);
+  const subRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(headingRef.current, {
+        opacity: 0,
+        y: 50,
+        duration: 0.9,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: headingRef.current,
+          start: "top 85%",
+          once: true,
+        },
+      });
+
+      gsap.from(subRef.current, {
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        delay: 0.15,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: subRef.current,
+          start: "top 87%",
+          once: true,
+        },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <main className="mx-auto max-w-7xl mt-12 px-4 sm:px-6 lg:px-8 py-12">
+    <main
+      ref={sectionRef}
+      className="mx-auto max-w-7xl mt-12 px-4 sm:px-6 lg:px-8 py-12"
+    >
       <div className="text-center">
-        <h2 className="font-[font4] text-4xl md:text-6xl leading-tight">
-          Choose Your <span className="primary-gradient-text">Recovery Plan</span>
+        <h2
+          ref={headingRef}
+          className="font-[font4] text-4xl md:text-6xl leading-tight"
+        >
+          Choose Your{" "}
+          <span className="primary-gradient-text">Recovery Plan</span>
         </h2>
-        <p className="mt-3 font-[font5] text-lg md:text-2xl text-gray-500">
-          Start with any plan and upgrade as your business grows. All plans include a free trial.
+        <p
+          ref={subRef}
+          className="mt-3 font-[font5] text-lg md:text-2xl text-gray-500"
+        >
+          Start with any plan and upgrade as your business grows. All plans
+          include a free trial.
         </p>
       </div>
 
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {PricingModel.map((plan) => (
+        {PricingModel.map((plan, i) => (
           <PricingCard
             key={plan.name}
             plan={plan}
             popular={plan.name === "Growth"}
             currency="₹"
+            index={i}
           />
         ))}
       </div>

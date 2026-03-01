@@ -1,39 +1,36 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import { BrowserRouter } from 'react-router-dom'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx";
+import { BrowserRouter } from "react-router-dom";
 import "flowbite";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Toaster } from "react-hot-toast";
+// import { ToastContainer } from 'react-toastify';
+// import 'react-toastify/dist/ReactToastify.css';
 
-
-
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <App />
     </BrowserRouter>
 
-    <ToastContainer
+    <Toaster
       position="top-right"
       autoClose={3000}
-      hideProgressBar={false}
       newestOnTop={false}
       closeOnClick
       rtl={false}
       pauseOnFocusLoss
       draggable
       pauseOnHover
-      theme="light"
     />
-    <ToastContainer
+    {/* <Toaster
       containerId="stackbar"
       position="bottom-right"
       newestOnTop
       draggable
       pauseOnHover
-      theme='light'
+      theme="light"
       pauseOnFocusLoss
       autoClose={3000}
       closeButton={false}
@@ -41,8 +38,8 @@ createRoot(document.getElementById('root')).render(
       stacked
       toastStyle={{
         borderRadius: "10px",
-        minWidth: "320px"
+        minWidth: "320px",
       }}
-    />
+    /> */}
   </StrictMode>,
-)
+);

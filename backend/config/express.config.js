@@ -3,8 +3,8 @@ import routes from "../routes/routes.js";
 import { corsMiddleware } from "./corsConfig.js";
 import cookieParser from "cookie-parser";
 import { sessionMiddleware } from "./sessionConfig.js";
-import passport from "../utils/passportSetup/passportSetup.js";
-import {Server} from "socket.io";
+import passport from "./passport.config.js";
+import { Server } from "socket.io";
 import http from "http";
 
 const app = express();

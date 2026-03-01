@@ -1,79 +1,48 @@
 /* helpers */
 
-import { EllipsisVertical, IndianRupee, Pencil, Trash2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { IndianRupee, Pencil, Trash2 } from "lucide-react";
 
 export const ActionBadge = ({ onEdit, onDelete, onTransaction }) => {
-  const [actionOptions, setActionOptions] = useState(false);
-  const menuRef = useRef(null);
-  const verticalIconRef = useRef(null);
-
-  // close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (verticalIconRef.current && verticalIconRef.current.contains(event.target)) {
-        return;
-      }
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setActionOptions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
-    <div className="relative px-6 py-4 "
-    >
-      {/* Three dot button */}
-      <button
-        ref={verticalIconRef}
-        // disabled={actionOptions}
-        onClick={() => setActionOptions((prev) => !prev)}
-        className="p-2 rounded-lg hover:bg-gray-200 transition-all outline-none"
-      >
-        <EllipsisVertical size={18} className="text-gray-700 hover:cursor-pointer" />
-      </button>
+    <div className="flex items-center gap-1 px-3 py-4">
+      {/* Edit */}
+      <div className="relative group/tip">
+        <button
+          onClick={onEdit}
+          className="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+        >
+          <Pencil size={14} />
+        </button>
+        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-[100] whitespace-nowrap rounded bg-gray-900 px-1.5 py-px text-[9px] font-medium text-white opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150">
+          Edit
+        </span>
+      </div>
 
-      {/* Dropdown menu */}
-      {actionOptions && (
-        <div className="absolute z-50 right-6 mt-1 w-42 rounded-lg shadow-lg bg-white border border-gray-200" ref={menuRef}>
-          <button
-            onClick={() => {
-              setActionOptions(false);
-              onEdit();
-              // alert("comming soon")
-            }}
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
-          >
-            <Pencil size={16} className="text-gray-600" />
-            Edit
-          </button>
+      {/* Delete */}
+      <div className="relative group/tip">
+        <button
+          onClick={onDelete}
+          className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+        >
+          <Trash2 size={14} />
+        </button>
+        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-[100] whitespace-nowrap rounded bg-gray-900 px-1.5 py-px text-[9px] font-medium text-white opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150">
+          Delete
+        </span>
+      </div>
 
-          <button
-            onClick={() => {
-              setActionOptions(false);
-              onDelete();
-            }}
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
-          >
-            <Trash2 size={16} className="text-gray-600" />
-            Delete
-          </button>
-          <button
-            onClick={() => {
-              // closing the action dropdowns
-              setActionOptions(false);
-              onTransaction()
-            }}
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
-          >
-            <IndianRupee size={16} className="text-gray-600 inline-flex" />
-            All Transactions
-          </button>
-        </div>
-      )}
+      {/* Transactions */}
+      <div className="relative group/tip">
+        <button
+          onClick={onTransaction}
+          className="p-1.5 rounded-md text-gray-400 hover:text-green-700 hover:bg-green-50 transition-colors cursor-pointer"
+        >
+          <IndianRupee size={14} />
+        </button>
+        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-[100] whitespace-nowrap rounded bg-gray-900 px-1.5 py-px text-[9px] font-medium text-white opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150">
+          Transactions
+        </span>
+      </div>
     </div>
   );
 };
@@ -85,16 +54,25 @@ export const currency = (n) =>
   });
 
 export const formatDate = (d) =>
-  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
+  d
+    ? new Date(d).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "-";
 
 export const StatusBadge = ({ value }) => {
   const styles = {
     Paid: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
     Overdue: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
-    Pending: "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
+    Pending:
+      "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
   };
   return (
-    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${styles[value] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}>
+    <span
+      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${styles[value] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}
+    >
       {value}
     </span>
   );
@@ -114,10 +92,11 @@ export function TabButton({ active, onClick, children, icon }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${active
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+        active
           ? "bg-green-50 text-green-700 border border-green-200"
           : "text-gray-600 hover:bg-gray-50 border border-transparent"
-        }`}
+      }`}
     >
       {icon} {children}
     </button>
@@ -129,10 +108,11 @@ export function IconBtn({ children, title, onClick, danger }) {
     <button
       title={title}
       onClick={onClick}
-      className={`p-2 rounded-lg transition-colors ${danger
+      className={`p-2 rounded-lg transition-colors ${
+        danger
           ? "text-red-600 hover:bg-red-50"
           : "text-gray-600 hover:bg-gray-100"
-        }`}
+      }`}
     >
       {children}
     </button>

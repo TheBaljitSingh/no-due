@@ -6,7 +6,7 @@ import BeforeAuthLayout from "../Layouts/BeforeAuthLayout";
 import AfterAuthLayout from "../Layouts/AfterAuthLayout";
 import { useEffect, useState } from "react";
 import AfterAuthLanding from "../Pages/AfterAuthPages/AfterAuthLanding";
-import CustomerMaster from "../Pages/AfterAuthPages/CustomerMaster";
+import CustomerMaster from "../Pages/AfterAuthPages/customer-master/CustomerMaster";
 import UploadCenter from "../Pages/AfterAuthPages/UploadCenter";
 import ReminderManagement from "../Pages/AfterAuthPages/ReminderManagement";
 import ReminderTemplates from "../Pages/AfterAuthPages/ReminderTemplates";
@@ -18,14 +18,14 @@ import HelpPage from "../Pages/AfterAuthCTCPages/HelpPage";
 import Error404Page from "../Pages/Error404Page";
 import { checkAuth } from "./service/authService";
 import LoadingPage from "../Components/AfterAuthComponent/ReminderHistoryPage/LoadingPage";
-import Hero from "../Pages/Hero";
+import Hero from "../Pages/BeforeAuthPages/Hero";
 import AuthSuccess from "../Components/auth/AuthSuccess";
 import AuthRoute from "../Layouts/AuthRoutes";
 import { useAuth } from "../context/AuthContext";
 import CustomerDetail from "../Pages/CustomerDetail";
-import PaymentReminder from "../Pages/PaymentReminder/PaymentReminder"
-import WhatsappChats from "../Pages/WhatsappChats/WhatsappChats"
-import AllTransaction from "../Pages/AfterAuthPages/AllTransaction"
+import PaymentReminder from "../Pages/PaymentReminder/PaymentReminder";
+import WhatsappChats from "../Pages/WhatsappChats/WhatsappChats";
+import AllTransaction from "../Pages/AfterAuthPages/AllTransaction";
 import TransactionHistoryDuePage from "../Components/AfterAuthComponent/CustomerMasterPage/Transactions";
 import WhatsappConnectivity from "../Pages/AfterAuthPages/WhatsappConnectivity";
 
@@ -35,32 +35,39 @@ const PageLinks = () => {
 
   const { loading } = useAuth();
 
-
   if (loading) {
     return (
       <>
         <LoadingPage />
       </>
-    )
-  };
+    );
+  }
 
   return (
     <Routes location={location}>
       {/* PUBLIC AREA */}
       <Route element={<BeforeAuthLayout />}>
-        <Route path='/' element={<Hero />} />
-        <Route path="/contact" element={<PageShell keyId={keyId}><Contact /></PageShell>} />
-        <Route path="/login" element={<Navigate to="/" state={{ openLogin: true }} replace />} />
+        <Route path="/" element={<Hero />} />
+        <Route
+          path="/contact"
+          element={
+            <PageShell keyId={keyId}>
+              <Contact />
+            </PageShell>
+          }
+        />
+        <Route
+          path="/login"
+          element={<Navigate to="/" state={{ openLogin: true }} replace />}
+        />
       </Route>
 
-      <Route path='/google-success' element={<AuthSuccess />} />
-
+      <Route path="/google-success" element={<AuthSuccess />} />
 
       {/* AUTH AREA */}
       <Route
         path="/nodue"
         element={
-          //authRoute works as privateRoute
           <AuthRoute>
             <AfterAuthLayout />
           </AuthRoute>
@@ -84,8 +91,6 @@ const PageLinks = () => {
         <Route path="whatsapp-chat" element={<WhatsappChats />} />
         <Route path="all-transactions" element={<AllTransaction />} />
         <Route path="settings/whatsapp" element={<WhatsappConnectivity />} />
-
-
       </Route>
 
       <Route path="*" element={<Error404Page />} />

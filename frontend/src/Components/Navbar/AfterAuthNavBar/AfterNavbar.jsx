@@ -8,7 +8,7 @@ import { socket } from "../../../socket/index.js";
 import notificationService from "../../../utils/service/notificationService";
 import { formatDate, NotificationActionBadge } from "../../../utils/AfterAuthUtils/Helpers";
 import { notificationUI } from "../../../utils/notificationUI/constants.js"
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, setIsProfileDropdownOpen }) => {
   const [open, setOpen] = useState(false);

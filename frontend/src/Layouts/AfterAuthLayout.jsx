@@ -112,14 +112,15 @@ const AfterAuthLayout = () => {
       toast.info(
         `Feedback from ${data.customerName || data.mobile}: "${data.feedback}"`,
         {
-          toastId: data.messageId,
-          containerId: "stackbar",
+          id: data.messageId,
+          duration: 5000,
           position: "bottom-right",
-          autoClose: 5000,
-          className:
-            "bg-white border-t-4 border-green-500 shadow-2xl rounded-none md:rounded-lg min-w-[320px] md:min-w-[450px]",
-          bodyClassName: "text-gray-800 font-medium",
-          progressClassName: "bg-green-500",
+          style: {
+            borderTop: "4px solid #22c55e",
+            borderRadius: "8px",
+            minWidth: "350px",
+            fontWeight: "500",
+          }
         },
       );
     };

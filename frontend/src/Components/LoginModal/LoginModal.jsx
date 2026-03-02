@@ -10,7 +10,7 @@ import {
 import { verify2FALogin } from "../../utils/service/twofaService";
 import LoadingPage from "../AfterAuthComponent/ReminderHistoryPage/LoadingPage";
 import { useAuth } from "../../context/AuthContext";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 // ─── Animation variants ─────────────────────────────────────────────────────
 
@@ -383,9 +383,8 @@ export default function LoginModal({ open, onClose }) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") submit2FA(e);
                 }}
-                className={`w-full font-semibold rounded border px-4 py-3 text-center text-lg tracking-[0.5em] outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600 ${
-                  isBackupCode ? "tracking-normal text-sm text-left" : ""
-                } ${twoFAError ? "border-red-400" : "border-gray-300"}`}
+                className={`w-full font-semibold rounded border px-4 py-3 text-center text-lg tracking-[0.5em] outline-none transition focus:border-teal-600 focus:ring-1 focus:ring-teal-600 ${isBackupCode ? "tracking-normal text-sm text-left" : ""
+                  } ${twoFAError ? "border-red-400" : "border-gray-300"}`}
                 placeholder={isBackupCode ? "Backup code" : "000000"}
                 autoFocus
                 autoComplete="one-time-code"

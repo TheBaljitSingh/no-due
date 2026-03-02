@@ -10,7 +10,7 @@ import {
 } from "../../../utils/service/customerService";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { Download, FileText, Phone } from "lucide-react";
 
 // ── Initials avatar ───────────────────────────────────────────────────────────

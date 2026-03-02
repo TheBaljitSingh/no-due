@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useSearchParams } from "react-router-dom";
-
+import { redirect, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import api from "../../utils/service/api";
+import toast from "react-hot-toast";
 
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -24,6 +24,7 @@ const WhatsAppSetupOverlay = ({ onClose, isRouteBlocked = false }) => {
   const [showManual, setShowManual] = useState(false);
   const [showToken, setShowToken] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [manualData, setManualData] = useState({
     wabaId: "",
@@ -64,10 +65,6 @@ const WhatsAppSetupOverlay = ({ onClose, isRouteBlocked = false }) => {
           const response = await api.get("/v1/auth/check-auth");
           if (response.data.success && response.data.data.user) {
             setUser(response.data.data.user);
-            toast.success("WhatsApp connected successfully!", {
-              position: "top-right",
-              autoClose: 3000,
-            });
             onClose?.();
           }
         } catch (error) {
@@ -81,7 +78,7 @@ const WhatsAppSetupOverlay = ({ onClose, isRouteBlocked = false }) => {
       const errorMessage = errorParam
         ? decodeURIComponent(errorParam)
         : "Failed to connect WhatsApp. Please try again.";
-      toast.error(errorMessage, { position: "top-right", autoClose: 7000 });
+      toast.error(errorMessage, { position: "top-right", duration: 7000 });
       searchParams.delete("connected");
       searchParams.delete("error");
       setSearchParams(searchParams, { replace: true });
@@ -139,15 +136,9 @@ const WhatsAppSetupOverlay = ({ onClose, isRouteBlocked = false }) => {
     try {
       const res = await api.post("/v1/whatsapp/manual-connect", manualData);
       if (res.data.success) {
-        const userResponse = await api.get("/v1/auth/check-auth");
-        if (userResponse.data.success && userResponse.data.data.user) {
-          setUser(userResponse.data.data.user);
-        }
-        toast.success("WhatsApp connected successfully!", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-        onClose?.();
+        //go the to whatsapp setting page
+        navigate("/nodue/settings/whatsapp?connected=true");
+        // Toast is handled by WhatsappConnectivity page via ?connected=true
       }
     } catch (error) {
       console.error("Manual connect failed", error);

@@ -79,27 +79,81 @@ export const getAllReminders = async (req, res) => {
           _id: null,
           total: { $sum: 1 },
           pending: {
-            $sum: {
-              $cond: [
-                { $in: ["$status", ["pending", "rescheduled", ""]] },
-                1,
-                0
-              ]
-            }
+            $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] }
           },
-          sent: { $sum: { $cond: [{ $eq: ["$status", "sent"] }, 1, 0] } },
-          failed: { $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] } },
-          scheduled: { $sum: { $cond: [{ $eq: ["$status", "scheduled"] }, 1, 0] } }
+          sent: {
+            $sum: { $cond: [{ $eq: ["$status", "sent"] }, 1, 0] }
+          },
+          failed: {
+            $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] }
+          },
+          cancelled: {
+            $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] }
+          },
+          rescheduled: {
+            $sum: { $cond: [{ $eq: ["$status", "rescheduled"] }, 1, 0] }
+          },
+          paused: {
+            $sum: { $cond: [{ $eq: ["$status", "paused"] }, 1, 0] }
+          },
         }
       },
       {
         $project: {
-          _id: 0, total: 1, pending: 1, sent: 1, failed: 1, scheduled: 1
+          _id: 0,
         }
       }
     ]);
 
-    const stats = statsAggregation[0] || { total: 0, pending: 0, sent: 0, failed: 0, scheduled: 0 };
+    // 4. Response Rate: count sent reminders whose customer has feedback
+    const responseAggregation = await Reminder.aggregate([
+      {
+        $match: {
+          customerId: { $in: customerIds },
+          status: "sent"
+        }
+      },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customerId",
+          foreignField: "_id",
+          as: "customer"
+        }
+      },
+      { $unwind: "$customer" },
+      {
+        $group: {
+          _id: null,
+          totalSent: { $sum: 1 },
+          responded: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$customer.feedback", null] },
+                    { $ne: ["$customer.feedback", ""] }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    const responseData = responseAggregation[0] || { totalSent: 0, responded: 0 };
+    const responseRate = responseData.totalSent > 0
+      ? Math.round((responseData.responded / responseData.totalSent) * 100)
+      : 0;
+
+    const stats = {
+      total: 0, pending: 0, sent: 0, failed: 0, paused: 0, cancelled: 0, rescheduled: 0,
+      ...(statsAggregation[0] || {}),
+      responseRate: `${responseRate}%`
+    };
 
     return new APIResponse(200, {
       data: reminders,
@@ -385,7 +439,7 @@ export const bulkSendReminders = async (req, res) => {
           populate: { path: "customerId", populate: { path: "paymentTerm" } }
         });
 
-        console.log("reminder to send in bulk request",reminder);
+        console.log("reminder to send in bulk request", reminder);
 
         if (!reminder || !reminder.transactionId) continue;
 

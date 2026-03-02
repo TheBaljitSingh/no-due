@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, Copy, AlertCircle, Filter, History, Loader2, ClipboardClock } from "lucide-react";
+import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, AlertCircle, History, Loader2, ClipboardClock, Bolt, AlarmClockCheck, CircleCheckBig } from "lucide-react";
 import { MOCK_REMINDERS, TEMPLATES } from "../../utils/constants";
 import { currency2, formatDate, IconBtn, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
@@ -10,12 +10,13 @@ import ScheduleOrSendReminderModal from "../../Components/AfterAuthComponent/Rem
 import toast from "react-hot-toast";
 import ConfirmModal from "../../Components/AfterAuthComponent/CustomerMasterPage/ConfirmModal.jsx";
 import BulkRescheduleModal from "../../Components/AfterAuthComponent/ReminderManagement/BulkRescheduleModal.jsx";
+import { FaWhatsapp } from "react-icons/fa";
 
 
 export default function ReminderManagement() {
 
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState("pending");
+  const [tab, setTab] = useState("all");
   const [q, setQ] = useState("");
   const [bulk, setBulk] = useState(new Set());
   const [openNew, setOpenNew] = useState(false);
@@ -34,6 +35,7 @@ export default function ReminderManagement() {
     failed: 0,
     pending: 0,
     total: 0,
+    rescheduled: 0,
     responseRate: "0%" // hardcoded for now or fetch if API supports
   });
 
@@ -50,15 +52,12 @@ export default function ReminderManagement() {
       };
 
       if (tab !== 'all') {
-        if (tab === 'pending') {
-          filters.status = 'pending,rescheduled';
-        } else {
-          filters.status = tab;
-        }
+        // if other then all then aply filter or not
+        filters.status = tab; // either it will be ["pending", "sent", "failed", "cancelled", 'rescheduled','paused'],
       }
 
       const res = await getAllReminders(filters);
-      // console.log(res);
+      console.log("res", res);
       const output = res.data.data;
 
       // console.log("output.data", output.data);
@@ -66,7 +65,11 @@ export default function ReminderManagement() {
       setPagination(prev => ({ ...prev, ...output.meta }));
 
       if (output.stats) {
-        setStats(prev => ({ ...prev, ...output.stats, scheduled: output?.stats?.pending }));
+        setStats(prev => ({
+          ...prev,
+          ...output.stats,
+          scheduled: output?.stats?.pending,
+        }));
       }
 
     } catch (error) {
@@ -348,17 +351,35 @@ export default function ReminderManagement() {
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           {/* Tabs */}
           <div className="border-b border-gray-200 px-6 py-2 pt-4">
-            <div className="flex items-center gap-1 -mb-px">
-              <TabButton active={tab === "pending"} onClick={() => setTab("pending")} icon={<Clock className="w-4 h-4" />}>
-                pending
+            <div className="flex items-center gap-1 -mb-px overflow-x-auto">
+              <TabButton active={tab === "all"} onClick={() => setTab("all")} icon={<Bolt className="w-4 h-4" />}>
+                All
                 <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                  {stats.pending}
+                  {stats.total}
                 </span>
               </TabButton>
-              <TabButton active={tab === "sent"} onClick={() => setTab("sent")} icon={<CheckCircle2 className="w-4 h-4" />}>
+              <TabButton active={tab === "pending"} onClick={() => setTab("pending")} icon={<Clock className="w-4 h-4" />}>
+                Scheduled
+                <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                  {stats.scheduled}
+                </span>
+              </TabButton>
+              <TabButton active={tab === "rescheduled"} onClick={() => setTab("rescheduled")} icon={<AlarmClockCheck className="w-4 h-4" />}>
+                Re-Scheduled
+                <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                  {stats.rescheduled || 0}
+                </span>
+              </TabButton>
+              <TabButton active={tab === "sent"} onClick={() => setTab("sent")} icon={<CircleCheckBig className="w-4 h-4" />}>
                 Sent
                 <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
                   {stats.sent}
+                </span>
+              </TabButton>
+              <TabButton active={tab === "paused"} onClick={() => setTab("paused")} icon={<Pause className="w-4 h-4" />}>
+                Paused
+                <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                  {stats.paused || 0}
                 </span>
               </TabButton>
               <TabButton active={tab === "failed"} onClick={() => setTab("failed")} icon={<XCircle className="w-4 h-4" />}>
@@ -498,13 +519,13 @@ export default function ReminderManagement() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-0.5">
-                        <IconBtn title="History" onClick={() => setAuditCustomer(r.customer)}> <History className="w-4 h-4" /> </IconBtn>
-                        <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-4 h-4" /></IconBtn>
+                        <IconBtn title="Whatsapp History" onClick={() => setAuditCustomer(r.customer)}> <FaWhatsapp className="w-5 h-5" /> </IconBtn>
+                        <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-5 h-5" /></IconBtn>
                         <IconBtn title="Delete" danger onClick={() => {
                           // console.log(r)
                           setConfirmOpen(true)
                           setToBeDeletedReminder(r.id)
-                        }} ><Trash2 className="w-4 h-4" /></IconBtn>
+                        }} ><Trash2 className="w-5 h-5" /></IconBtn>
                       </div>
                     </td>
                   </tr>

@@ -37,3 +37,23 @@ export const rescheduleReminder = async (reminderId, scheduledFor) => {
     const response = await api.put(`/v1/reminders/reschedule/${reminderId}`, { scheduledFor });
     return response.data;
 };
+
+export const bulkSendReminders = async (ids) => {
+    const response = await api.post("/v1/reminders/bulk/send-now", { ids });
+    return response.data;
+};
+
+export const bulkPauseReminders = async (ids) => {
+    const response = await api.post("/v1/reminders/bulk/pause", { ids });
+    return response.data;
+};
+
+export const bulkDeleteReminders = async (ids) => {
+    const response = await api.post("/v1/reminders/bulk/delete", { ids });
+    return response.data;
+};
+
+export const bulkRescheduleReminders = async (ids, scheduledFor) => {
+    const response = await api.post("/v1/reminders/bulk/reschedule", { ids, scheduledFor });
+    return response.data;
+};

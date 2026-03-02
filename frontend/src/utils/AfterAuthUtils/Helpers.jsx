@@ -1,6 +1,7 @@
 /* helpers */
 
-import { IndianRupee, Pencil, Trash2 } from "lucide-react";
+import { EllipsisVertical, IndianRupee, Pencil, Trash2 } from "lucide-react";
+import React, { useState, useRef, useEffect, memo } from "react";
 
 export const ActionBadge = ({ onEdit, onDelete, onTransaction }) => {
   return (
@@ -46,6 +47,68 @@ export const ActionBadge = ({ onEdit, onDelete, onTransaction }) => {
     </div>
   );
 };
+
+export const NotificationActionBadge = React.memo(({ onDelete }) => {
+  const [actionOptions, setActionOptions] = useState(false);
+  const menuRef = useRef(null);
+  const verticalIconRef = useRef(null);
+
+  // close menu when clicking outside
+  useEffect(() => {
+    if (!actionOptions) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        verticalIconRef.current &&
+        verticalIconRef.current.contains(event.target)
+      ) {
+        return;
+      }
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setActionOptions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [actionOptions]);
+
+  return (
+    <div className="relative px-6 py-4 ">
+      {/* Three dot button */}
+      <button
+        ref={verticalIconRef}
+        // disabled={actionOptions}
+        onClick={() => setActionOptions((prev) => !prev)}
+        className="p-2 rounded-lg hover:bg-gray-200 transition-all outline-none"
+      >
+        <EllipsisVertical
+          size={18}
+          className="text-gray-700 hover:cursor-pointer"
+        />
+      </button>
+
+      {actionOptions && (
+        <div
+          className="absolute z-50 right-0 mt-1 w-32 rounded-lg shadow-lg bg-white border border-gray-200 py-1"
+          ref={menuRef}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => {
+              setActionOptions(false);
+              onDelete();
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2 cursor-pointer text-sm text-gray-700 hover:text-red-600"
+          >
+            <Trash2 size={14} />
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
 export const currency = (n) =>
   Number(n || 0).toLocaleString("en-IN", {
     style: "currency",
@@ -84,6 +147,7 @@ export const statusChip = (s) => {
     sent: "bg-green-50 text-green-700 border-green-200",
     failed: "bg-red-50 text-red-700 border-red-200",
     paused: "bg-amber-50 text-amber-700 border-amber-200",
+    rescheduled: "bg-purple-50 text-purple-700 border-purple-200",
   };
   return map[s] || "bg-gray-50 text-gray-700 border-gray-200";
 };

@@ -43,7 +43,7 @@ export default function AuditDrawer({ customer, onClose }) {
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
                     <div>
                         <h2 className="text-lg font-semibold text-gray-900">Communication Logs</h2>
-                        <p className="text-sm text-gray-500 mt-1">{customer.name} • {customer.mobile}</p>
+                        <p className="text-sm text-gray-500 mt-1">{customer?.name} • {customer?.mobile} • {customer?.email}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
                         <X className="w-5 h-5" />

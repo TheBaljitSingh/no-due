@@ -369,3 +369,108 @@ export const getAuditLogs = async (req, res) => {
     return new APIError(500, null, "Failed to fetch audit logs").send(res);
   }
 };
+
+export const bulkSendReminders = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return new APIError(400, ["ids array is required"]).send(res);
+    }
+
+    const results = [];
+    for (const id of ids) {
+      try {
+        const reminder = await Reminder.findById(id).populate({
+          path: "transactionId",
+          populate: { path: "customerId", populate: { path: "paymentTerm" } }
+        });
+
+        console.log("reminder to send in bulk request",reminder);
+
+        if (!reminder || !reminder.transactionId) continue;
+
+        const tx = reminder.transactionId;
+        const customer = tx.customerId;
+        let dueDate = tx.dueDate;
+        if (!dueDate && customer?.paymentTerm) {
+          dueDate = new Date(tx.createdAt);
+          dueDate.setDate(dueDate.getDate() + customer.paymentTerm.creditDays);
+        }
+        if (!dueDate) dueDate = new Date();
+
+        const reminderType = getReminderType(dueDate, new Date());
+        const templateName = TEMPLATE_MAP[reminderType];
+        const variables = [customer.name, tx.amount.toString(), dueDate];
+
+        const result = await reminderService.sendNow({
+          transactionId: tx._id,
+          templateName,
+          variables,
+          reminderId: id // Pass original ID to update it
+        });
+        results.push({ id, success: true, result });
+      } catch (err) {
+        results.push({ id, success: false, error: err.message });
+      }
+    }
+
+    return new APIResponse(200, results, "Bulk send completed").send(res);
+  } catch (error) {
+    return new APIError(500, [error.message], "Bulk send failed").send(res);
+  }
+};
+
+export const bulkPauseReminders = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return new APIError(400, ["ids array is required"]).send(res);
+    }
+
+    const result = await Reminder.updateMany(
+      { _id: { $in: ids } },
+      { $set: { status: "paused" } }
+    );
+
+    return new APIResponse(200, result, "Reminders paused successfully").send(res);
+  } catch (error) {
+    return new APIError(500, [error.message], "Bulk pause failed").send(res);
+  }
+};
+
+export const bulkDeleteReminders = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return new APIError(400, ["ids array is required"]).send(res);
+    }
+
+    const result = await Reminder.deleteMany({ _id: { $in: ids } });
+    return new APIResponse(200, result, "Reminders deleted successfully").send(res);
+  } catch (error) {
+    return new APIError(500, [error.message], "Bulk delete failed").send(res);
+  }
+};
+
+export const bulkRescheduleReminders = async (req, res) => {
+  try {
+    const { ids, scheduledFor } = req.body;
+    if (!ids || !Array.isArray(ids) || !scheduledFor) {
+      return new APIError(400, ["ids and scheduledFor are required"]).send(res);
+    }
+
+    const result = await Reminder.updateMany(
+      { _id: { $in: ids } },
+      {
+        $set: {
+          scheduledFor: new Date(scheduledFor),
+          status: "rescheduled"
+        }
+      }
+    );
+
+    return new APIResponse(200, result, "Reminders rescheduled successfully").send(res);
+  } catch (error) {
+    return new APIError(500, [error.message], "Bulk reschedule failed").send(res);
+  }
+};

@@ -213,7 +213,8 @@ export default function LoginModal({ open, onClose }) {
       confirmPw: isSignUp ? validateField("confirmPw", confirmPw, pw) : "",
     };
     setErr(newErrors);
-    if (Object.values(newErrors).some((e) => e)) {
+
+    if (isSignUp && Object.values(newErrors).some((err) => err)) {
       setLoading(false);
       return;
     }

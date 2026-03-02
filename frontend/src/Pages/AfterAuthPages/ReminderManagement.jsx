@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, Copy, AlertCircle, Filter, History, Loader2 } from "lucide-react";
+import { Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, Copy, AlertCircle, Filter, History, Loader2, ClipboardClock } from "lucide-react";
 import { MOCK_REMINDERS, TEMPLATES } from "../../utils/constants";
 import { currency2, formatDate, IconBtn, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
 import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/EditDrawer";
 import AuditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/AuditDrawer";
-import { deleteReminder, getAllReminders, scheduleReminder, sendReminderNow } from "../../utils/service/reminderService.js"
+import { deleteReminder, getAllReminders, scheduleReminder, sendReminderNow, bulkDeleteReminders, bulkPauseReminders, bulkRescheduleReminders, bulkSendReminders } from "../../utils/service/reminderService.js"
 import ScheduleOrSendReminderModal from "../../Components/AfterAuthComponent/ReminderManagement/ScheduleOrSendReminderModal.jsx";
 import toast from "react-hot-toast";
 import ConfirmModal from "../../Components/AfterAuthComponent/CustomerMasterPage/ConfirmModal.jsx";
+import BulkRescheduleModal from "../../Components/AfterAuthComponent/ReminderManagement/BulkRescheduleModal.jsx";
 
 
 export default function ReminderManagement() {
@@ -38,6 +39,8 @@ export default function ReminderManagement() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toBedeletedReminder, setToBeDeletedReminder] = useState();
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   const fetchReminders = useCallback(async () => {
     try {
@@ -182,35 +185,109 @@ export default function ReminderManagement() {
 
   }
 
-  const handleDeleteReminder = async (id) => {
-    //show alert here
+  const handleBulkSend = async () => {
+    try {
+      setBulkActionLoading(true);
+      const ids = Array.from(bulk); //it makes array of ids
+      await toast.promise(
+        bulkSendReminders(ids),
+        {
+          pending: 'Sending reminders...',
+          success: 'Reminders triggered successfully',
+          error: 'Failed to send some reminders'
+        }
+      );
+      setBulk(new Set());
+      fetchReminders();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
 
+  const handleBulkPause = async () => {
+    try {
+      setBulkActionLoading(true);
+      const ids = Array.from(bulk);
+      await toast.promise(
+        bulkPauseReminders(ids),
+        {
+          pending: 'Pausing reminders...',
+          success: 'Reminders paused successfully',
+          error: 'Failed to pause reminders'
+        }
+      );
+      setBulk(new Set());
+      fetchReminders();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const confirm = window.confirm(`Delete ${bulk.size} reminders?`);
+    if (!confirm) return;
+    try {
+      setBulkActionLoading(true);
+      const ids = Array.from(bulk);
+      await toast.promise(
+        bulkDeleteReminders(ids),
+        {
+          pending: 'Deleting reminders...',
+          success: 'Reminders deleted successfully',
+          error: 'Failed to delete reminders'
+        }
+      );
+      setBulk(new Set());
+      fetchReminders();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkReschedule = async (newDate) => {
+    try {
+      setBulkActionLoading(true);
+      const ids = Array.from(bulk);
+      await toast.promise(
+        bulkRescheduleReminders(ids, newDate),
+        {
+          pending: 'Rescheduling reminders...',
+          success: 'Reminders rescheduled successfully',
+          error: 'Failed to reschedule reminders'
+        }
+      );
+      setBulk(new Set());
+      setRescheduleOpen(false);
+      fetchReminders();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleDeleteReminder = async (id) => {
     try {
       if (!id) {
         toast.error("Invalid reminder");
         return;
       }
-
       const res = await deleteReminder(id);
-
-      // console.log(res);
-
       if (res?.success) {
         toast.success("Reminder deleted successfully");
-
-        // OPTIONAL: update UI immediately
-        setData(prev =>
-          prev.filter(r => r._id !== id)
-        );
+        setData(prev => prev.filter(r => r._id !== id));
       } else {
         toast.error(res?.message || "Failed to delete reminder");
       }
     } catch (error) {
       console.error("Delete reminder error:", error);
-
-      toast.error(
-        error?.response?.data?.message || "Something went wrong"
-      );
+      toast.error(error?.response?.data?.message || "Something went wrong");
     }
     setConfirmOpen(false);
     setToBeDeletedReminder(null);
@@ -315,25 +392,34 @@ export default function ReminderManagement() {
             {/* Bulk Actions */}
             {bulk.size > 0 && (
               <div className="flex flex-wrap items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                <span className="text-sm font-medium text-green-900">{bulk.size} selected</span>
+                <span className="text-sm font-medium text-green-900">{bulk.size} reminders selected</span>
                 <div className="flex flex-wrap items-center gap-2 ml-auto">
-                  {/* <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
-                    <Send className="w-3.5 h-3.5" /> Send Now
-                  </button> */}
-                  {/* <button className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium">
-                    <Pause className="w-3.5 h-3.5" /> Pause
-                  </button> */}
                   <button
-                    onClick={async () => {
-                      const confirm = window.confirm(`Delete ${bulk.size} reminders?`);
-                      if (!confirm) return;
-                      for (let id of bulk) {
-                        await deleteReminder(id);
-                      }
-                      setBulk(new Set());
-                      window.location.reload();
-                    }}
-                    className="inline-flex items-center gap-1.5 bg-white border border-red-300 px-3 py-1.5 rounded-lg hover:bg-red-50 text-sm font-medium text-red-600">
+                    disabled={bulkActionLoading}
+                    onClick={handleBulkSend}
+                    className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
+                  >
+                    <Send className="w-3.5 h-3.5" /> Send Now
+                  </button>
+                  <button
+                    disabled={bulkActionLoading}
+                    onClick={handleBulkPause}
+                    className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
+                  >
+                    <Pause className="w-3.5 h-3.5" /> Pause
+                  </button>
+                  <button
+                    disabled={bulkActionLoading}
+                    onClick={() => setRescheduleOpen(true)}
+                    className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
+                  >
+                    <ClipboardClock className='w-3.5 h-3.5' /> ReSchedule
+                  </button>
+                  <button
+                    disabled={bulkActionLoading}
+                    onClick={handleBulkDelete}
+                    className="inline-flex items-center gap-1.5 bg-white border border-red-300 px-3 py-1.5 rounded-lg hover:bg-red-50 text-sm font-medium text-red-600 disabled:opacity-50"
+                  >
                     <Trash2 className="w-3.5 h-3.5" /> Delete
                   </button>
                 </div>
@@ -359,7 +445,7 @@ export default function ReminderManagement() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID & Template</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Customer</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Channels</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Due Amount</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Scheduled For</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
@@ -469,6 +555,7 @@ export default function ReminderManagement() {
       {drawer && <EditDrawer reminder={drawer} onClose={() => setDrawer(null)} onDeleteSuccess={handleDrawerDeleteSuccess} onRescheduleSuccess={handleDrawerRescheduleSuccess} />}
       {auditCustomer && <AuditDrawer customer={auditCustomer} onClose={() => setAuditCustomer(null)} />}
       {confirmOpen && <ConfirmModal open={confirmOpen} onClose={() => { setConfirmOpen(false); setToBeDeletedReminder(null); }} onConfirm={() => handleDeleteReminder(toBedeletedReminder)} message="Are you sure you want to delete this reminder?" />}
+      {rescheduleOpen && <BulkRescheduleModal open={rescheduleOpen} onClose={() => setRescheduleOpen(false)} onConfirm={handleBulkReschedule} count={bulk.size} />}
     </div>
   );
 }

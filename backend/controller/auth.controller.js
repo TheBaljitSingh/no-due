@@ -139,11 +139,12 @@ export const localLogin = (req, res) => {
 
     req.session.regenerate((err) => {
       if (err) {
-        return new APIError(500, ["Session regeneration failed"]).send(res);
+        //session generation failed
+        return new APIError(500, ["Authentication failed"]).send(res);
       }
       req.login(user, async (err) => {
         if (err) {
-          return new APIError(500, ["Login failed"]).send(res);
+          return new APIError(500, ["Authentication failed"]).send(res);
         }
         setMaxAge(req, rememberMe);
         try {

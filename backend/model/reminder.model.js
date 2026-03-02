@@ -56,7 +56,7 @@ const reminderSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["pending", "sent", "failed", "cancelled", 'rescheduled'],
+      enum: ["pending", "sent", "failed", "cancelled", 'rescheduled','paused'],
       default: "pending",
       index: true
     },

@@ -1,25 +1,33 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, X } from "lucide-react";
+import { Bell, CheckCheck, Ellipsis, Trash, X } from "lucide-react";
 import { notificationData } from "../../../utils/constants";
 import LogoutModal from "../../auth/LogoutModal";
 import { useAuth } from "../../../context/AuthContext";
 import { socket } from "../../../socket/index.js";
 import notificationService from "../../../utils/service/notificationService";
-import { formatDate } from "../../../utils/AfterAuthUtils/Helpers";
+import { formatDate, NotificationActionBadge } from "../../../utils/AfterAuthUtils/Helpers";
 import { notificationUI } from "../../../utils/notificationUI/constants.js"
+import { toast } from "react-toastify";
 
 const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, setIsProfileDropdownOpen }) => {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [filter, setFilter] = useState("all");
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const unreadCount = useMemo(
-    () => notifications?.filter((n) => n.read === false || n.isRead === false).length,
-    [notifications]
-  );
+  // const unreadCount = useMemo(
+  //   () => notifications?.filter((n) => n.isRead === false).length,
+  //   [notifications]
+  // );
+
+  const filteredNotifications = useMemo(() => {
+    if (filter === "all") return notifications;
+    return notifications?.filter((n) => n.type === filter);
+  }, [notifications, filter]);
   const { user } = useAuth();
   // console.log(user);
   const fullName = user?.name || (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "") || "";
@@ -56,9 +64,28 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
     }
   };
 
+  const handleDeleteNotification = async (id) => {
+    try {
+      notificationService.deleteNotification(id);
+      // await toast.promise(
+      // i have use function call here so toast will work like promise of api
+      //   {
+      //     pending: 'Deleting notification...',
+      //     success: 'Notification deleted successfully 👌',
+      //     error: 'Failed to delete notification 🤯'
+      //   }
+      // );
+      setNotifications((prev) => prev.filter((n) => n._id !== id));
+    } catch (error) {
+      console.error("Failed to delete notification", error);
+    }
+  };
+
   // const user = {name:"Tanmay Singh", email:"tanmay@singh.com"}
   // const navigate = useNavigate();
 
+
+  const hasFetched = useRef(false);
 
   // Fetch existing notifications
   useEffect(() => {
@@ -67,35 +94,33 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
         const response = await notificationService.getNotifications();
         console.log("Fetched notifications:", response.data.notifications);
         setNotifications(response.data.notifications);
+        console.log("here is the unreadcount", response?.data?.unreadCount);
+        setUnreadCount(response?.data?.unreadCount)
       } catch (error) {
         console.error("Error loading notifications:", error);
       }
     };
 
-    if (user) {
+    if (user && !hasFetched.current) {
       fetchNotifications();
+      hasFetched.current = true;
     }
   }, [user]);
 
   useEffect(() => {
     if (user) {
-      if (!socket.connected) {
-        socket.connect();
-      }
-
-      // Listen for new notifications
-      socket.on('new_notification', (data) => {
+      const handleNewNotification = (data) => {
         console.log("New real-time notification:", data);
         setNotifications((prev) => [data, ...prev]);
-      });
+      };
 
-      // Cleanup on unmount or user change
+      socket.on('new_notification', handleNewNotification);
+
       return () => {
-        socket.off('new_notification');
-        // socket.disconnect(); // Keep socket if other parts use it
-      }
+        socket.off('new_notification', handleNewNotification);
+      };
     }
-  }, [user]);
+  }, []);
 
 
   return (
@@ -167,16 +192,35 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
                         </button>
                       </div>
                     </div>
+                    <div className="flex  items-center gap-1 px-4 py-2 border-b border-gray-100 bg-white overflow-x-auto no-scrollbar scrollbar-hide">
+                      {[
+                        { id: 'all', label: 'All' },
+                        { id: 'statement_request_alert', label: 'Statement Requests' },
+                        { id: 'excuse_alert', label: 'Excuses' },
+                        { id: 'system_alert', label: 'System Alerts' },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setFilter(tab.id)}
+                          className={`whitespace-nowrap px-2.5 py-1 text-[11px] font-medium rounded-md transition-all ${filter === tab.id
+                            ? "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 shadow-sm"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                            }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
 
                     {/* List */}
                     <div className="max-h-72 overflow-y-auto">
-                      {notifications.length === 0 ? (
+                      {filteredNotifications.length === 0 ? (
                         <div className="px-4 py-8 text-center text-sm text-gray-500">
-                          You’re all caught up 🎉
+                          {filter === "all" ? "You’re all caught up 🎉" : "No notifications in this category"}
                         </div>
                       ) : (
-                        <ul className="divide-y divide-gray-100">
-                          {notifications.map((notif, idx) => {
+                        <ul className="divide-y divide-gray-100 mb-4">
+                          {filteredNotifications.map((notif, idx) => {
                             const isRead = notif.read !== undefined ? notif.read : notif.isRead;
                             const title = notif.name || notif.title;
                             const message = notif.msg || notif.message;
@@ -186,13 +230,13 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
                             return (
                               <li
                                 key={notif._id || idx}
-                                className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition"
+                                className="flex items-center gap-3  px-4 py-3 hover:bg-gray-50 transition"
                               >
-                                <div className="relative">
+                                <div className="relative flex">
                                   <img
                                     src={img}
                                     alt={title}
-                                    className="w-10 h-10 p-0.5 rounded-full object-cover ring-1 ring-gray-200"
+                                    className="w-8 h-8 p-0.5 rounded-full object-cover ring-1 ring-gray-200"
                                   />
                                   {!isRead && (
                                     <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-white" />
@@ -200,6 +244,7 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
                                 </div>
 
                                 <div className="min-w-0 flex-1">
+
                                   <p className="text-sm text-gray-700">
                                     <span className="font-semibold text-gray-900">
                                       {title}
@@ -209,6 +254,9 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
                                   <div className="mt-1 text-xs text-gray-500">
                                     {time}
                                   </div>
+                                </div>
+                                <div className="flex items-center justify-center">
+                                  <NotificationActionBadge onDelete={() => handleDeleteNotification(notif._id)} />
                                 </div>
                               </li>
                             );

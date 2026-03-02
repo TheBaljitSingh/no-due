@@ -240,7 +240,7 @@ export default function UserProfile() {
                 </p>
               </div>
             </div>
-            {user.whatsapp.status != "connected" ? (
+            {user?.whatsapp?.status != "connected" ? (
               <div className="flex items-center gap-3">
                 <Link
                   to="/nodue/settings/whatsapp"

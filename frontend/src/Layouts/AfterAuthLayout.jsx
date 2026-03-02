@@ -103,9 +103,9 @@ const AfterAuthLayout = () => {
   });
 
   useEffect(() => {
-    if (!socket.connected) {
-      socket.connect();
-    }
+    if (socket.connected) return;
+
+    socket.connect();
 
     const handleFeedbackUpdate = (data) => {
       console.log("[Global Socket] Feedback update received:", data);
@@ -128,6 +128,8 @@ const AfterAuthLayout = () => {
 
     return () => {
       socket.off("feedback_updated", handleFeedbackUpdate);
+      // Optional: disconnect on logout or layout unmount
+      // socket.disconnect(); 
     };
   }, []);
 

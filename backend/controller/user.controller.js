@@ -1,4 +1,5 @@
 import Transaction from "../model/transaction.model.js";
+import Notification from "../model/notification.model.js";
 import User from "../model/user.model.js";
 import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
@@ -30,6 +31,15 @@ export const registerUser = async (req, res) => {
     const avatar = await generateAvatar(userData?.fname, userData?.lname); // Generate an avatar
     const savedUser = await User.create(userData);
     savedUser.profileImageUrl = avatar;
+
+    //have to create here default notification of type system_alert
+    const notification = await Notification.create({
+      userId: savedUser._id,
+      type: "system_alert",
+      title: "Welcome to No Due",
+      message: "Thank you for registering with No Due. We are happy to have you with us.",
+    });
+
     await savedUser.save();
     savedUser.password = undefined;
     savedUser.createdAt = undefined;

@@ -105,7 +105,7 @@ class ReminderService {
 
 
   /*MANUAL SEND NOW REMINDER*/
-  async sendNow({ transactionId, templateName, variables }) {
+  async sendNow({ transactionId, templateName, variables, reminderId=null }) {
     const transaction = await Transaction
       .findById(transactionId)
       .populate("customerId")
@@ -120,17 +120,26 @@ class ReminderService {
       throw new Error("Cannot send reminder for paid due");
     }
 
-
-    const reminder = await Reminder.create({
-      customerId: transaction.customerId?._id || transaction.customerId,
-      transactionId,
-      reminderType: REMINDER_TYPES.DUE_TODAY, // Defaulting types might need adjustment based on date but caller usually decides templateName
-      whatsappTemplate: { name: templateName, language: "en" },
-      templateVariables: variables,
-      scheduledFor: new Date(),
-      status: "pending",
-      source: "manual",
-    });
+    let reminder;
+    if (reminderId) {
+      reminder = await Reminder.findById(reminderId);
+      if (!reminder) throw new Error("Reminder not found");
+      reminder.whatsappTemplate = { name: templateName, language: "en" };
+      reminder.templateVariables = variables;
+      reminder.scheduledFor = new Date();
+      reminder.source = "manual";
+    } else {
+      reminder = await Reminder.create({
+        customerId: transaction.customerId?._id || transaction.customerId,
+        transactionId,
+        reminderType: REMINDER_TYPES.DUE_TODAY,
+        whatsappTemplate: { name: templateName, language: "en" },
+        templateVariables: variables,
+        scheduledFor: new Date(),
+        status: "pending",
+        source: "manual",
+      });
+    }
 
     try {
       const isInteractive = Object.values(REMINDER_TEMPLATE_NAMES).includes(templateName);
@@ -305,7 +314,7 @@ class ReminderService {
         // console.log("tx", tx);
         //there is not use of this, because i'm not updating the transaction of reminder while manking payment
         const linkedDueTransaction = await Transaction.findById(tx.linkedDueTransaction);
-        if(linkedDueTransaction){
+        if (linkedDueTransaction) {
           tx = linkedDueTransaction;
         }
 

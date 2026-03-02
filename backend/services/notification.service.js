@@ -55,6 +55,13 @@ class NotificationService {
             { new: true }
         );
     }
+
+    async deleteAllNotifications(userId) {
+        return await Notification.updateMany(
+            { userId, isDeleted: false },
+            { $set: { isDeleted: true } }
+        );
+    }
 }
 
 export default new NotificationService();

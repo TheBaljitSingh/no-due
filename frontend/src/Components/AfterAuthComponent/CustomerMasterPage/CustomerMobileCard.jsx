@@ -12,6 +12,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "react-hot-toast";
 import { Download, FileText, Phone } from "lucide-react";
+import CustomerMobileCardSkeleton from "./CustomerMobileCardSkeleton";
 
 // ── Initials avatar ───────────────────────────────────────────────────────────
 const AVATAR_COLORS = [

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { createCustomers } from "../../../utils/service/customerService";
 
 const CustomerCreationPage = ({ paymentTerms }) => {
@@ -24,13 +24,13 @@ const CustomerCreationPage = ({ paymentTerms }) => {
       type: "email",
       placeholder: "Enter email",
     },
-    {
-      name: "currentDue",
-      label: "Current Due Amount",
-      type: "number",
-      disabled: true,
-      placeholder: "₹ 0.00",
-    },
+    // {
+    //   name: "currentDue",
+    //   label: "Current Due Amount",
+    //   type: "number",
+    //   disabled: true,
+    //   placeholder: "₹ 0.00",
+    // },
     {
       name: "gender",
       label: "Gender",

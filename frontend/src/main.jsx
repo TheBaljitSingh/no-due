@@ -5,8 +5,8 @@ import App from "./App.jsx";
 import { BrowserRouter } from "react-router-dom";
 import "flowbite";
 import { Toaster } from "react-hot-toast";
-// import { ToastContainer } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
+// import { ToastContainer } from 'react-hot-toast';
+// import 'react-hot-toast/dist/ReactToastify.css';
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -16,13 +16,12 @@ createRoot(document.getElementById("root")).render(
 
     <Toaster
       position="top-right"
-      autoClose={3000}
-      newestOnTop={false}
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
+      toastOptions={{
+        duration: 3000,
+        style: {
+          borderRadius: "8px",
+        },
+      }}
     />
     {/* <Toaster
       containerId="stackbar"

@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   Loader2,
   KeyRound,
+  Check,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import toast, { ToastBar } from "react-hot-toast";
@@ -255,7 +256,7 @@ export default function UserProfile() {
                   to="/nodue/settings/whatsapp"
                   className="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <LogOut className="w-4 h-4" /> Connect WhatsApp Account
+                  WhatsApp Account Connected <Check className="w-4 h-4" /> 
                 </Link>
               </div>
             )}

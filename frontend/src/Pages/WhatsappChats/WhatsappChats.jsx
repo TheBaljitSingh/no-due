@@ -12,7 +12,7 @@ import {
   getChatHistory,
 } from "../../utils/service/whatsappService.js";
 import { useAuth } from ".././../context/AuthContext.jsx";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 export default function WhatsappChats() {
   const socketRef = useRef(socket); // Use shared socket instance

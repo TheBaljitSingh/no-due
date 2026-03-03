@@ -59,6 +59,7 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, read: true, isRead: true }))
       );
+      setUnreadCount(0);
     } catch (error) {
       console.error("Failed to mark notifications as read", error);
     }
@@ -66,16 +67,15 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
 
   const handleDeleteNotification = async (id) => {
     try {
-      notificationService.deleteNotification(id);
-      // await toast.promise(
-      // i have use function call here so toast will work like promise of api
-      //   {
-      //     pending: 'Deleting notification...',
-      //     success: 'Notification deleted successfully 👌',
-      //     error: 'Failed to delete notification 🤯'
-      //   }
-      // );
+      const notificationToDelete = notifications.find(n => n._id === id);
+      const isUnread = notificationToDelete && !(notificationToDelete.read || notificationToDelete.isRead);
+
+      await notificationService.deleteNotification(id);
+
       setNotifications((prev) => prev.filter((n) => n._id !== id));
+      if (isUnread) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
     } catch (error) {
       console.error("Failed to delete notification", error);
     }
@@ -112,6 +112,7 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
       const handleNewNotification = (data) => {
         console.log("New real-time notification:", data);
         setNotifications((prev) => [data, ...prev]);
+        setUnreadCount((prev) => prev + 1);
       };
 
       socket.on('new_notification', handleNewNotification);

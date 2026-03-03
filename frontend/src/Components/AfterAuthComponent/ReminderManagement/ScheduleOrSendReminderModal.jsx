@@ -28,9 +28,9 @@ export default function ScheduleOrSendReminderModal({
 
   // User's configured template names
   const [configuredTemplates, setConfiguredTemplates] = useState({
-    beforeDue: 'interactive_before_due',
-    dueToday: 'interactive_due_today',
-    overdue: 'interactive_overdue'
+    beforeDue: { name: 'interactive_before_due', language: 'en' },
+    dueToday: { name: 'interactive_due_today', language: 'en' },
+    overdue: { name: 'interactive_overdue', language: 'en' }
   });
 
 
@@ -86,32 +86,42 @@ export default function ScheduleOrSendReminderModal({
 
     console.log("configuredTemplates", configuredTemplates);
 
-    if (selectedTransaction && configuredTemplates  ) { // removed this part && configuredTemplates
+    if (selectedTransaction && configuredTemplates) {
       const dueDate = new Date(selectedTransaction.dueDate);
-      const today = new Date();
+      console.log("dueDate", dueDate);
 
-      console.log("due data", dueDate);
-      console.log("due data",dueDate);
+      // Use scheduleDate as the reference date when in schedule mode,
+      // otherwise fall back to today's date
+      let referenceDate;
+      if (mode === "schedule" && scheduleDate) {
+        referenceDate = new Date(scheduleDate);
+        console.log("Using scheduleDate as reference:", referenceDate);
+      } else {
+        referenceDate = new Date();
+        console.log("Using today as reference:", referenceDate);
+      }
 
       // Normalize dates to compare only date part (not time)
       dueDate.setHours(0, 0, 0, 0);
-      today.setHours(0, 0, 0, 0);
+      referenceDate.setHours(0, 0, 0, 0);
+      console.log("dueDate after setHours", dueDate);
+      console.log("referenceDate after setHours", referenceDate);
 
       let autoTemplate;
-      if (dueDate > today) {
-        // Due date is in the future - use configured beforeDue template
-        autoTemplate =  configuredTemplates?.beforeDue?.name  ||'interactive_before_due';
-      } else if (dueDate.getTime() === today.getTime()) {
-        // Due date is today - use configured dueToday template
-        autoTemplate = configuredTemplates?.dueToday?.name ||'interactive_due_today'; 
+      if (dueDate > referenceDate) {
+        // Due date is after the reference date - use beforeDue template
+        autoTemplate = configuredTemplates?.beforeDue?.name || 'interactive_before_due';
+      } else if (dueDate.getTime() === referenceDate.getTime()) {
+        // Due date matches the reference date - use dueToday template
+        autoTemplate = configuredTemplates?.dueToday?.name || 'interactive_due_today';
       } else {
-        // Due date has passed (overdue) - use configured overdue template
+        // Due date is before the reference date (overdue) - use overdue template
         autoTemplate = configuredTemplates?.overdue?.name || 'interactive_overdue';
       }
 
       setTemplate(autoTemplate);
     }
-  }, [selectedTransaction, configuredTemplates]);
+  }, [selectedTransaction, configuredTemplates, scheduleDate, mode]);
 
   // ----------------------------------
   // EFFECTS: Fetch Data
@@ -315,31 +325,31 @@ export default function ScheduleOrSendReminderModal({
                     {transactions.map((tx) => (
                       tx.remainingDue > 0 && (
                         //only showing if remaining due is greater than 0
-                      <div
-                        key={tx._id}
-                        onClick={() => handleSelectTransaction(tx)}
-                        className={`cursor-pointer rounded-xl border p-4 transition-all hover:shadow-md 
+                        <div
+                          key={tx._id}
+                          onClick={() => handleSelectTransaction(tx)}
+                          className={`cursor-pointer rounded-xl border p-4 transition-all hover:shadow-md 
                                       ${selectedTransaction?._id === tx._id
-                            ? "border-green-500 bg-green-50 ring-1 ring-green-500"
-                            : "border-gray-200 hover:border-green-200"
-                          }
+                              ? "border-green-500 bg-green-50 ring-1 ring-green-500"
+                              : "border-gray-200 hover:border-green-200"
+                            }
                                   `}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <span className="text-lg font-bold text-gray-800">₹{tx?.remainingDue}</span>
-                            {/* You can add more badges here if tx logic requires it */}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <span className="text-lg font-bold text-gray-800">₹{tx?.remainingDue}</span>
+                              {/* You can add more badges here if tx logic requires it */}
+                            </div>
+                            <div className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                              {formatDate(tx.createdAt)}
+                            </div>
                           </div>
-                          <div className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {formatDate(tx.createdAt)}
-                          </div>
-                        </div>
 
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Calendar size={14} />
-                          <span>Due: {formatDate(tx.dueDate)}</span>
-                        </div>
-                      </div>)
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar size={14} />
+                            <span>Due: {formatDate(tx.dueDate)}</span>
+                          </div>
+                        </div>)
                     ))}
                   </div>
                 )}
@@ -352,76 +362,76 @@ export default function ScheduleOrSendReminderModal({
                ------------------------------------------------------------- */}
 
 
-           <div className="col-span-1 md:col-span-5 flex flex-col bg-gray-50/30 h-full min-h-0">
+            <div className="col-span-1 md:col-span-5 flex flex-col bg-gray-50/30 h-full min-h-0">
 
-  {/* ================= HEADER ================= */}
-  <div className="border-b px-6 py-4 flex items-center gap-2 shrink-0">
-    <h3 className="font-semibold text-gray-700">Preview & Send</h3>
-  </div>
+              {/* ================= HEADER ================= */}
+              <div className="border-b px-6 py-4 flex items-center gap-2 shrink-0">
+                <h3 className="font-semibold text-gray-700">Preview & Send</h3>
+              </div>
 
 
-  {/* ================= SCROLLABLE AREA ================= */}
-  <div className="flex-1 overflow-y-auto p-6 min-h-0">
+              {/* ================= SCROLLABLE AREA ================= */}
+              <div className="flex-1 overflow-y-auto p-6 min-h-0">
 
-    {!selectedTransaction ? (
-      <div className="flex h-full flex-col items-center justify-center text-gray-400 gap-3">
-        <Send size={48} className="opacity-20" />
-        <p className="text-sm">Select a transaction to proceed</p>
-      </div>
-    ) : (
-      <div className="space-y-6">
+                {!selectedTransaction ? (
+                  <div className="flex h-full flex-col items-center justify-center text-gray-400 gap-3">
+                    <Send size={48} className="opacity-20" />
+                    <p className="text-sm">Select a transaction to proceed</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
 
-        {/* Mode Selection */}
-        <div className="rounded-xl border bg-white p-1 shadow-sm">
-          <div className="grid grid-cols-2 gap-1">
-            <button
-              onClick={() => setMode("schedule")}
-              className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all
+                    {/* Mode Selection */}
+                    <div className="rounded-xl border bg-white p-1 shadow-sm">
+                      <div className="grid grid-cols-2 gap-1">
+                        <button
+                          onClick={() => setMode("schedule")}
+                          className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all
                 ${mode === "schedule"
-                  ? "bg-green-600 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50"
-                }`}
-            >
-              <Calendar size={16} /> Schedule
-            </button>
+                              ? "bg-green-600 text-white shadow-sm"
+                              : "text-gray-600 hover:bg-gray-50"
+                            }`}
+                        >
+                          <Calendar size={16} /> Schedule
+                        </button>
 
-            <button
-              onClick={() => setMode("now")}
-              className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all
+                        <button
+                          onClick={() => setMode("now")}
+                          className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all
                 ${mode === "now"
-                  ? "bg-green-600 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50"
-                }`}
-            >
-              <Send size={16} /> Send Now
-            </button>
-          </div>
-        </div>
+                              ? "bg-green-600 text-white shadow-sm"
+                              : "text-gray-600 hover:bg-gray-50"
+                            }`}
+                        >
+                          <Send size={16} /> Send Now
+                        </button>
+                      </div>
+                    </div>
 
-        {mode === "schedule" && (
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Schedule Date
-            </label>
-            <input
-              type="datetime-local"
-              value={scheduleDate}
-              onChange={(e) => setScheduleDate(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
-            />
-          </div>
-        )}
+                    {mode === "schedule" && (
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Schedule Date
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={scheduleDate}
+                          onChange={(e) => setScheduleDate(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                        />
+                      </div>
+                    )}
 
-        {/* Template */}
+                    {/* Template */}
 
-        {scheduleDate && <>
-        
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Template
-          </label>
+                    {scheduleDate && <>
 
-          {/* <select
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Template
+                        </label>
+
+                        {/* <select
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
             className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
@@ -433,54 +443,54 @@ export default function ScheduleOrSendReminderModal({
               </option>
             ))}
           </select> */}
-          <p className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" >
-            {template}
-          </p>
-        </div>
+                        <p className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" >
+                          {template}
+                        </p>
+                      </div>
 
-        {/* Preview */}
-        <div>
-          <label className="mb-2 block text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Message Preview
-          </label>
+                      {/* Preview */}
+                      <div>
+                        <label className="mb-2 block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Message Preview
+                        </label>
 
-          <div className="relative rounded-xl border border-gray-200 bg-white max-h-48">
-            <div className="absolute top-0 left-0 h-1 w-full bg-green-500"></div>
-            <div className="p-4 max-h-40 overflow-y-auto">
-              <div className="whitespace-pre-line text-sm text-gray-700 leading-relaxed">
-                {previewMessage}
+                        <div className="relative rounded-xl border border-gray-200 bg-white max-h-48">
+                          <div className="absolute top-0 left-0 h-1 w-full bg-green-500"></div>
+                          <div className="p-4 max-h-40 overflow-y-auto">
+                            <div className="whitespace-pre-line text-sm text-gray-700 leading-relaxed">
+                              {previewMessage}
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 p-2 text-center text-[10px] text-gray-400 uppercase tracking-widest border-t">
+                            WhatsApp Preview
+                          </div>
+                        </div>
+                      </div>
+
+                    </>}
+
+
+
+                  </div>
+                )}
               </div>
+
+
+              {/* ================= FIXED FOOTER ================= */}
+              {selectedTransaction && (
+                <div className="border-t bg-white p-4 shrink-0">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!selectedTransaction || (mode === "schedule" && !scheduleDate)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white shadow-lg shadow-green-200 transition-all hover:scale-[1.02] hover:bg-green-700 disabled:opacity-50"
+                  >
+                    <Send size={18} />
+                    {mode === "now" ? "Send Reminder Now" : "Schedule Reminder"}
+                  </button>
+                </div>
+              )}
+
             </div>
-            <div className="bg-gray-50 p-2 text-center text-[10px] text-gray-400 uppercase tracking-widest border-t">
-              WhatsApp Preview
-            </div>
-          </div>
-        </div>
-
-</>}
-
-
-
-      </div>
-    )}
-  </div>
-
-
-  {/* ================= FIXED FOOTER ================= */}
-  {selectedTransaction && (
-    <div className="border-t bg-white p-4 shrink-0">
-      <button
-        onClick={handleSubmit}
-        disabled={!selectedTransaction || (mode === "schedule" && !scheduleDate)}
-        className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white shadow-lg shadow-green-200 transition-all hover:scale-[1.02] hover:bg-green-700 disabled:opacity-50"
-      >
-        <Send size={18} />
-        {mode === "now" ? "Send Reminder Now" : "Schedule Reminder"}
-      </button>
-    </div>
-  )}
-
-</div>
 
 
 

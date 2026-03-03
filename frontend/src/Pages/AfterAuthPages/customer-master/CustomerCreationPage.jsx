@@ -31,17 +31,17 @@ const CustomerCreationPage = ({ paymentTerms }) => {
     //   disabled: true,
     //   placeholder: "₹ 0.00",
     // },
-    {
-      name: "gender",
-      label: "Gender",
-      type: "select",
-      options: [
-        { label: "Select gender", value: "" },
-        { label: "Male", value: "male" },
-        { label: "Female", value: "female" },
-      ],
-      required: true,
-    },
+    // {
+    //   name: "gender",
+    //   label: "Gender",
+    //   type: "select",
+    //   options: [
+    //     { label: "Select gender", value: "" },
+    //     { label: "Male", value: "male" },
+    //     { label: "Female", value: "female" },
+    //   ],
+    //   required: true,
+    // },
     {
       name: "paymentTerm",
       label: "Payment Term",
@@ -85,36 +85,32 @@ const CustomerCreationPage = ({ paymentTerms }) => {
     try {
       setLoading(true);
 
-      await createCustomers({
-        ...formData,
-        currentDue: Number(formData.currentDue) || 0,
-      });
-
-      console.log("Submitting:", formData);
-
-      toast.success("Customer created successfully");
-      setFormData(initialFormData); // reset form
-    } catch (error) {
-      const errors = error?.response?.data?.errors;
-      if (errors) {
-        const formattedErrors = Object.entries(errors).map(
-          ([field, message]) => {
-            if (message.includes("Cast to ObjectId failed")) {
-              return "Please select a valid payment term";
+      await toast.promise(
+        createCustomers({
+          ...formData,
+          currentDue: Number(formData.currentDue) || 0,
+        }),
+        {
+          loading: "Creating customer...",
+          success: "Customer created successfully",
+          error: (error) => {
+            const errors = error?.response?.data?.errors;
+            if (errors) {
+              const formatted = Object.entries(errors).map(([field, message]) => {
+                if (message.includes("Cast to ObjectId failed")) return "Please select a valid payment term";
+                if (message.includes("is not a valid enum value")) return `Please select a valid ${field}`;
+                return message;
+              });
+              return formatted[0];
             }
-
-            if (message.includes("is not a valid enum value")) {
-              return `Please select a valid ${field}`;
-            }
-
-            return message; // fallback
+            return "Failed to create customer";
           },
-        );
+        }
+      );
 
-        toast.error(formattedErrors[0]); // show first error
-      } else {
-        toast.error("Failed to create customer");
-      }
+      setFormData(initialFormData);
+    } catch (error) {
+      console.log(error);
     } finally {
       setLoading(false);
     }

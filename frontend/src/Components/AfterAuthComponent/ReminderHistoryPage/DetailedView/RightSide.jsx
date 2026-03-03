@@ -54,62 +54,68 @@ const RightSide = memo(({ setDetailedView, setSelectedCustomer, imgFor, selected
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6 flex-shrink-0">
+          <div className="grid grid-cols-3 gap-3 mt-6 flex-shrink-0">
             <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
-              <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total</div>
-              <div className="text-2xl font-semibold text-blue-900 mt-1">{selectedCustomer?.summary?.totalReminders || 0}</div>
+              <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Reminders</div>
+              <div className="text-2xl font-semibold text-blue-900 mt-1">{(selectedCustomer?.summary?.totalSent || 0)+(selectedCustomer?.summary?.totalFailed ||0) }</div>
             </div>
             <div className="rounded-lg bg-green-50 border border-green-100 p-3">
-              <div className="text-xs font-medium text-green-600 uppercase tracking-wide">Pending</div>
-              <div className="text-2xl font-semibold text-green-900 mt-1">{selectedCustomer?.summary?.totalPending || 0}</div>
+              <div className="text-xs font-medium text-green-600 uppercase tracking-wide">Sent</div>
+              <div className="text-2xl font-semibold text-green-900 mt-1">{selectedCustomer?.summary?.totalSent || 0}</div>
             </div>
-            <div className="rounded-lg bg-purple-50 border border-purple-100 p-3">
-              <div className="text-xs font-medium text-purple-600 uppercase tracking-wide">Sent</div>
-              <div className="text-2xl font-semibold text-purple-900 mt-1">{selectedCustomer?.summary?.stotalSent || 0}</div>
+            <div className="rounded-lg bg-red-50 border border-red-100 p-3">
+              <div className="text-xs font-medium text-red-600 uppercase tracking-wide">Failed</div>
+              <div className="text-2xl font-semibold text-red-900 mt-1">{selectedCustomer?.summary?.totalFailed || 0}</div>
             </div>
-            {/* <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
-              <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">Last Active</div>
-              <div className="text-sm font-semibold text-gray-900 mt-1">Oct 14, 2025</div>
-            </div> */}
           </div>
 
           {/* Timeline / table */}
           <div className="mt-6 flex-1 min-h-0 flex flex-col">
             <h4 className="text-sm font-semibold text-gray-900 mb-3 flex-shrink-0">Reminder Timeline</h4>
             <div className="overflow-hidden rounded-lg border border-gray-200 flex-1 overflow-y-auto">
-              <table className="min-w-full bg-white text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Channel</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Due Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {selectedCustomer?.history?.map((r) => (
-                    <tr key={r?._id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{formatDate(r?.createdAt)}</td>
-                      <td className="px-4 py-3 text-gray-700">{r?.channel || 'WhatsApp'} </td>
-                      <td className="px-4 py-3 text-gray-700">₹{r?.dueAmount || '0'} </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${r.status === 'Delivered'
-                            ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
-                            : r.status === 'Seen'
-                              ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
-                              : r.status === 'Answered'
-                                ? 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20'
-                                : 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20'
-                            }`}
-                        >
-                          {r?.status}
-                        </span>
-                      </td>
+              {selectedCustomer?.history?.length > 0 ? (
+                <table className="min-w-full bg-white text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Channel</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Due Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {selectedCustomer?.history?.map((r) => (
+                      <tr key={r?._id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{new Date(r?.sentAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</td>
+                        <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{r?.whatsappTemplate?.name}</td>
+                        <td className="px-4 py-3 text-gray-700">{r?.channel || 'WhatsApp'} </td>
+                        <td className="px-4 py-3 text-gray-700">₹{r?.dueAmount || '0'} </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${r.status === 'Delivered'
+                              ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
+                              : r.status === 'Seen'
+                                ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
+                                : r.status === 'Answered'
+                                  ? 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20'
+                                  : 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20'
+                              }`}
+                          >
+                            {r?.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Send className="w-10 h-10 text-gray-300 mb-3" />
+                  <p className="text-sm font-medium text-gray-500">No reminder history yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Sent reminders will appear here</p>
+                </div>
+              )}
             </div>
           </div>
 

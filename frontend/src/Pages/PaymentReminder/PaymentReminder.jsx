@@ -1,4 +1,4 @@
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import PaymentReminderTemplateCreationModel from "../../Components/AfterAuthComponent/PaymentReminder/PaymentReminderTemplateCreationModel";
 import {
@@ -9,13 +9,15 @@ import {
 } from "../../utils/service/paymentTermService";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
+import ConfirmModal from "../../Components/AfterAuthComponent/CustomerMasterPage/ConfirmModal";
 
 export default function PaymentReminder() {
   const [globalTerms, setGlobalTerms] = useState([]);
   const [customTerms, setCustomTerms] = useState([]);
   const { user } = useAuth();
   const [editingTerm, setEditingTerm] = useState();
-  const [deletePaymentTerm, setPaymentTerm] = useState();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [toBeDeletedId, setToBeDeletedId] = useState(null);
 
   const [showTemplateCreationModal, setShowTemplateCreationModal] =
     useState(false);
@@ -59,46 +61,56 @@ export default function PaymentReminder() {
   }, [showTemplateCreationModal]);
 
   const handleCreationSubmit = async (payload) => {
-    // dout can i make it async?
     console.log("payload", payload);
 
-    try {
-      if (editingTerm) {
-        const res = await updatePaymentTerms(editingTerm._id, payload);
+    const action = editingTerm
+      ? updatePaymentTerms(editingTerm._id, payload)
+      : createPaymentTerms(payload);
 
+    try {
+      const res = await toast.promise(action, {
+        loading: editingTerm ? "Updating..." : "Creating...",
+        success: editingTerm ? "Payment term updated" : "Payment term created",
+        error: (err) => err?.response?.data?.message || "Operation failed",
+      });
+
+      if (editingTerm) {
         setCustomTerms((prev) =>
           prev.map((t) =>
             t._id === editingTerm._id ? res.data.paymentTerm : t,
           ),
         );
-        toast.success("Payment term updated");
       } else {
-        const res = await createPaymentTerms(payload);
-
-        //have to update the res
         setCustomTerms((prev) => [...prev, res.data.paymentTerm]);
-        toast.success("Payment term created");
       }
 
       setEditingTerm(null);
       setShowTemplateCreationModal(false);
     } catch (error) {
       console.log(error);
-      toast.error("Operation failed");
+      // toast.promise already showed the error, dialog stays open
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this payment term?")) return;
+  const handleDeleteClick = (id) => {
+    setToBeDeletedId(id);
+    setConfirmOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
     try {
-      await deletePaymentTerms(id);
+      await toast.promise(deletePaymentTerms(toBeDeletedId), {
+        loading: "Deleting...",
+        success: "Payment term deleted",
+        error: (err) => err?.response?.data?.message || "Failed to delete",
+      });
 
-      setCustomTerms((prev) => prev.filter((t) => t._id !== id));
-      toast.success("Payment term deleted");
+      setCustomTerms((prev) => prev.filter((t) => t._id !== toBeDeletedId));
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete");
+    } finally {
+      setConfirmOpen(false);
+      setToBeDeletedId(null);
     }
   };
 
@@ -186,7 +198,7 @@ export default function PaymentReminder() {
                     </button>
 
                     <button
-                      onClick={() => handleDelete(term._id)}
+                      onClick={() => handleDeleteClick(term._id)}
                       className="text-black hover:underline hover:text-red-500"
                     >
                       Delete
@@ -208,6 +220,14 @@ export default function PaymentReminder() {
             handleSubmit={handleCreationSubmit}
           />
         </div>
+      )}
+      {confirmOpen && (
+        <ConfirmModal
+          open={confirmOpen}
+          onClose={() => { setConfirmOpen(false); setToBeDeletedId(null); }}
+          onConfirm={handleDeleteConfirm}
+          message="Are you sure you want to delete this payment term?"
+        />
       )}
     </div>
   );

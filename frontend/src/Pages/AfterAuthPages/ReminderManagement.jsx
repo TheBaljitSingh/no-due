@@ -16,7 +16,13 @@ import { FaWhatsapp } from "react-icons/fa";
 export default function ReminderManagement() {
 
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [tab, setTab] = useState("all");
+
+  // Reset page to 1 whenever tab changes
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, [tab]);
   const [q, setQ] = useState("");
   const [bulk, setBulk] = useState(new Set());
   const [openNew, setOpenNew] = useState(false);
@@ -42,6 +48,7 @@ export default function ReminderManagement() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toBedeletedReminder, setToBeDeletedReminder] = useState();
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   const fetchReminders = useCallback(async () => {
@@ -85,12 +92,12 @@ export default function ReminderManagement() {
     async function run() {
       try {
         setLoading(true);
-        // await new Promise(resolve=>setTimeout(resolve, 3000)); testing
         await fetchReminders();
       } catch (error) {
         console.log(error);
       } finally {
         setLoading(false);
+        setInitialLoading(false);
       }
     }
 
@@ -150,39 +157,31 @@ export default function ReminderManagement() {
     const { userId, templateName, mode, scheduleDate, transactionId, variables } = data;
 
     if (mode === 'schedule') {
-      //call to schedule api
-      const apiData = {};
-      apiData.transactionId = transactionId;
-      apiData.scheduledFor = scheduleDate;
-      apiData.templateName = templateName;
-      apiData.variables = variables;
+      const apiData = { transactionId, scheduledFor: scheduleDate, templateName, variables };
 
       try {
-        const response = await scheduleReminder(apiData);
-        toast.success("reminder scheduled ");
+        await toast.promise(scheduleReminder(apiData), {
+          loading: "Scheduling...",
+          success: "Reminder scheduled!",
+          error: (err) => err?.response?.data?.errors?.[0] || err?.message || "Error while scheduling",
+        });
         setOpenNew(false);
-
       } catch (error) {
         console.log(error);
-        toast.error(error.response.data.errors[0] || error.message || "error while scheduling");
-
       }
 
     } else {
-      //send now
-      const apiData = {};
-      apiData.transactionId = transactionId;
-      apiData.templateName = templateName;
-      apiData.variables = variables
-      try {
-        const response = await sendReminderNow(apiData);
-        // console.log(response);
-        toast.success("reminder sent!");
-        setOpenNew(false);
+      const apiData = { transactionId, templateName, variables };
 
+      try {
+        await toast.promise(sendReminderNow(apiData), {
+          loading: "Sending...",
+          success: "Reminder sent!",
+          error: (err) => err?.response?.data?.errors?.[0] || err?.message || "Error while sending",
+        });
+        setOpenNew(false);
       } catch (error) {
         console.log(error);
-        toast.error(error.response.data.errors[0] || error.message || "error while sending");
       }
     }
 
@@ -230,16 +229,19 @@ export default function ReminderManagement() {
     }
   };
 
-  const handleBulkDelete = async () => {
-    const confirm = window.confirm(`Delete ${bulk.size} reminders?`);
-    if (!confirm) return;
+  const handleBulkDelete = () => {
+    setBulkDeleteConfirmOpen(true);
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    setBulkDeleteConfirmOpen(false);
     try {
       setBulkActionLoading(true);
       const ids = Array.from(bulk);
       await toast.promise(
         bulkDeleteReminders(ids),
         {
-          pending: 'Deleting reminders...',
+          loading: 'Deleting reminders...',
           success: 'Reminders deleted successfully',
           error: 'Failed to delete reminders'
         }
@@ -281,16 +283,19 @@ export default function ReminderManagement() {
         toast.error("Invalid reminder");
         return;
       }
-      const res = await deleteReminder(id);
+      const res = await toast.promise(deleteReminder(id), {
+        loading: "Deleting...",
+        success: "Reminder Deleted",
+        error: (err) => (err?.message) || "Failed to delete Reminder"
+      })
+
       if (res?.success) {
-        toast.success("Reminder deleted successfully");
         setData(prev => prev.filter(r => r._id !== id));
       } else {
-        toast.error(res?.message || "Failed to delete reminder");
+        console.log(res?.message);
       }
     } catch (error) {
       console.error("Delete reminder error:", error);
-      toast.error(error?.response?.data?.message || "Something went wrong");
     }
     setConfirmOpen(false);
     setToBeDeletedReminder(null);
@@ -307,7 +312,7 @@ export default function ReminderManagement() {
   };
 
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
@@ -508,7 +513,7 @@ export default function ReminderManagement() {
                     <td className="px-6 py-4 text-gray-900 font-semibold text-sm">{currency2(r.dueAmount)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-gray-700 text-sm">
-                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        {/* <Calendar className="w-3.5 h-3.5 text-gray-400" /> */}
                         <span className="text-xs">{new Date(r.sendAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
                       </div>
                     </td>
@@ -576,6 +581,7 @@ export default function ReminderManagement() {
       {drawer && <EditDrawer reminder={drawer} onClose={() => setDrawer(null)} onDeleteSuccess={handleDrawerDeleteSuccess} onRescheduleSuccess={handleDrawerRescheduleSuccess} />}
       {auditCustomer && <AuditDrawer customer={auditCustomer} onClose={() => setAuditCustomer(null)} />}
       {confirmOpen && <ConfirmModal open={confirmOpen} onClose={() => { setConfirmOpen(false); setToBeDeletedReminder(null); }} onConfirm={() => handleDeleteReminder(toBedeletedReminder)} message="Are you sure you want to delete this reminder?" />}
+      {bulkDeleteConfirmOpen && <ConfirmModal open={bulkDeleteConfirmOpen} onClose={() => setBulkDeleteConfirmOpen(false)} onConfirm={handleBulkDeleteConfirm} message={`Are you sure you want to delete ${bulk.size} reminder${bulk.size > 1 ? 's' : ''}?`} />}
       {rescheduleOpen && <BulkRescheduleModal open={rescheduleOpen} onClose={() => setRescheduleOpen(false)} onConfirm={handleBulkReschedule} count={bulk.size} />}
     </div>
   );

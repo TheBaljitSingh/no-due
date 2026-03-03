@@ -155,11 +155,11 @@ export const SidebarFeatures = [
         icon: "ReminderIcon",
         path: "reminder-management",
       },
-      {
-        name: "Templates",
-        icon: "BookIcon",
-        path: "reminder-templates",
-      },
+      // {
+      //   name: "Templates",
+      //   icon: "BookIcon",
+      //   path: "reminder-templates",
+      // },
       {
         name: "Reminder History",
         icon: "HistoryIcon",

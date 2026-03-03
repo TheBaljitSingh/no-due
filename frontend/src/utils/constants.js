@@ -200,7 +200,7 @@ export const SideBarCTC = [
 
 export const TableHeaders = [
   "Id",
-  "Customer Name",
+  "Company Name",
   "Phone Number",
   "Due",
   "LastReminder",

@@ -65,8 +65,8 @@ const customerSchema = new Schema({
     },
     gender: {
         type: String,
-        enum: ["male", "female", "other"],
-        default: "other",
+        enum: ["male", "female", "other","unknown"],
+        default: "unknown",
     },
     CustomerOfComapny: {
         type: Types.ObjectId,

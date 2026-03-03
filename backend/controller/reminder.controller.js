@@ -320,9 +320,6 @@ export const getCustomerReminderHistory = async (req, res) => {
               $group: {
                 _id: null,
                 totalReminders: { $sum: 1 },
-                totalPending: {
-                  $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] }
-                },
                 totalSent: {
                   $sum: { $cond: [{ $eq: ["$status", "sent"] }, 1, 0] }
                 },
@@ -335,17 +332,21 @@ export const getCustomerReminderHistory = async (req, res) => {
 
           history: [
             {
+              $match: { status: "sent" }
+            },
+            {
               $project: {
                 _id: 1,
                 channel: 1,
                 status: 1,
                 templateName: 1,
                 sentAt: 1,
+                "whatsappTemplate.name": 1,
                 createdAt: 1,
                 dueAmount: "$txn.amount"
               }
             },
-            { $sort: { createdAt: -1 } }
+            { $sort: { sentAt: -1 } }
           ]
         }
       }

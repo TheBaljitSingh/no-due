@@ -193,17 +193,21 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
     fetchCustomers();
   }, [page, debounceQuery]);
 
-  // Socket updates
+  //for the socket data
   useEffect(() => {
-    if (!socket.connected) socket.connect();
-    socket.on("feedback_updated", (data) => {
-      setCustomers((prev) =>
-        prev.map((c) =>
-          c.mobile === data.mobile ? { ...c, feedback: data?.feedback } : c,
-        ),
-      );
-    });
-  }, []);
+    //for the listening not required to check the connection, becauset it is handleed on client side, for emmiting check first is required
+    const handleFeedbackUpdate = (data) => {
+      // Update UI state here
+      setCustomers(prev => prev.map(c => c.mobile === data.mobile ? { ...c, feedback: data?.feedback } : c));
+    };
+
+
+    socket.on('feedback_updated', handleFeedbackUpdate);
+
+    return () => {
+      socket.off('feedback_updated', handleFeedbackUpdate);
+    };
+  }, [socket]);
 
   const handleEditCustomer = (customer) => {
     setCurrentCustomer(
@@ -217,15 +221,18 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
   };
 
   const handleEditSubmit = async () => {
-    const response = await updatecustomer(currentCustomer._id, currentCustomer);
-    if (response.status === 200) {
-      toast.success("Customer updated");
+    try {
+      const response = await toast.promise(updatecustomer(currentCustomer._id, currentCustomer), {
+        loading: "Updating...",
+        success: "Customer updated",
+        error: (err) => err?.response?.data?.message || "Error while updating",
+      });
       setCustomers((prev) =>
         prev.map((c) => (c._id === currentCustomer._id ? response.data : c)),
       );
       setShowEditModal(false);
-    } else {
-      toast.error("Error while updating");
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -235,30 +242,33 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
   };
 
   const handleConfirmDelete = async () => {
-    const res = await deleteCustomerById(deletingId);
-    if (res.success) {
-      setDeletedCustomerId(deletingId);
-      setTimeout(() => {
-        const updatedCustomers = customers.filter((c) => c._id !== deletingId);
-        const newTotalCount = totalCustomers - 1;
-        setTotalCustomers(newTotalCount);
+    try {
+      const res = await toast.promise(deleteCustomerById(deletingId), {
+        loading: "Deleting...",
+        success: "Customer deleted",
+        error: (err) => err?.response?.data?.message || "Error while deleting",
+      });
+      if (res.success) {
+        setDeletedCustomerId(deletingId);
+        setTimeout(() => {
+          const updatedCustomers = customers.filter((c) => c._id !== deletingId);
+          const newTotalCount = totalCustomers - 1;
+          setTotalCustomers(newTotalCount);
 
-        if (updatedCustomers.length === 0 && newTotalCount > 0) {
-          // If the page is now empty but there are more customers
-          if (page > 1) {
-            setPage((prev) => prev - 1);
+          if (updatedCustomers.length === 0 && newTotalCount > 0) {
+            if (page > 1) {
+              setPage((prev) => prev - 1);
+            } else {
+              fetchCustomers();
+            }
           } else {
-            // On page 1, manually refetch to bring items from next page
-            fetchCustomers();
+            setCustomers(updatedCustomers);
           }
-        } else {
-          setCustomers(updatedCustomers);
-        }
-        setDeletingId(null);
-      }, 300);
-      toast.success("Customer deleted");
-    } else {
-      toast.error(res?.error || "Error while deleting");
+          setDeletingId(null);
+        }, 300);
+      }
+    } catch (error) {
+      console.error(error);
     }
     setConfirmOpen(false);
   };
@@ -509,9 +519,8 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
               {TableHeaders.map((h, i) => (
                 <th
                   key={i}
-                  className={`py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap ${
-                    i === 0 ? "pl-3 pr-1 w-6" : "px-3"
-                  }`}
+                  className={`py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap ${i === 0 ? "pl-3 pr-1 w-6" : "px-3"
+                    }`}
                 >
                   {h}
                 </th>
@@ -609,11 +618,10 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
-            className={`px-4 py-2 rounded-lg border ${
-              page === 1
+            className={`px-4 py-2 rounded-lg border ${page === 1
                 ? "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
                 : "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
-            }`}
+              }`}
           >
             ← Prev
           </button>
@@ -624,11 +632,10 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
           <button
             disabled={page === totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className={`px-4 py-2 rounded-lg border ${
-              page === totalPages
+            className={`px-4 py-2 rounded-lg border ${page === totalPages
                 ? "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
                 : "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
-            }`}
+              }`}
           >
             Next →
           </button>

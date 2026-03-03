@@ -18,7 +18,7 @@ export default function ConfirmModal({ open, onClose, onConfirm, message }) {
 
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-lg border border-gray-300 bg-red-200 text-gray-700 hover:bg-red-100"
+            className="px-4 py-2 rounded-lg border border-gray-300 bg-red-500 text-gray-800 hover:bg-red-400"
           >
             Delete
           </button>

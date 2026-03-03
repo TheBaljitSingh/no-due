@@ -75,6 +75,13 @@ export default function PreviewCustomerModal({
     }
   }, [data.length]);
 
+  const columnLabelMap = {
+  name: "Company Name",
+  email: "Email Address",
+  mobile: "mobile Number",
+  };
+
+  //have to map here
   const headers = data.length > 0 ? Object.keys(data[0]) : [];
 
   const filteredIndices = useMemo(() => {
@@ -128,8 +135,8 @@ export default function PreviewCustomerModal({
   };
 
   const dropdownFields = {
-    gender: ["male", "female", "other"],
-    status: ["Due", "Overdue", "Pending"],
+    gender: ["male", "female", "other",'unknown'],
+    status: ["Due", "Overdue"],
   };
 
   const allFilteredSelected =
@@ -238,7 +245,7 @@ export default function PreviewCustomerModal({
                       key={i}
                       className={`px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 whitespace-nowrap ${i === headers.length - 1 ? "rounded-tr-lg" : ""}`}
                     >
-                      {h}
+                      {columnLabelMap[h] || h}
                     </th>
                   ))}
                 </tr>

@@ -13,6 +13,7 @@ import autoTable from "jspdf-autotable";
 import { toast } from "react-hot-toast";
 import { Download, FileText, Phone } from "lucide-react";
 import CustomerMobileCardSkeleton from "./CustomerMobileCardSkeleton";
+import { socket } from "../../../socket/index.js";
 
 // ── Initials avatar ───────────────────────────────────────────────────────────
 const AVATAR_COLORS = [
@@ -153,6 +154,22 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
     };
     fetchCustomers();
   }, [page, limit, debounceQuery]);
+
+  useEffect(() => {
+    const handleFeedbackUpdate = (data) => {
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.mobile === data.mobile ? { ...c, feedback: data?.feedback } : c,
+        ),
+      );
+    };
+
+    socket.on("feedback_updated", handleFeedbackUpdate);
+
+    return () => {
+      socket.off("feedback_updated", handleFeedbackUpdate);
+    };
+  }, []);
 
   const handleDownloadCsv = async () => {
     try {

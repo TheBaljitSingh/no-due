@@ -21,6 +21,7 @@ export default function PaymentReminder() {
 
   const [showTemplateCreationModal, setShowTemplateCreationModal] =
     useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const templateCreationRef = useRef();
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function PaymentReminder() {
       ? updatePaymentTerms(editingTerm._id, payload)
       : createPaymentTerms(payload);
 
+    setSubmitting(true);
     try {
       const res = await toast.promise(action, {
         loading: editingTerm ? "Updating..." : "Creating...",
@@ -89,6 +91,8 @@ export default function PaymentReminder() {
     } catch (error) {
       console.log(error);
       // toast.promise already showed the error, dialog stays open
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -218,6 +222,7 @@ export default function PaymentReminder() {
               (setShowTemplateCreationModal(false), setEditingTerm(null));
             }}
             handleSubmit={handleCreationSubmit}
+            loading={submitting}
           />
         </div>
       )}

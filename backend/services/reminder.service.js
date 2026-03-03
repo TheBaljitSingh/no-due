@@ -496,6 +496,7 @@ class ReminderService {
     }
 
     reminder.scheduledFor = new Date(scheduledFor);
+    reminder.status='rescheduled'; //updating the state as well
 
     await reminder.save();
 

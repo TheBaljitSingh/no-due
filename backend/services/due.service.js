@@ -71,7 +71,7 @@ export const updateTransactionStatus = async ({ from, actionId, contextId, merch
           expectedPaymentDate: now,
           reminderPausedUntil: new Date(now.getTime() + 24 * 60 * 60 * 1000), // +24 hours
         };
-        if (transaction.excuseCount >= 3) {
+        if (transaction.excuseCount >= 2) {
           notificationMsg = `Customer ${customer.name} (${customer.mobile}) is repeatedly saying 'I will pay today' (Excuse #${transaction.excuseCount}). please contact manually.`;
           updates.commitmentStatus = "LOOP_BROKEN";
         }

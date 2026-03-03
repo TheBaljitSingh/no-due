@@ -24,14 +24,17 @@ const EditDrawer = ({
   const [scheduleDate, setScheduleDate] = useState(reminder.sendAt || "");
 
   const handleDelete = async () => {
-    try {
-      await deleteReminder(reminder.id);
-      toast.success("Reminder deleted successfully");
-      if (onDeleteSuccess) onDeleteSuccess(reminder.id);
-      else onClose();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete reminder");
-    }
+
+    await toast.promise(deleteReminder(reminder.id),
+      {
+        loading: "Deleting...",
+        success: "Reminder deleted successfully",
+        error: (err) => err.response?.data?.message || "Failed to delete reminder",
+      })
+
+    if (onDeleteSuccess) onDeleteSuccess(reminder.id);
+    else onClose();
+
   };
 
   const handleReschedule = async () => {
@@ -40,14 +43,15 @@ const EditDrawer = ({
       return;
     }
     try {
-      const res = await rescheduleReminder(reminder.id, scheduleDate);
-      toast.success("Reminder rescheduled successfully");
+      await toast.promise(rescheduleReminder(reminder.id, scheduleDate), {
+        loading: "Rescheduling...",
+        success: "Reminder rescheduled successfully",
+        error: (err) => err?.response?.data?.message || "Failed to reschedule reminder",
+      });
       if (onRescheduleSuccess) onRescheduleSuccess();
       else onClose();
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to reschedule reminder",
-      );
+      console.log(error);
     }
   };
 
@@ -209,7 +213,7 @@ const EditDrawer = ({
                     onClick={handleDelete}
                     className="flex-1 px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors inline-flex items-center justify-center gap-2"
                   >
-                    <Trash2 className="w-4 h-4" /> Delete
+                    <Trash2 className="w-4 h-4" /> Delet
                   </button>
                   <button
                     onClick={handleReschedule}

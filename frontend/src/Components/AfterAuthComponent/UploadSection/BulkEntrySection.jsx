@@ -90,20 +90,18 @@ const BulkEntrySection = ({ paymentTerms }) => {
 
   const handleSubmitEntry = async () => {
     try {
-      const response = await createCustomers(previewData);
-      if (response.success) {
-        toast.success(response?.message);
-        setTimeout(() => {
-          setShowPreview(false);
-          setSelectedFile(null);
-          naviage("/nodue/customer-master");
-        }, 2000);
-      }
+      await toast.promise(createCustomers(previewData), {
+        loading: "Uploading entries...",
+        success: "Bulk entries created successfully",
+        error: (err) => err?.response?.data?.message || "Failed to create bulk entries",
+      });
+      setTimeout(() => {
+        setShowPreview(false);
+        setSelectedFile(null);
+        naviage("/nodue/customer-master");
+      }, 1500);
     } catch (error) {
       console.log(error);
-      toast.error(
-        error?.response?.data?.message || "Failed to create bulk entries",
-      );
     }
   };
   const handleDownloadCSVFormat = () => {
@@ -254,9 +252,8 @@ const BulkEntrySection = ({ paymentTerms }) => {
 
                 <ChevronDown
                   size={18}
-                  className={`transition-transform duration-200 ${
-                    open ? "rotate-180" : ""
-                  } text-gray-500`}
+                  className={`transition-transform duration-200 ${open ? "rotate-180" : ""
+                    } text-gray-500`}
                 />
               </button>
 

@@ -106,3 +106,77 @@ html { scroll-behavior: smooth; }
     animation: none !important;
   }
 }
+
+/* ── AuditDrawer animations ── */
+@keyframes audit-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes audit-drawer-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes audit-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes audit-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@utility audit-drawer-enter {
+  animation: audit-drawer-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility audit-drawer-exit {
+  animation: audit-drawer-out 0.24s ease-in both;
+}
+
+@utility audit-overlay-enter {
+  animation: audit-overlay-in 0.22s ease-out both;
+}
+
+@utility audit-overlay-exit {
+  animation: audit-overlay-out 0.2s ease-in both;
+}
+
+@keyframes bubble-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@utility bubble-enter {
+  animation: bubble-pop-in 0.2s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .audit-drawer-enter,
+  .audit-drawer-exit,
+  .audit-overlay-enter,
+  .audit-overlay-exit,
+  .bubble-enter {
+    animation: none !important;
+  }
+}

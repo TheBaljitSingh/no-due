@@ -109,7 +109,7 @@ const AfterAuthLayout = () => {
 
     const handleFeedbackUpdate = (data) => {
       console.log("[Global Socket] Feedback update received:", data);
-      toast.info(
+      toast(
         `Feedback from ${data.customerName || data.mobile}: "${data.feedback}"`,
         {
           id: data.messageId,

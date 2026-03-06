@@ -480,8 +480,10 @@ class ReminderService {
       throw new Error("Reminder not found");
     }
 
-    if (reminder.status !== "pending") {
-      throw new Error("Only pending reminders can be rescheduled");
+    const allowedStatus = ['pending','paused','failed','rescheduled'];
+
+    if (!allowedStatus.includes(reminder.status)) {
+      throw new Error(`this ${reminder.status} reminder can not be rescheduled`);
     }
 
     // Optional: prevent duplicate reminders at same time

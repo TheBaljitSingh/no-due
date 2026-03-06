@@ -9,6 +9,7 @@ import NoDataFallbackPage from '../../Components/AfterAuthComponent/ReminderHist
 import LoadingPage from '../../Components/AfterAuthComponent/ReminderHistoryPage/LoadingPage';
 import { getAllcustomers } from "../../utils/service/customerService"
 import { getCustomerReminder } from "../../utils/service/reminderService"
+import { Loader2 } from 'lucide-react';
 
 const ReminderHistory = () => {
   const [loading, setLoading] = useState(true);
@@ -83,7 +84,9 @@ const ReminderHistory = () => {
 
   if (loading) {
     return (
-      <LoadingPage />
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+      </div>
     );
   }
 

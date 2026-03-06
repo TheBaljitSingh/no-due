@@ -442,7 +442,9 @@ export const bulkSendReminders = async (req, res) => {
 
         console.log("reminder to send in bulk request", reminder);
 
-        if (!reminder || !reminder.transactionId) continue;
+
+        if (!reminder || !reminder.transactionId || reminder.status === 'sent') continue;
+
 
         const tx = reminder.transactionId;
         const customer = tx.customerId;
@@ -482,8 +484,9 @@ export const bulkPauseReminders = async (req, res) => {
       return new APIError(400, ["ids array is required"]).send(res);
     }
 
+
     const result = await Reminder.updateMany(
-      { _id: { $in: ids } },
+      { _id: { $in: ids },status:{$nin:['sent']} },
       { $set: { status: "paused" } }
     );
 
@@ -514,18 +517,72 @@ export const bulkRescheduleReminders = async (req, res) => {
       return new APIError(400, ["ids and scheduledFor are required"]).send(res);
     }
 
-    const result = await Reminder.updateMany(
-      { _id: { $in: ids } },
-      {
-        $set: {
-          scheduledFor: new Date(scheduledFor),
-          status: "rescheduled"
-        }
-      }
-    );
+    const totalRequested = ids.length;
 
-    return new APIResponse(200, result, "Reminders rescheduled successfully").send(res);
+    const allReminders = await Reminder.find({ _id: { $in: ids } });
+
+    const sentReminders = allReminders.filter(r => r.status === "sent");
+    const eligibleReminders = allReminders.filter(r => r.status !== "sent");
+
+    const sentCount = sentReminders.length;
+    let duplicateCount = 0;
+    const reschedulableIds = [];
+    const processedPairs = new Set(); // Track (transactionId + reminderType) to avoid target collisions
+
+    for (const reminder of eligibleReminders) {
+      const pairKey = `${reminder.transactionId.toString()}_${reminder.reminderType}`;
+
+      // 1. Check if we've already planned to move another reminder for this same transaction/type
+      if (processedPairs.has(pairKey)) {
+        duplicateCount++;
+        continue;
+      }
+
+      // 2. Check if a reminder already exists in the DATABASE for this same transaction/type and new date
+      const exists = await Reminder.findOne({
+        transactionId: reminder.transactionId,
+        reminderType: reminder.reminderType,
+        scheduledFor: new Date(scheduledFor),
+        _id: { $ne: reminder._id }
+      });
+
+      if (!exists) {
+        reschedulableIds.push(reminder._id);
+        processedPairs.add(pairKey);
+      } else {
+        duplicateCount++;
+      }
+    }
+
+    // 2. Perform the update for reschedulable reminders
+    let updatedCount = 0;
+    if (reschedulableIds.length > 0) {
+      const result = await Reminder.updateMany(
+        { _id: { $in: reschedulableIds } },
+        {
+          $set: {
+            scheduledFor: new Date(scheduledFor),
+            status: "rescheduled"
+          }
+        }
+      );
+      updatedCount = result.modifiedCount;
+    }
+
+    // 3. Construct a helpful response
+    const data = {
+      totalRequested,
+      updatedCount,
+      sentCount,
+      duplicateCount
+    };
+
+    let responseMessage = "Bulk reschedule completed";
+
+    return new APIResponse(200, data, responseMessage).send(res);
+
   } catch (error) {
+    console.error("Bulk Reschedule Error:", error);
     return new APIError(500, [error.message], "Bulk reschedule failed").send(res);
   }
 };

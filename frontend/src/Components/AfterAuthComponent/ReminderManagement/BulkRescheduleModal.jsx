@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Calendar, Clock } from "lucide-react";
+import { X, Calendar, Clock, AlertCircle } from "lucide-react";
 
 export default function BulkRescheduleModal({ open, onClose, onConfirm, count }) {
     const [scheduledFor, setScheduledFor] = useState("");
@@ -23,13 +23,21 @@ export default function BulkRescheduleModal({ open, onClose, onConfirm, count })
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                            <Calendar className="w-5 h-5 text-blue-600" />
+                    <div className="flex flex-col gap-2 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                <Calendar className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-blue-900">Rescheduling {count} reminders</p>
+                                <p className="text-xs text-blue-700">Set a new date and time for selected reminders.</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm font-semibold text-blue-900">Rescheduling {count} reminders</p>
-                            <p className="text-xs text-blue-700">All selected reminders will be updated to the new time.</p>
+                        <div className="flex items-start gap-2 mt-1 px-1">
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
+                            <p className="text-[11px] text-amber-700 leading-tight">
+                                Note: Reminders that have already been <strong>sent</strong> will be skipped automatically.
+                            </p>
                         </div>
                     </div>
 

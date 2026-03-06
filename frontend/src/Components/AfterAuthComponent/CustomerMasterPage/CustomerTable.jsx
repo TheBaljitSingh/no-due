@@ -119,7 +119,7 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState([]);
   const [page, setPage] = useState(1);
-  const [limit] = useState(5);
+  const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [debounceQuery, setDebounceQuery] = useState("");
@@ -560,7 +560,7 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
                     </div>
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-gray-600 text-sm">
-                    {`+91 ${c.mobile.slice(2, 5)} ${c.mobile.slice(5, 8)} ${c.mobile.slice(8, 12)}`}
+                    {`+91 ${c.mobile.slice(2, 7)}  ${c.mobile.slice(7, 12)}`}
                   </td>
                   <td className="px-3 py-4 font-semibold whitespace-nowrap">
                     <span

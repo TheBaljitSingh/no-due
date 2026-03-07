@@ -5,22 +5,12 @@ import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import axios from "axios";
 
-const generateAvatar = async (fname, lname) => {
-  try {
-    // Make a request to DiceBear API
-    const response = await axios.get(
-      `https://api.dicebear.com/5.x/initials/svg?seed=${fname} ${lname}`,
-    );
+const generateAvatar = (fname, lname) => {
+  const name = encodeURIComponent(`${fname || ""} ${lname || ""}`.trim());
+  return `https://ui-avatars.com/api/?name=${name}&background=00A63E&size=128&rounded=true&bold=true&color=fff`;
 
-    // Get the SVG content from the response
-    const avatarSvg = response.data;
-
-    return avatarSvg;
-  } catch (error) {
-    console.error("Error generating avatar:", error);
-    return "https://api.dicebear.com/9.x/pixel-art/svg"; // Fallback if something goes wrong
-  }
 };
+
 export const registerUser = async (req, res) => {
   const userData = req.body;
   try {
@@ -28,9 +18,11 @@ export const registerUser = async (req, res) => {
     if (existingUser) {
       return new APIError(400, ["User already exists"]).send(res);
     }
-    const avatar = await generateAvatar(userData?.fname, userData?.lname); // Generate an avatar
-    const savedUser = await User.create(userData);
-    savedUser.profileImageUrl = avatar;
+    const avatar = generateAvatar(userData?.fname, userData?.lname); // Generate an avatar
+    const savedUser = await User.create({
+      ...userData,
+      profileImageUrl: avatar
+    });
 
     //have to create here default notification of type system_alert
     const notification = await Notification.create({

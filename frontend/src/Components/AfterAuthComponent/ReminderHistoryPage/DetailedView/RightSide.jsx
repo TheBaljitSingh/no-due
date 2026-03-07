@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom';
 const RightSide = memo(({ setDetailedView, setSelectedCustomer, imgFor, selectedCustomer }) => {
   const navigate = useNavigate();
 
-  const handleSendReminder = () => {
-    navigate('/nodue/reminder-management');
+  const handleSendReminder = (selectedCustomer) => {
+    console.log("clickd on handle send reminder");
+    navigate(`/nodue/reminder-management?query=${selectedCustomer.name}`);
   };
 
   return (
@@ -122,7 +123,7 @@ const RightSide = memo(({ setDetailedView, setSelectedCustomer, imgFor, selected
           {/* Actions */}
           <div className="mt-6 flex-shrink-0">
             <button
-              onClick={handleSendReminder}
+              onClick={()=>handleSendReminder(selectedCustomer)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
               <Send className="w-4 h-4" />
               Send Reminder Now

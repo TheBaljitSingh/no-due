@@ -49,8 +49,8 @@ const ReminderHistory = () => {
 
   const imgFor = useCallback((c) =>
     c.gender === 'male'
-      ? 'https://img.freepik.com/free-vector/smiling-man-with-glasses_1308-174409.jpg'
-      : 'https://img.freepik.com/free-vector/smiling-woman-with-long-brown-hair_1308-175662.jpg', []);
+      ? 'https://img.freepik.com/free-vector/smiling-man-with-glasses_1308-174409.jpg':
+       c.gender==='female'? 'https://img.freepik.com/free-vector/smiling-woman-with-long-brown-hair_1308-175662.jpg':'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Unknown_person.jpg/1280px-Unknown_person.jpg?_=20200423155822', []);
 
   const handleSelectCustomer = useCallback(async (customer) => {
     const customerId = customer._id;

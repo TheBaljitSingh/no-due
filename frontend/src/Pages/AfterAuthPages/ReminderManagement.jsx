@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { X, Calendar, Clock, MessageCircle, Phone, Plus, Search, Send, Trash2, Pause, CheckCircle2, XCircle, Pencil, AlertCircle, History, Loader2, ClipboardClock, Bolt, AlarmClockCheck, CircleCheckBig } from "lucide-react";
-import { MOCK_REMINDERS, TEMPLATES } from "../../utils/constants";
-import { currency2, formatDate, IconBtn, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
+import { useSearchParams } from "react-router-dom";
+import {  Clock,  Phone, Plus, Search, Send, Trash2, Pause,  XCircle, Pencil, AlertCircle, ClipboardClock, Bolt, AlarmClockCheck, CircleCheckBig, CircleX, Loader2 } from "lucide-react";
+
+import { TEMPLATES } from "../../utils/constants";
+import { currency2, formatDate, IconBtn, LoaderTwo, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
 import StatCard from "../../Components/AfterAuthComponent/ReminderManagement/StatCard";
 import EditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/EditDrawer";
 import AuditDrawer from "../../Components/AfterAuthComponent/ReminderManagement/AuditDrawer";
@@ -14,16 +16,50 @@ import { FaWhatsapp } from "react-icons/fa";
 
 
 export default function ReminderManagement() {
-
+  
   const [initialLoading, setInitialLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("all");
-  const [selectAll, setSelectAll] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Reset page to 1 whenever tab changes
+  const urlQuery = searchParams.get("query") || "";
+  const [query, setQuery] = useState(urlQuery); //global
+
+  // URL sync: update local q and query from URL initial setup
+  const [q, setQ] = useState(urlQuery); //for local
+
+  // Reset page to 1 whenever tab or query changes
   useEffect(() => {
     setPagination(prev => ({ ...prev, page: 1 }));
-  }, [tab]);
-  const [q, setQ] = useState("");
+  }, [tab, query]);
+
+
+  // Debounce search update: q updates query and URL
+  useEffect(() => {
+    // Show loading immediately as user starts typing
+    if (q !== query) setLoading(true);
+
+    const handler = setTimeout(() => {
+      setQuery(q);
+      const params = new URLSearchParams(searchParams);
+      if (q) params.set("query", q);
+      else params.delete("query");
+      setSearchParams(params, { replace: true });
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [q]);
+
+  // Handle direct URL updates (external navigation)
+  useEffect(() => {
+    const currentUrlQuery = searchParams.get("query") || "";
+    if (currentUrlQuery !== query) {
+      setQ(currentUrlQuery);
+      // console.log("currentUrlQuery",currentUrlQuery);
+      setQuery(currentUrlQuery);
+    }
+  }, [searchParams]);
+
   const [bulk, setBulk] = useState(new Set());
   const [openNew, setOpenNew] = useState(false);
   const [drawer, setDrawer] = useState(null);
@@ -35,6 +71,7 @@ export default function ReminderManagement() {
     total: 0,
     totalPages: 1
   });
+  //this is not used for now{previously it was for card}
   const [stats, setStats] = useState({
     scheduled: 0,
     sent: 0,
@@ -53,6 +90,7 @@ export default function ReminderManagement() {
 
   const fetchReminders = useCallback(async () => {
     try {
+      setLoading(true);
       const filters = {
         page: pagination.page,
         limit: pagination.limit
@@ -63,10 +101,13 @@ export default function ReminderManagement() {
         filters.status = tab; // either it will be ["pending", "sent", "failed", "cancelled", 'rescheduled','paused'],
       }
 
+      filters.query = query;
+
       const res = await getAllReminders(filters);
-      console.log("res", res);
+      // console.log("res", res.data.data.data);
       const output = res.data.data;
 
+      console.log("this is data", output.data);
       // console.log("output.data", output.data);
       setData(output.data || []);
       setPagination(prev => ({ ...prev, ...output.meta }));
@@ -82,8 +123,10 @@ export default function ReminderManagement() {
     } catch (error) {
       console.log(error);
       console.log("error while loading reminder data");
+    } finally {
+      setLoading(false);
     }
-  }, [pagination.page, pagination.limit, tab]);
+  }, [pagination.page, pagination.limit, tab, query]);
 
 
 
@@ -114,7 +157,7 @@ export default function ReminderManagement() {
 
       dueAmount: r.templateVariables?.[1] || r?.transactionId?.amount || 0,
 
-      sendAt: r.scheduledFor,
+      scheduledFor: r.scheduledFor,
 
       status: r.status === "pending" ? "scheduled" : r.status,
 
@@ -132,8 +175,9 @@ export default function ReminderManagement() {
       const s = q.trim().toLowerCase();
       if (!s) return true;
       return (
-        r.id.toLowerCase().includes(s) ||
-        r.customer.name.toLowerCase().includes(s)
+        r.id.toLowerCase().includes(s) || // including id also
+        r.customer.name.toLowerCase().includes(s) || //including name also
+        r.customer.mobile.toLowerCase().includes(s) //including mobile also
       );
     });
   }, [normalizeData, q]);
@@ -147,6 +191,9 @@ export default function ReminderManagement() {
       return n;
     });
   };
+
+
+
 
 
 
@@ -293,6 +340,11 @@ export default function ReminderManagement() {
 
       if (res?.success) {
         setData(prev => prev.filter(r => r._id !== id));
+        setBulk(prev => {
+          const n = new Set(prev);
+          n.delete(id);
+          return n;
+        });
       } else {
         console.log(res?.message);
       }
@@ -305,6 +357,11 @@ export default function ReminderManagement() {
 
   const handleDrawerDeleteSuccess = (id) => {
     setData(prev => prev.filter(r => r._id !== id));
+    setBulk(prev => {
+      const n = new Set(prev);
+      n.delete(id);
+      return n;
+    });
     setDrawer(null);
   };
 
@@ -390,6 +447,12 @@ export default function ReminderManagement() {
                 {stats.paused || 0}
               </span>
             </TabButton>
+            <TabButton active={tab === "cancelled"} onClick={() => setTab("cancelled")} icon={<CircleX className="w-4 h-4" />}>
+              Cancelled
+              <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                {stats.cancelled}
+              </span>
+            </TabButton>
             <TabButton active={tab === "failed"} onClick={() => setTab("failed")} icon={<XCircle className="w-4 h-4" />}>
               Failed
               <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
@@ -464,11 +527,22 @@ export default function ReminderManagement() {
                 <th className="px-6 py-3 w-12">
                   <input
                     type="checkbox"
-                    checked={bulk.size===filtered.length && filtered.length>0}
+                    checked={filtered.length > 0 && filtered.every((r) => bulk.has(r.id))}
                     className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                     onChange={(e) => {
-                      if (e.target.checked) setBulk(new Set(filtered.map((r) => r.id)));
-                      else setBulk(new Set());
+                      if (e.target.checked) {
+                        setBulk((prev) => {
+                          const n = new Set(prev);
+                          filtered.forEach((r) => n.add(r.id));
+                          return n;
+                        });
+                      } else {
+                        setBulk((prev) => {
+                          const n = new Set(prev);
+                          filtered.forEach((r) => n.delete(r.id));
+                          return n;
+                        });
+                      }
                     }}
                   />
                 </th>
@@ -482,71 +556,78 @@ export default function ReminderManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filtered.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                      checked={bulk.has(r.id)}
-                      onChange={() => toggleBulk(r.id)}
-                    />
-                  </td>
-                  <td className="px-6 py-4">
-                    {/* <div className="font-medium text-gray-900 text-sm">{r.id}</div> */}
-                    <div className="text-xs text-gray-500 mt-0.5">{TEMPLATES[r.template]?.label || r.template}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900 text-sm">{r.customer.name}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{r.customer.company}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1.5">
-                      {r.channel.includes("whatsapp") && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
-                          <MessageCircle className="w-3 h-3" /> WhatsApp
-                        </span>
-                      )}
-                      {r.channel.includes("voice") && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
-                          <Phone className="w-3 h-3" /> Voice
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-900 font-semibold text-sm">{currency2(r.dueAmount)}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-gray-700 text-sm">
-                      {/* <Calendar className="w-3.5 h-3.5 text-gray-400" /> */}
-                      <span className="text-xs">{new Date(r.sendAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ring-1 ring-inset ${statusChip(r.status)}`}>
-                      {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="inline-flex items-center gap-0.5">
-                      <IconBtn title="Whatsapp History" onClick={() => setAuditCustomer(r.customer)}> <FaWhatsapp className="w-5 h-5" /> </IconBtn>
-                      <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-5 h-5" /></IconBtn>
-                      <IconBtn title="Delete" danger onClick={() => {
-                        // console.log(r)
-                        setConfirmOpen(true)
-                        setToBeDeletedReminder(r.id)
-                      }} ><Trash2 className="w-5 h-5" /></IconBtn>
-                    </div>
+              {loading ? (
+                <tr>
+                  <td className="px-6 py-24 text-center" colSpan={8}>
+                            <LoaderTwo text="Filtering Reminders..." />
                   </td>
                 </tr>
-              ))}
-              {filtered.length === 0 && (
+              ) : filtered.length > 0 ? (
+                filtered.map((r) => (
+                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        checked={bulk.has(r.id)}
+                        onChange={() => toggleBulk(r.id)}
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      {/* <div className="font-medium text-gray-900 text-sm">{r.id}</div> */}
+                      <div className="text-xs text-gray-500 mt-0.5">{TEMPLATES[r.template]?.label || r.template}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900 text-sm">{r.customer.name}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{r.customer.company}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1.5">
+                        {r.channel.includes("whatsapp") && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium  text-green-700 ring-1 ring-inset ring-green-600/20">
+                            <FaWhatsapp className="w-3 h-3" /> WhatsApp
+                          </span>
+                        )}
+                        {r.channel.includes("voice") && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+                            <Phone className="w-3 h-3" /> Voice
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-900 font-semibold text-sm">{currency2(r.dueAmount)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5 text-gray-700 text-sm">
+                        {/* <Calendar className="w-3.5 h-3.5 text-gray-400" /> */}
+                        <span className="text-xs">{new Date(r.scheduledFor).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ring-1 ring-inset ${statusChip(r.status)}`}>
+                        {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="inline-flex items-center gap-0.5">
+                        <IconBtn title="Whatsapp History" onClick={() => setAuditCustomer(r.customer)}> <FaWhatsapp className="w-5 h-5" /> </IconBtn>
+                        <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-5 h-5" /></IconBtn>
+                        <IconBtn title="Delete" danger onClick={() => {
+                          // console.log(r)
+                          setConfirmOpen(true)
+                          setToBeDeletedReminder(r.id)
+                        }} ><Trash2 className="w-5 h-5" /></IconBtn>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td className="px-6 py-16 text-center" colSpan={8}>
                     <div className="flex flex-col items-center justify-center">
                       <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                         <AlertCircle className="w-8 h-8 text-gray-400" />
                       </div>
-                      <div className="text-base font-medium text-gray-900 mb-1">No reminders found</div>
+                      <div className="text-base font-medium text-gray-900 mb-1">No {tab !== 'all' ? `${tab}` : ''} reminders found </div>
                       <div className="text-sm text-gray-500">Try adjusting your search or filter criteria</div>
                     </div>
                   </td>

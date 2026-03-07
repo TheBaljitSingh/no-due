@@ -80,7 +80,14 @@ const customerSchema = new Schema({
     },
 }, { timestamps: true });
 
+customerSchema.virtual("transactions", {
+  ref: "Transaction",
+  localField: "_id",
+  foreignField: "customerId"
+});
 
+customerSchema.set("toObject", { virtuals: true });
+customerSchema.set("toJSON", { virtuals: true });
 
 const Customer = mongoose.model('Customer', customerSchema);
 

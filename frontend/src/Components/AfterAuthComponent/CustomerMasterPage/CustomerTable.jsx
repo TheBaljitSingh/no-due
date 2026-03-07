@@ -5,7 +5,7 @@ import {
   StatusBadge,
   ActionBadge,
 } from "../../../utils/AfterAuthUtils/Helpers";
-import { Download, FileText, Loader2, Pencil, Trash2 } from "lucide-react";
+import { CloudCog, Download, FileText, Loader2, Pencil, Trash2 } from "lucide-react";
 import { TableHeaders } from "../../../utils/constants.js";
 import {
   deleteCustomerById,
@@ -277,8 +277,10 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
     setCurrentCustomer(c);
     async function loadTxn() {
       try {
-        const tsx = await getCustomerTransactions(c._id);
-        setTransactions(tsx.data?.dues || tsx.dues || []);
+        // const tsx = await getCustomerTransactions(c._id);
+        const ctx = customers.find(d=>d._id===c._id)
+        // setTransactions(tsx.data?.dues || tsx.dues || []);
+        setTransactions(ctx?.transactions);
       } catch (error) {
         console.error(error);
       }
@@ -320,6 +322,7 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
             "updatedAt",
             "lastTransaction",
             "lastInteraction",
+            "gender"
           ].includes(row),
       ); // keys array will be stored
 
@@ -508,6 +511,9 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
 
   // Filtering is now done server-side; `customers` already contains only matching results
   const filteredCustomers = customers;
+
+  console.log("fv",transactions);
+  
 
   return (
     <div className="hidden md:block rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">

@@ -220,6 +220,13 @@ class ReminderService {
   /* USER SCHEDULED REMINDER */
   async scheduleByUser({ transactionId, scheduledFor }) {
     console.log("scheduleByUser");
+
+    //if scheduleFor is negative then throw error
+    const scheduledTime = new Date(scheduledFor).getTime();
+    if(scheduledTime<Date.now()){
+      throw new Error("Cannot schedule reminder for past time");
+    }
+
     const transaction = await Transaction
       .findById(transactionId)
       .populate("customerId");

@@ -1,6 +1,6 @@
 /* helpers */
 
-import { EllipsisVertical, IndianRupee, Pencil, Trash2 } from "lucide-react";
+import { EllipsisVertical, IndianRupee, Loader2, Pencil, Trash2 } from "lucide-react";
 import React, { useState, useRef, useEffect, memo } from "react";
 
 export const ActionBadge = ({ onEdit, onDelete, onTransaction }) => {
@@ -156,7 +156,7 @@ export function TabButton({ active, onClick, children, icon }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+      className={`inline-flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
         active
           ? "bg-green-50 text-green-700 border border-green-200"
           : "text-gray-600 hover:bg-gray-50 border border-transparent"
@@ -181,6 +181,18 @@ export function IconBtn({ children, title, onClick, danger }) {
       {children}
     </button>
   );
+}
+
+
+export function LoaderTwo({text}){
+  return (
+   <div className="flex flex-col items-center justify-center ">
+    <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+    {text&&
+      <span className="text-base font-medium text-gray-600">{text}</span>
+    }
+    </div>
+  )
 }
 
 export const currency2 = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;

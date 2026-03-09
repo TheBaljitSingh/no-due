@@ -291,6 +291,11 @@ export default function ReminderManagement() {
           error: (err) => err?.response?.data?.errors?.[0] || err?.message || "Error while sending",
         });
         setOpenNew(false);
+        //have to increase count
+        setStats(prev=>({
+          ...prev,
+          sent:prev?.sent+1
+        }))
       } catch (error) {
         console.log(error);
       }

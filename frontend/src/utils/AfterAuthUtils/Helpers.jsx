@@ -119,10 +119,10 @@ export const currency = (n) =>
 export const formatDate = (d) =>
   d
     ? new Date(d).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
     : "-";
 
 export const StatusBadge = ({ value, transactions }) => {
@@ -137,7 +137,7 @@ export const StatusBadge = ({ value, transactions }) => {
       className={`inline-flex flex-col  items-start rounded-md px-2 py-1 text-xs font-medium ${styles[value] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}
     >
       {value}
-      <p className="text-gray-500 text-sm">{value==='Overdue' && formatDate(transactions?.find(c=>c.type==='DUE_ADDED')?.dueDate)}</p>
+      <p className="text-gray-500 text-sm">{value === 'Overdue' && formatDate(transactions?.find(c => c.type === 'DUE_ADDED')?.dueDate)}</p>
 
     </span>
   );
@@ -158,11 +158,10 @@ export function TabButton({ active, onClick, children, icon }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-colors hover:cursor-pointer ${
-        active
+      className={`inline-flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-colors hover:cursor-pointer ${active
           ? "bg-green-50 text-green-700 border border-green-200"
           : "text-gray-600 hover:bg-gray-50 border border-transparent"
-      }`}
+        }`}
     >
       {icon} {children}
     </button>
@@ -174,11 +173,10 @@ export function IconBtn({ children, title, onClick, danger }) {
     <button
       title={title}
       onClick={onClick}
-      className={`p-2 rounded-lg transition-colors ${
-        danger
+      className={`p-2 rounded-lg transition-colors ${danger
           ? "text-red-600 hover:bg-red-50"
           : "text-gray-600 hover:bg-gray-100"
-      }`}
+        }`}
     >
       {children}
     </button>
@@ -186,13 +184,13 @@ export function IconBtn({ children, title, onClick, danger }) {
 }
 
 
-export function LoaderTwo({text}){
+export function LoaderTwo({ text }) {
   return (
-   <div className="flex flex-col items-center justify-center ">
-    <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
-    {text&&
-      <span className="text-base font-medium text-gray-600">{text}</span>
-    }
+    <div className="flex flex-col items-center justify-center ">
+      <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+      {text &&
+        <span className="text-base font-medium text-gray-600">{text}</span>
+      }
     </div>
   )
 }

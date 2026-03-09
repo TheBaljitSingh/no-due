@@ -1,3 +1,11 @@
+export const formatMobile = (mobile) => {
+  if (!mobile) return "";
+  const cleaned = String(mobile).replace(/\D/g, "");
+  if (cleaned.length < 10) return mobile;
+  const last10 = cleaned.slice(-10);
+  return `+91 ${last10.slice(0, 5)} ${last10.slice(5)}`;
+};
+
 export const siteAnalysis = [
   { name: "Faster Payment Recovery", data: "90%" },
   { name: "Return on Investment", data: "10X" },

@@ -568,9 +568,48 @@ export const getCustomers = async (req, res) => {
       .limit(queryLimit);
 
     const total = await Customer.countDocuments(query);
+
+    function groupTransactionsHelper(transactions) {
+    const dueMap = {};
+
+    transactions.forEach((tx) => {
+
+      if (tx.type === "DUE_ADDED") {
+        dueMap[tx._id] = {
+          _id: tx._id,
+          amount: tx.amount,
+          remainingDue: tx.remainingDue,
+          dueDate: tx.dueDate,
+          paymentStatus: tx.paymentStatus,
+          createdAt: tx.createdAt,
+          payments: []
+        };
+      }
+
+      if (tx.type === "PAYMENT") {
+        const dueId = tx.linkedDueTransaction;
+
+        if (dueMap[dueId]) {
+          dueMap[dueId].payments.push(tx);
+        }
+      }
+
+    });
+
+    return Object.values(dueMap).sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+  }
+
+    const formattedCustomers = customers.map((customer) => ({
+      ...customer.toObject(),
+      transactions: groupTransactionsHelper(customer.transactions || [])
+    }));
+
+
     return new APIResponse(
       200,
-      { customers, total, page, limit, totalPages: Math.ceil(total / limit) },
+      { customers:formattedCustomers, total, page, limit, totalPages: Math.ceil(total / limit) },
       "Fetched all customers",
     ).send(res);
   } catch (error) {

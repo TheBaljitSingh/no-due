@@ -1,5 +1,6 @@
-import React, { memo } from 'react'
-import { Mail, Hash, Phone } from 'lucide-react'
+import React, { memo } from "react";
+import { Mail, Hash, Phone } from "lucide-react";
+import { formatMobile } from "../../../utils/constants";
 
 const CustomerDetailCard = memo(({ CustomerNames, imgFor, openDetails }) => {
   return (
@@ -20,16 +21,22 @@ const CustomerDetailCard = memo(({ CustomerNames, imgFor, openDetails }) => {
           <h3 className="text-base font-semibold text-gray-900 mb-0.5 text-center">
             {customer.name}
           </h3>
-          <p className="text-xs text-gray-500 mb-4 capitalize">{customer.gender}</p>
+          <p className="text-xs text-gray-500 mb-4 capitalize">
+            {customer.gender}
+          </p>
 
           <div className="w-full space-y-2 mb-4">
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <Phone className="w-3.5 h-3.5 text-gray-400" />
-              <span className="truncate">{customer.mobile || 'mobile-1234'}</span>
+              <span className="truncate">
+                {formatMobile(customer.mobile) || "mobile-1234"}
+              </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <Mail className="w-3.5 h-3.5 text-gray-400" />
-              <span className="truncate">{customer.email || 'not available'}</span>
+              <span className="truncate">
+                {customer.email || "not available"}
+              </span>
             </div>
           </div>
 
@@ -42,7 +49,7 @@ const CustomerDetailCard = memo(({ CustomerNames, imgFor, openDetails }) => {
         </div>
       ))}
     </div>
-  )
+  );
 });
 
-export default CustomerDetailCard
+export default CustomerDetailCard;

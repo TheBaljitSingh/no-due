@@ -383,7 +383,7 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
                 <div>
                   <p className="text-xs text-gray-400 mb-0.5">Current Due</p>
                   <p
-                    className={`font-semibold ${(c.currentDue || 0) > 0 ? "text-red-600" : "text-gray-400"}`}
+                    className={`font-semibold ${(c.currentDue || 0) > 0 ? "text-green-600" : "text-gray-400"}`}
                   >
                     {currency(c.currentDue)}
                   </p>

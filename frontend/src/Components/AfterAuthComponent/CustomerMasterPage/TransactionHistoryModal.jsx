@@ -97,10 +97,10 @@ export default function TransactionHistoryModal({
     switch (activeTab) {
       case "VIEW":
         if (transactions.length === 0)
-          return <p className="text-center py-6 text-gray-500">No dues found.</p>;
+          return <p className="text-center py-6 text-gray-800">No dues found.</p>;
 
         return (
-          <div className="max-h-90 overflow-y-auto scroll-smooth space-y-4">
+          <div className="max-h-90 overflow-y-auto scroll-smooth space-y-4 text-gray-700">
             {transactions.map((due) => {
               let runningRemaining = due.amount;
 
@@ -115,7 +115,7 @@ export default function TransactionHistoryModal({
                     <p className="text-sm">
                       Due Date: {new Date(due.dueDate).toLocaleDateString()}
                     </p>
-                    <p className="text-sm">Status: {due.paymentStatus}</p>
+                    <p className="text-md ">Status: {due.paymentStatus}</p>
                   </div>
 
                   {/* Ledger Table */}
@@ -195,7 +195,7 @@ export default function TransactionHistoryModal({
               e.preventDefault();
               handleAddDue();
             }}
-            className="space-y-3"
+            className="space-y-3 text-gray-800"
           >
             <input
               type="number"
@@ -222,7 +222,7 @@ export default function TransactionHistoryModal({
               e.preventDefault();
               handlePayment();
             }}
-            className="space-y-3"
+            className="space-y-3 text-gray-700"
           >
             <select
               className="w-full border px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
@@ -275,31 +275,31 @@ export default function TransactionHistoryModal({
         </button>
 
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b">
-          <h2 className="text-xl font-semibold">Transaction History • {customer.name}</h2>
+        <div className="px-6 pt-6 pb-4 border-b border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-700">Transaction History • {customer.name}</h2>
           <p className="text-lg font-bold text-gray-700 mt-1">
             Current Due: ₹{customer.currentDue || 0}
           </p>
 
           {/* Tabs */}
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-4 border-none">
             <button
               onClick={() => setActiveTab("VIEW")}
-              className={`px-3 py-1 rounded-lg ${activeTab === "VIEW" ? "bg-gray-600 text-white" : "bg-gray-100"
+              className={`px-3 py-1 text-gray-800 border-gray-800 rounded-lg ${activeTab === "VIEW" ? "bg-gray-600 text-white" : "bg-gray-100"
                 }`}
             >
               View
             </button>
             <button
               onClick={() => setActiveTab("ADD_DUE")}
-              className={`px-3 py-1 rounded-lg ${activeTab === "ADD_DUE" ? "bg-green-600 text-white" : "bg-green-100"
+              className={`px-3 py-1 text-gray-700 rounded-lg ${activeTab === "ADD_DUE" ? "bg-green-600 text-white" : "bg-green-100"
                 }`}
             >
               Add Due
             </button>
             <button
               onClick={() => setActiveTab("PAY")}
-              className={`px-3 py-1 rounded-lg ml-auto ${activeTab === "PAY" ? "bg-green-600 text-white" : "bg-green-100"
+              className={`px-3 py-1 rounded-lg text-gray-800 ml-auto ${activeTab === "PAY" ? "bg-green-600 text-white" : "bg-green-100"
                 }`}
             >
               Pay

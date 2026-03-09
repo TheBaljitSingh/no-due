@@ -86,6 +86,12 @@ customerSchema.virtual("transactions", {
   foreignField: "customerId"
 });
 
+customerSchema.virtual("reminders",{
+    ref:'Reminder',
+    localField:'_id',
+    foreignField:'customerId'
+})
+
 customerSchema.set("toObject", { virtuals: true });
 customerSchema.set("toJSON", { virtuals: true });
 

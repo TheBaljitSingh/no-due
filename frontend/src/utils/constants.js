@@ -203,9 +203,9 @@ export const TableHeaders = [
   "Company Name",
   "Phone Number",
   "Total Due",
-  "LastReminder",
+  "Next Reminder",
   "Status",
-  "Last Reaction",
+  "Feedback",
   "Actions",
 ];
 

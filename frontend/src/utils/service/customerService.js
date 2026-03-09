@@ -16,8 +16,8 @@ export const createCustomers = async (formData) => {
   return response.data;
 };
 
-export const deleteCustomerById = async (id) => {
-  const response = await api.delete(`/v1/customers/${id}`);
+export const deleteCustomers = async (ids) => {
+  const response = await api.delete(`/v1/customers`, { data: ids });
   return response.data;
 };
 
@@ -59,6 +59,12 @@ export const updatecustomer = async (id, updatedData) => {
   const response = await api.put(`/v1/customers/${id}`, updatedData);
   return response.data;
 };
+
+export const updateCustomersBatch = async (batchData) => {
+  const response = await api.put(`/v1/customers/bulk`, batchData);
+  return response.data;
+};
+
 
 /**
  * Dry-run validation — zero DB writes.

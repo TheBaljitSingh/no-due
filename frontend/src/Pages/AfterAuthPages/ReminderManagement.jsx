@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import {  Clock,  Phone, Plus, Search, Send, Trash2, Pause,  XCircle, Pencil, AlertCircle, ClipboardClock, Bolt, AlarmClockCheck, CircleCheckBig, CircleX, Loader2 } from "lucide-react";
+import { Clock, Phone, Plus, Search, Send, Trash2, Pause, XCircle, Pencil, AlertCircle, ClipboardClock, Bolt, AlarmClockCheck, CircleCheckBig, CircleX, Loader2, Users, Calendar, ChevronDown, ChevronRight, UserRound } from "lucide-react";
 
 import { TEMPLATES } from "../../utils/constants";
 import { currency2, formatDate, IconBtn, LoaderTwo, statusChip, TabButton } from "../../utils/AfterAuthUtils/Helpers";
@@ -16,7 +16,7 @@ import { FaWhatsapp } from "react-icons/fa";
 
 
 export default function ReminderManagement() {
-  
+
   const [initialLoading, setInitialLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("all");
@@ -67,7 +67,7 @@ export default function ReminderManagement() {
   const [data, setData] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 20,
     total: 0,
     totalPages: 1
   });
@@ -87,6 +87,10 @@ export default function ReminderManagement() {
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [viewMode, setViewMode] = useState("client");
+  const [showOnly7Days, setShowOnly7Days] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
+  const [isExpandedAll, setIsExpandedAll] = useState(true);
 
   const fetchReminders = useCallback(async () => {
     try {
@@ -110,7 +114,12 @@ export default function ReminderManagement() {
       console.log("this is data", output.data);
       // console.log("output.data", output.data);
       setData(output.data || []);
-      setPagination(prev => ({ ...prev, ...output.meta }));
+      // Only update aggregate metadata to avoid infinite loops with page/limit Fighting
+      setPagination(prev => ({
+        ...prev,
+        total: output.meta?.total || prev.total,
+        totalPages: output.meta?.totalPages || prev.totalPages
+      }));
 
       if (output.stats) {
         setStats(prev => ({
@@ -143,7 +152,6 @@ export default function ReminderManagement() {
     }
 
     run();
-
   }, [fetchReminders]);
 
   const normalizeData = useMemo(() => {
@@ -169,9 +177,8 @@ export default function ReminderManagement() {
     }));
   }, [data]);
 
-  const filtered = useMemo(() => {
-    return normalizeData.filter((r) => {
-
+  const finalFiltered = useMemo(() => {
+    let result = normalizeData.filter((r) => {
       const s = q.trim().toLowerCase();
       if (!s) return true;
       return (
@@ -180,9 +187,68 @@ export default function ReminderManagement() {
         r.customer.mobile.toLowerCase().includes(s) //including mobile also
       );
     });
-  }, [normalizeData, q]);
+    if (showOnly7Days) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const next7Days = new Date();
+      next7Days.setDate(now.getDate() + 7);
+      next7Days.setHours(23, 59, 59, 999);
 
-  console.log("filtered", filtered);
+      result = result.filter(r => {
+        const sched = new Date(r.scheduledFor);
+        return sched >= now && (sched <= next7Days );
+      });
+    }
+    return result;
+  }, [normalizeData, q, showOnly7Days]);
+
+  const clientGroups = useMemo(() => {
+    const groups = {};
+    finalFiltered.forEach(r => {
+      const cId = r.raw.customerId?._id || r.customer.mobile;
+      if (!groups[cId]) {
+        groups[cId] = {
+          customer: r.customer,
+          reminders: []
+        };
+      }
+      groups[cId].reminders.push(r);
+    });
+    return Object.values(groups).map(g => ({
+      ...g,
+      reminders: g.reminders.sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor))
+    }));
+  }, [finalFiltered]);
+
+  const toggleGroup = (cId) => {
+    setExpandedGroups(prev => {
+      const n = new Set(prev);
+      n.has(cId) ? n.delete(cId) : n.add(cId);
+      return n;
+    });
+  };
+
+  const handleExpandAll = () => {
+    const allKeys = clientGroups.map(g => g.customer.mobile);
+    setExpandedGroups(new Set(allKeys));
+    setIsExpandedAll(true);
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedGroups(new Set());
+    setIsExpandedAll(false);
+
+  };
+
+  // Sync expanded groups when data arrives
+  useEffect(() => {
+    if (isExpandedAll && clientGroups.length > 0) {
+      const allKeys = clientGroups.map(g => g.customer.mobile);
+      setExpandedGroups(new Set(allKeys));
+    }
+  }, [clientGroups, isExpandedAll]);
+
+  console.log("finalFiltered", finalFiltered);
 
   const toggleBulk = (id) => {
     setBulk((prev) => {
@@ -464,7 +530,7 @@ export default function ReminderManagement() {
 
         {/* Search & Actions Bar */}
         <div className="p-4 border-b border-gray-200 space-y-3">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
             <div className="flex-1">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -472,14 +538,57 @@ export default function ReminderManagement() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Search by customer, company, or ID..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full pl-8 border shadow-accertinity inline px-2 py-1.5 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
                 />
               </div>
             </div>
-            {/* <button className="inline-flex items-center justify-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                <Filter className="w-4 h-4" /> Filters
-              </button> */}
+
+            <div className="flex items-center gap-2 border border-gray-200 p-1 rounded-xl bg-gray-50/50">
+              <button
+                onClick={() => setViewMode("individual")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:cursor-pointer transition-all ${viewMode === "individual" ? "bg-white text-green-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                Individual
+              </button>
+              <button
+                onClick={() => setViewMode("client")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:cursor-pointer transition-all ${viewMode === "client" ? "bg-white text-green-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                By Client
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowOnly7Days(!showOnly7Days)}
+              className={`inline-flex items-center gap-2 border px-4 py-2 rounded-xl transition-all text-xs font-medium shadow-sm ${showOnly7Days ? "bg-green-600 border-green-600 text-white" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+            >
+              <Calendar className="w-4 h-4" />
+              Next 7 Days
+            </button>
           </div>
+
+          {viewMode === "client" && (
+            <div className="flex justify-start items-center gap-3 pt-1 px-1">
+              <button
+                onClick={handleExpandAll}
+                className={`text-[11px] uppercase tracking-wider ${isExpandedAll ? 'text-green-600' : 'text-gray-300'} hover:cursor-pointer hover:text-green-600/70 font-bold transition-colors`}
+              >
+                Expand All
+              </button>
+              <span className="text-gray-300 text-xs">|</span>
+              <button
+                onClick={handleCollapseAll}
+                className={`text-[11px] uppercase tracking-wider ${!isExpandedAll ? 'text-green-600' : 'text-gray-300'}  hover:cursor-pointer hover:text-green-600/70 font-bold transition-colors`}
+              >
+                Collapse All
+              </button>
+            </div>
+          )}
 
           {/* Bulk Actions */}
           {bulk.size > 0 && (
@@ -489,28 +598,28 @@ export default function ReminderManagement() {
                 <button
                   disabled={bulkActionLoading}
                   onClick={handleBulkSend}
-                  className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:cursor-pointer hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" /> Send Now
                 </button>
                 <button
                   disabled={bulkActionLoading}
                   onClick={handleBulkPause}
-                  className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:cursor-pointer hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
                 >
                   <Pause className="w-3.5 h-3.5" /> Pause
                 </button>
                 <button
                   disabled={bulkActionLoading}
                   onClick={() => setRescheduleOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-1.5 rounded-lg hover:cursor-pointer hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
                 >
                   <ClipboardClock className='w-3.5 h-3.5' /> ReSchedule
                 </button>
                 <button
                   disabled={bulkActionLoading}
                   onClick={handleBulkDelete}
-                  className="inline-flex items-center gap-1.5 bg-white border border-red-300 px-3 py-1.5 rounded-lg hover:bg-red-50 text-sm font-medium text-red-600 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 bg-white border border-red-300 px-3 py-1.5 rounded-lg hover:cursor-pointer hover:bg-red-50 text-sm font-medium text-red-600 disabled:opacity-50"
                 >
                   <Trash2 className="w-3.5 h-3.5" /> Delete
                 </button>
@@ -527,19 +636,19 @@ export default function ReminderManagement() {
                 <th className="px-6 py-3 w-12">
                   <input
                     type="checkbox"
-                    checked={filtered.length > 0 && filtered.every((r) => bulk.has(r.id))}
+                    checked={finalFiltered.length > 0 && finalFiltered.every((r) => bulk.has(r.id))}
                     className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                     onChange={(e) => {
                       if (e.target.checked) {
                         setBulk((prev) => {
                           const n = new Set(prev);
-                          filtered.forEach((r) => n.add(r.id));
+                          finalFiltered.forEach((r) => n.add(r.id));
                           return n;
                         });
                       } else {
                         setBulk((prev) => {
                           const n = new Set(prev);
-                          filtered.forEach((r) => n.delete(r.id));
+                          finalFiltered.forEach((r) => n.delete(r.id));
                           return n;
                         });
                       }
@@ -559,67 +668,161 @@ export default function ReminderManagement() {
               {loading ? (
                 <tr>
                   <td className="px-6 py-24 text-center" colSpan={8}>
-                            <LoaderTwo text="Filtering Reminders..." />
+                    <LoaderTwo text="Filtering Reminders..." />
                   </td>
                 </tr>
-              ) : filtered.length > 0 ? (
-                filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                        checked={bulk.has(r.id)}
-                        onChange={() => toggleBulk(r.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      {/* <div className="font-medium text-gray-900 text-sm">{r.id}</div> */}
-                      <div className="text-xs text-gray-500 mt-0.5">{TEMPLATES[r.template]?.label || r.template}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900 text-sm">{r.customer.name}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{r.customer.company}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1.5">
-                        {r.channel.includes("whatsapp") && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium  text-green-700 ring-1 ring-inset ring-green-600/20">
-                            <FaWhatsapp className="w-3 h-3" /> WhatsApp
-                          </span>
-                        )}
-                        {r.channel.includes("voice") && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
-                            <Phone className="w-3 h-3" /> Voice
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-900 font-semibold text-sm">{currency2(r.dueAmount)}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-gray-700 text-sm">
-                        {/* <Calendar className="w-3.5 h-3.5 text-gray-400" /> */}
-                        <span className="text-xs">{new Date(r.scheduledFor).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ring-1 ring-inset ${statusChip(r.status)}`}>
-                        {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="inline-flex items-center gap-0.5">
-                        <IconBtn title="Whatsapp History" onClick={() => setAuditCustomer(r.customer)}> <FaWhatsapp className="w-5 h-5" /> </IconBtn>
-                        <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-5 h-5" /></IconBtn>
-                        <IconBtn title="Delete" danger onClick={() => {
-                          // console.log(r)
-                          setConfirmOpen(true)
-                          setToBeDeletedReminder(r.id)
-                        }} ><Trash2 className="w-5 h-5" /></IconBtn>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+              ) : finalFiltered.length > 0 ? (
+                viewMode === 'individual' ? (
+                  finalFiltered.map((r) => (
+                    <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                          checked={bulk.has(r.id)}
+                          onChange={() => toggleBulk(r.id)}
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs text-gray-500 mt-0.5">{TEMPLATES[r.template]?.label || r.template}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900 text-sm">{r.customer.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{r.customer.company}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {r.channel.includes("whatsapp") && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium  text-green-700 ring-1 ring-inset ring-green-600/20">
+                              <FaWhatsapp className="w-3 h-3" /> WhatsApp
+                            </span>
+                          )}
+                          {r.channel.includes("voice") && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+                              <Phone className="w-3 h-3" /> Voice
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-900 font-semibold text-sm">{currency2(r.dueAmount)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5 text-gray-700 text-sm">
+                          <span className="text-xs">{new Date(r.scheduledFor).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ring-1 ring-inset ${statusChip(r.status)}`}>
+                          {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="inline-flex items-center gap-0.5">
+                          <IconBtn title="Whatsapp History" onClick={() => setAuditCustomer(r.customer)}> <FaWhatsapp className="w-5 h-5" /> </IconBtn>
+                          <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-5 h-5" /></IconBtn>
+                          <IconBtn title="Delete" danger onClick={() => {
+                            setConfirmOpen(true)
+                            setToBeDeletedReminder(r.id)
+                          }} ><Trash2 className="w-5 h-5" /></IconBtn>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  clientGroups.map((group) => {
+                    const groupKey = group.customer.mobile;
+                    const isExpanded = expandedGroups.has(groupKey);
+                    return (
+                      <React.Fragment key={groupKey}>
+                        <tr
+                          onClick={() => toggleGroup(groupKey)}
+                          className="bg-green-50/30 cursor-pointer hover:bg-green-100/40 transition-colors"
+                        >
+                          <td colSpan={8} className="px-6 py-3 border-y border-green-100">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                                  <UserRound className="w-4 h-4 text-green-600" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="text-sm font-semibold text-gray-900">{group.customer.name}</h3>
+                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                                  </div>
+                                  <p className="text-xs text-gray-500">{group.customer.mobile}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                  <p className="text-xs text-gray-500 uppercase font-medium">Total Dues</p>
+                                  <p className="text-sm font-bold text-gray-900">{currency2(group.reminders.reduce((acc, r) => acc + Number(r.dueAmount), 0))}</p>
+                                </div>
+                                <span className="bg-white border border-green-200 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
+                                  {group.reminders.length} Reminders
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded && group.reminders.map((r) => (
+                          <tr key={r.id} className="hover:bg-gray-50 transition-colors border-l-4 border-l-transparent hover:border-l-green-500">
+                            <td className="px-6 py-4">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                checked={bulk.has(r.id)}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  toggleBulk(r.id);
+                                }}
+                              />
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-xs text-gray-500 mt-0.5">{TEMPLATES[r.template]?.label || r.template}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="font-medium text-gray-900 text-sm">{r.customer.name}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-wrap gap-1.5">
+                                {r.channel.includes("whatsapp") && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                                    <FaWhatsapp className="w-3 h-3" /> WhatsApp
+                                  </span>
+                                )}
+                                {r.channel.includes("voice") && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+                                    <Phone className="w-3 h-3" /> Voice
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-gray-900 font-semibold text-sm">{currency2(r.dueAmount)}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-1.5 text-gray-700 text-sm">
+                                <span className="text-xs">{new Date(r.scheduledFor).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ring-1 ring-inset ${statusChip(r.status)}`}>
+                                {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="inline-flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                                <IconBtn title="Whatsapp History" onClick={() => setAuditCustomer(r.customer)}> <FaWhatsapp className="w-5 h-5" /> </IconBtn>
+                                <IconBtn title="Edit" onClick={() => setDrawer(r)}><Pencil className="w-5 h-5" /></IconBtn>
+                                <IconBtn title="Delete" danger onClick={() => {
+                                  setConfirmOpen(true)
+                                  setToBeDeletedReminder(r.id)
+                                }} ><Trash2 className="w-5 h-5" /></IconBtn>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    )
+                  })
+                )
               ) : (
                 <tr>
                   <td className="px-6 py-16 text-center" colSpan={8}>
@@ -638,10 +841,11 @@ export default function ReminderManagement() {
         </div>
 
         {/* Pagination Footer */}
-        {filtered.length > 0 && (
+        {finalFiltered.length > 0 && (
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="font-medium">{pagination.total}</span> reminders
+              Showing <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="font-medium">{pagination.total}</span> total reminders
+              {showOnly7Days && <span className="ml-1 text-green-600 font-medium">(Filtered for next 7 days: {finalFiltered.length} showing)</span>}
             </div>
             <div className="flex gap-2">
               <button

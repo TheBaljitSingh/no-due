@@ -125,7 +125,7 @@ export const formatDate = (d) =>
       })
     : "-";
 
-export const StatusBadge = ({ value }) => {
+export const StatusBadge = ({ value, transactions }) => {
   const styles = {
     Paid: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
     Overdue: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
@@ -134,9 +134,11 @@ export const StatusBadge = ({ value }) => {
   };
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${styles[value] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}
+      className={`inline-flex flex-col  items-start rounded-md px-2 py-1 text-xs font-medium ${styles[value] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}
     >
       {value}
+      <p className="text-gray-500 text-sm">{value==='Overdue' && formatDate(transactions?.find(c=>c.type==='DUE_ADDED')?.dueDate)}</p>
+
     </span>
   );
 };
@@ -156,7 +158,7 @@ export function TabButton({ active, onClick, children, icon }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+      className={`inline-flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-colors hover:cursor-pointer ${
         active
           ? "bg-green-50 text-green-700 border border-green-200"
           : "text-gray-600 hover:bg-gray-50 border border-transparent"

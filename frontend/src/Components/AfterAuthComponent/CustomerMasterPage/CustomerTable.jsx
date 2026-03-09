@@ -8,7 +8,7 @@ import {
 import { CloudCog, Download, FileText, Loader2, Pencil, Trash2 } from "lucide-react";
 import { TableHeaders } from "../../../utils/constants.js";
 import {
-  deleteCustomerById,
+  deleteCustomers,
   getAllcustomers,
   getCustomers,
   getCustomerTransactions,
@@ -115,7 +115,7 @@ const EmptyState = () => (
   </tr>
 );
 
-const CustomerTable = ({ search = "", onStatsReady }) => {
+const CustomerTable = ({ search = "", onStatsReady, selectedCustomers, setSelectedCustomers }) => {
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState([]);
   const [page, setPage] = useState(1);
@@ -130,6 +130,8 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
   const [deletedCustomerId, setDeletedCustomerId] = useState();
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [transactions, setTransactions] = useState([]);
+
+
   const editRef = useRef();
   const transactionRef = useRef();
   const navigate = useNavigate();
@@ -243,7 +245,7 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
 
   const handleConfirmDelete = async () => {
     try {
-      const res = await toast.promise(deleteCustomerById(deletingId), {
+      const res = await toast.promise(deleteCustomers(deletingId), {
         loading: "Deleting...",
         success: "Customer deleted",
         error: (err) => err?.response?.data?.message || "Error while deleting",
@@ -278,7 +280,7 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
     async function loadTxn() {
       try {
         // const tsx = await getCustomerTransactions(c._id);
-        const ctx = customers.find(d=>d._id===c._id)
+        const ctx = customers.find(d => d._id === c._id)
         // setTransactions(tsx.data?.dues || tsx.dues || []);
         setTransactions(ctx?.transactions);
       } catch (error) {
@@ -505,33 +507,83 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
     }
   };
 
+  const handleToggleAll = () => {
+    // Check if all current page customers are already selected
+    const allOnPageSelected = customers.length > 0 && customers.every((c) =>
+      selectedCustomers.some(sc => sc._id === c._id)
+    );
+
+    if (allOnPageSelected) {
+      // Remove all customers on current page from selection
+      const pageIds = customers.map(c => c._id);
+      setSelectedCustomers(prev => prev.filter(sc => !pageIds.includes(sc._id)));
+    } else {
+      // Add all customers on current page that are not already selected
+      setSelectedCustomers(prev => {
+        const next = [...prev];
+        customers.forEach(c => {
+          if (!next.some(sc => sc._id === c._id)) {
+            next.push(c);
+          }
+        });
+        return next;
+      });
+    }
+  };
+
+  const handletoggleRow = (data) => {
+    setSelectedCustomers((prev) => {
+      const exists = prev.some(sc => sc._id === data._id);
+      if (exists) {
+        return prev.filter(sc => sc._id !== data._id);
+      } else {
+        return [...prev, data];
+      }
+    });
+  };
+
+
   if (loading) {
     return <CustomerTableSkeleton />;
   }
 
   // Filtering is now done server-side; `customers` already contains only matching results
-  const filteredCustomers = customers;
+  // const filteredCustomers = customers;
 
-  console.log("fv",transactions);
-  
+  const allCustomerSelected = customers.length > 0 &&
+    customers.every((c) => selectedCustomers.some(sc => sc._id === c._id));
+
+  // console.log("fv",transactions);
+  console.log(selectedCustomers)
+
 
   return (
     <div className="hidden md:block rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           {/* ── Sticky header ── */}
           <thead className="sticky top-0 z-10 bg-gradient-to-b from-gray-50 to-gray-50/95 border-b border-gray-100">
-            <tr>
+            <tr className="bg-gray-50">
+              <th className="px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 rounded-tl-lg">
+                <input type="checkbox"
+                  checked={allCustomerSelected}
+                  onChange={handleToggleAll}
+                />
+              </th>
+
               {TableHeaders.map((h, i) => (
+
                 <th
                   key={i}
-                  className={`py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap ${i === 0 ? "pl-3 pr-1 w-6" : "px-3"
+                  className={`py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap ${i === 0 ? "pl-0 pr-1 w-6" : "px-3"
                     }`}
                 >
                   {h}
                 </th>
               ))}
             </tr>
+
           </thead>
 
           <tbody className="divide-y divide-gray-50">
@@ -540,69 +592,115 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
             ) : customers.length === 0 ? (
               <EmptyState />
             ) : (
-              customers.map((c, index) => (
-                <tr
-                  key={c._id}
-                  className={`
+              customers.map((c, index) => {
+                const isSelected = selectedCustomers.some(sc => sc._id === c._id);
+                // Get the edited version from selectedCustomers if it exists
+                const editData = isSelected ? selectedCustomers.find(sc => sc._id === c._id) : c;
+
+                const handleLocalChange = (field, value) => {
+                  setSelectedCustomers(prev => prev.map(sc =>
+                    sc._id === c._id ? { ...sc, [field]: value } : sc
+                  ));
+                };
+
+                return (
+                  <tr
+                    key={c._id}
+                    className={`
                       group transition-all duration-200
                       hover:bg-green-50/40 hover:shadow-[inset_3px_0_0_0_#22c55e]
-                      ${deletedCustomerId === c._id ? "opacity-0 scale-95" : "opacity-100"}
+                      ${deletedCustomerId === c._id ? "opacity-0 scale-95" : "opacity-100 font-medium"}
+                      ${isSelected ? "bg-green-100/20" : ""}
                     `}
-                >
-                  <td className="pl-3 pr-1 py-4 text-gray-400 text-xs font-medium w-6">
-                    {(page - 1) * limit + index + 1}
-                  </td>
-                  <td className="px-3 py-4">
-                    <div className="flex items-center gap-2.5">
-                      {/* Avatar */}
-                      {/* <div className="shrink-0 w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
-                        <span className="text-xs font-semibold text-green-700">
-                          {(c.name || "?")[0].toUpperCase()}
-                        </span>
-                      </div> */}
-                      <span className="font-medium text-gray-900 truncate max-w-[140px]">
-                        {c.name}
+                  >
+                    <td className="pl-3">
+                      <input type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handletoggleRow(c)}
+                      />
+                    </td>
+                    <td className="pr-1 py-4 text-gray-400 text-xs font-medium w-6">
+                      {(page - 1) * limit + index + 1}
+                    </td>
+                    <td className="px-3 py-4">
+                      <div className="flex items-center gap-2.5">
+                        {isSelected ? (
+                          <input
+                            type="text"
+                            value={editData.name || ""}
+                            onChange={(e) => handleLocalChange('name', e.target.value)}
+                            className="w-full border shadow-accertinity inline px-2 py-1.5 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+                          />
+                        ) : (
+                          <span className="font-medium text-gray-900 truncate max-w-[140px]">
+                            {c.name}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-4 whitespace-nowrap text-gray-600 text-sm">
+                      {isSelected ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-400 text-xs">+91</span>
+                          <input
+                            type="text"
+                            value={editData.mobile?.startsWith('91') ? editData.mobile.slice(2) : editData.mobile}
+                            onChange={(e) => handleLocalChange('mobile', `91${e.target.value.replace(/\D/g, '')}`)}
+                            className="w-full ml-0.5 border shadow-accertinity inline px-2 py-1.5 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
+                            placeholder="Mobile"
+                          />
+                        </div>
+                      ) : (
+                        `+91 ${c.mobile.slice(2, 7)}  ${c.mobile.slice(7, 12)}`
+                      )}
+                    </td>
+
+
+                    <td className="px-3 py-4 font-semibold whitespace-nowrap">
+                      <span
+                        className={
+                          (c.currentDue || 0) > 0
+                            ? "text-red-600"
+                            : "text-gray-400"
+                        }
+                      >
+                        {currency(c.currentDue)}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-gray-600 text-sm">
-                    {`+91 ${c.mobile.slice(2, 7)}  ${c.mobile.slice(7, 12)}`}
-                  </td>
-                  <td className="px-3 py-4 font-semibold whitespace-nowrap">
-                    <span
-                      className={
-                        (c.currentDue || 0) > 0
-                          ? "text-red-600"
-                          : "text-gray-400"
-                      }
-                    >
-                      {currency(c.currentDue)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-gray-500 text-sm">
-                    {formatDate(c.lastReminder)}
-                  </td>
-                  <td className="px-3 py-4">
-                    <StatusBadge value={c.status} />
-                  </td>
-                  <td className="px-3 py-4 text-gray-600 text-sm max-w-[160px] truncate">
-                    {c.feedback ? (
-                      c.feedback
-                        .toLowerCase()
-                        .replace(/\b\w/g, (l) => l.toUpperCase())
-                    ) : (
-                      <span className="text-gray-300">—</span>
-                    )}
-                  </td>
-                  <td>
-                    <ActionBadge
-                      onEdit={() => handleEditCustomer(c)}
-                      onDelete={() => handleDeleteCustomer(c._id)}
-                      onTransaction={() => handleAllTransactions(c)}
-                    />
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="px-3 py-4 whitespace-nowrap text-gray-500 text-sm">
+                      {formatDate(c?.reminders
+                        .filter(r => ['pending', 'rescheduled']
+                          .includes(r.status))
+                        .sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor))[0]?.scheduledFor)}
+                    </td>
+                    <td className="px-3 py-4">
+                      <StatusBadge value={c.status} transactions={c?.transactions} />
+                    </td>
+                    <td className="px-3 py-4 text-gray-600 text-sm max-w-[160px] truncate">
+                      {c.feedback ? (
+                        c.feedback
+                          .toLowerCase()
+                          .replace(/\b\w/g, (l) => l.toUpperCase())
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td>
+                      <ActionBadge
+                        onEdit={() => handleEditCustomer(c)}
+                        onDelete={() => handleDeleteCustomer(c._id)}
+                        onTransaction={() => handleAllTransactions(c)}
+                      />
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>
@@ -625,8 +723,8 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
             className={`px-4 py-2 rounded-lg border ${page === 1
-                ? "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
-                : "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
+              ? "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
+              : "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
               }`}
           >
             ← Prev
@@ -639,8 +737,8 @@ const CustomerTable = ({ search = "", onStatsReady }) => {
             disabled={page === totalPages}
             onClick={() => setPage((p) => p + 1)}
             className={`px-4 py-2 rounded-lg border ${page === totalPages
-                ? "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
-                : "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
+              ? "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
+              : "inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
               }`}
           >
             Next →

@@ -158,7 +158,7 @@ const userSchema = new Schema(
     profileImageUrl: {
       type: String,
       default: function () {
-        return `https://ui-avatars.com/api/?name=${encodeURIComponent(this.name)}&background=random`;
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(`${this.fname || ""} ${this.lname || ""}`)}&background=00A63E&size=128&rounded=true&bold=true&color=fff`;
       },
     },
     companyName: {

@@ -27,9 +27,9 @@ export const createCustomer = async (req, res) => {
       owner: null,
       isDefault: true,
       isActive: true,
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).select("creditDays reminderOffsets").lean();
 
-    console.log(defaultPT);
+    // console.log(defaultPT);
 
     // ---------- BULK UPLOAD ----------
     if (Array.isArray(customerData)) {
@@ -47,15 +47,15 @@ export const createCustomer = async (req, res) => {
         const dueAmount = Number(customer.amount) || 0;
         const status = (customer?.status).toLowerCase();
 
-        console.log("status", status);
+        // console.log("status", status);
 
         //this will store info of payment term - have to check
         const paymentTermData = customer.paymentTerm
-          ? await PaymentTerm.findById(customer.paymentTerm)
+          ? await PaymentTerm.findById(customer.paymentTerm).select("creditDays reminderOffsets").lean()
           : defaultPT; // have to take default payment term if not provided
 
         const creditDays =
-          paymentTermData?.creditDays ?? defaultPT?.creditDays ?? 10;
+          paymentTermData?.creditDays ?? defaultPT?.creditDays;
 
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + creditDays);
@@ -64,7 +64,13 @@ export const createCustomer = async (req, res) => {
           mobile: formattedMobile,
           CustomerOfComapny: userId,
           paymentTerm: paymentTermData?._id,
-        });
+        }).select("name lastTransaction status currentDue").populate({
+          path: "CustomerOfComapny",
+          select: "companyName"
+        }).lean();
+
+        console.log("existing customer", existingCustomer);
+
 
         // ================= EXISTING CUSTOMER =================
         if (existingCustomer) {
@@ -109,7 +115,7 @@ export const createCustomer = async (req, res) => {
                   operatorId: userId,
                 },
               });
-              console.log("Transaction created:", transaction);
+              // console.log("Transaction created:", transaction);
 
               existingCustomer.currentDue += dueAmount;
               existingCustomer.status =
@@ -554,11 +560,12 @@ export const getCustomers = async (req, res) => {
     }
 
     const customers = await Customer.find(query)
-    .populate("lastTransaction", "commitmentStatus")
-    .populate("paymentTerm", "name")
-    .populate("transactions") 
-    .skip(offset)
-    .limit(queryLimit);
+      .populate("lastTransaction", "commitmentStatus")
+      .populate("paymentTerm", "name")
+      .populate("transactions")
+      .populate('reminders')
+      .skip(offset)
+      .limit(queryLimit);
 
     const total = await Customer.countDocuments(query);
     return new APIResponse(
@@ -608,9 +615,27 @@ export const updateCustomer = async (req, res) => {
     const { customerId } = req.params;
     const userId = req.user._id;
     const updatedData = req.body;
+
     if (!updatedData) {
       return new APIResponse(400, null, `No data provided to update`).send(res);
     }
+
+    // Support Bulk Update if updatedData is an array
+    if (Array.isArray(updatedData)) {
+      const results = [];
+      for (const data of updatedData) {
+        if (!data._id) continue;
+        const updated = await Customer.findOneAndUpdate(
+          { _id: data._id, CustomerOfComapny: userId },
+          data,
+          { new: true }
+        );
+        if (updated) results.push(updated);
+      }
+      return new APIResponse(200, results, `${results.length} customers updated successfully`).send(res);
+    }
+
+    // Single Update
     const filters = {};
     filters.CustomerOfComapny = userId;
     filters._id = customerId;
@@ -618,41 +643,70 @@ export const updateCustomer = async (req, res) => {
     const response = await Customer.findOneAndUpdate(filters, updatedData, {
       new: true,
     });
+
+    if (!response) {
+      return new APIResponse(404, null, "Customer not found").send(res);
+    }
+
     return new APIResponse(200, response, "Successfully updated").send(res);
   } catch (error) {
     return new APIError(500, error, "Failed to Update Customer").send(res);
   }
 };
 
+
 export const deleteCustomers = async (req, res) => {
   try {
-    const { customerId } = req.params;
     const userId = req.user._id;
+    const bodyIds = req.body;
 
-    const customer = await Customer.findOne({
-      _id: customerId,
-      CustomerOfComapny: userId,
-    });
+    console.log("ids to delete", bodyIds);
 
-    if (!customer) {
-      return new APIResponse(404, null, "Customer not found").send(res);
+    const ids = Array.isArray(bodyIds) ? bodyIds : [bodyIds];
+
+    if (!ids || ids.length === 0 || ids[0] == null) {
+      return new APIError(400, ["No IDs provided for deletion"]).send(res);
     }
 
-    const result = await Customer.deleteOne({
-      _id: customerId,
-      CustomerOfComapny: userId,
-    });
+    if (ids.length > 1) {
+      const result = await Customer.deleteMany({
+        _id: { $in: ids },
+        CustomerOfComapny: userId,
+      });
 
-    return new APIResponse(
-      200,
-      result,
-      `Customer with this Id: ${customerId} is deleted`,
-    ).send(res);
+      return new APIResponse(
+        200,
+        result,
+        `${result.deletedCount} customers deleted`,
+      ).send(res);
+    } else {
+      const customerId = ids[0];
+      const customer = await Customer.findOne({
+        _id: customerId,
+        CustomerOfComapny: userId,
+      });
+
+      if (!customer) {
+        return new APIError(404, ["Customer not found"]).send(res);
+      }
+
+      const result = await Customer.deleteOne({
+        _id: customerId,
+        CustomerOfComapny: userId,
+      });
+
+      return new APIResponse(
+        200,
+        result,
+        `Customer with this Id: ${customerId} is deleted`,
+      ).send(res);
+    }
   } catch (error) {
-    console.log(error);
-    return new APIError(500, error, "Failed to delete customer").send(res);
+    console.error("Delete customer error:", error);
+    return new APIError(500, [error.message || "Failed to delete customer"]).send(res);
   }
 };
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VALIDATE BULK — pure in-memory dry-run, zero DB writes
@@ -1016,9 +1070,9 @@ export const bulkUploadSSE = async (req, res) => {
               scheduledFor: scheduledDate,
               whatsappTemplate: templatePayload
                 ? {
-                    name: templatePayload.templateName,
-                    language: templatePayload.language,
-                  }
+                  name: templatePayload.templateName,
+                  language: templatePayload.language,
+                }
                 : undefined,
               templateVariables: [
                 customer.name,

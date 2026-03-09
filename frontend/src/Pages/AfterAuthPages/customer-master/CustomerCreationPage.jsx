@@ -186,7 +186,7 @@ const CustomerCreationPage = ({ paymentTerms }) => {
                     onChange={handleChange}
                     placeholder={field.placeholder}
                     disabled={field.name === "currentDue"}
-                    className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
+                    className="w-full border shadow-accertinity inline px-2 py-1.5 rounded-xl 
                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
                          focus:border-gray-300 focus:bg-gray-100 border-transparent 
                          transition-all duration-200 outline-none"

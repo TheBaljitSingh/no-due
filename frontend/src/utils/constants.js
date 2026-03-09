@@ -202,10 +202,10 @@ export const TableHeaders = [
   "Id",
   "Company Name",
   "Phone Number",
-  "Due",
-  "LastReminder",
+  "Total Due",
+  "Next Reminder",
   "Status",
-  "Last Reaction",
+  "Feedback",
   "Actions",
 ];
 

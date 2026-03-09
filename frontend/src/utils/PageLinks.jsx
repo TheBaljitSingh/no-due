@@ -26,7 +26,7 @@ import CustomerDetail from "../Pages/CustomerDetail";
 import PaymentReminder from "../Pages/PaymentReminder/PaymentReminder";
 import WhatsappChats from "../Pages/WhatsappChats/WhatsappChats";
 import AllTransaction from "../Pages/AfterAuthPages/AllTransaction";
-import TransactionHistoryDuePage from "../Components/AfterAuthComponent/CustomerMasterPage/Transactions";
+import TransactionHistory from "../Components/AfterAuthComponent/CustomerMasterPage/Transactions";
 import WhatsappConnectivity from "../Pages/AfterAuthPages/WhatsappConnectivity";
 
 const PageLinks = () => {
@@ -78,7 +78,7 @@ const PageLinks = () => {
 
         <Route path="dashboard" element={<AfterAuthLanding />} />
         <Route path="customer-master" element={<CustomerMaster />} />
-        <Route path="transactions" element={<TransactionHistoryDuePage />} />
+        <Route path="transactions" element={<TransactionHistory />} />
         <Route path="upload-center" element={<UploadCenter />} />
         <Route path="reminder-management" element={<ReminderManagement />} />
         <Route path="reminder-templates" element={<ReminderTemplates />} />

@@ -144,6 +144,16 @@ export const getAllTransaction = async (req, res) => {
     const userId = req.user._id; // logged-in company owner
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const query = req.query.query || "";
+
+    // Advanced Filters
+    const statuses = req.query.statuses ? req.query.statuses.split(",") : [];
+    const overdue = req.query.overdue || "any";
+    const minAmt = parseFloat(req.query.minAmt) || null;
+    const maxAmt = parseFloat(req.query.maxAmt) || null;
+    const fromDate = req.query.from || null;
+    const toDate = req.query.to || null;
+
     const skip = (page - 1) * limit;
 
     const baseAggregation = [
@@ -162,7 +172,14 @@ export const getAllTransaction = async (req, res) => {
         $match: {
           "customer.CustomerOfComapny": userId,
           type: "DUE_ADDED",
-          // paymentStatus: { $ne: "PAID" } //for now adding the paid transaction also
+          ...(query ? {
+            $or: [
+              { "customer.name": { $regex: query, $options: "i" } },
+              { "customer.mobile": { $regex: query, $options: "i" } },
+              { "paymentStatus": { $regex: query, $options: "i" } },
+              { $expr: { $regexMatch: { input: { $toString: "$amount" }, regex: query, options: "i" } } }
+            ]
+          } : {})
         },
       },
       // Calculate remaining balance (virtual field isn't available in aggregation)
@@ -199,6 +216,7 @@ export const getAllTransaction = async (req, res) => {
       //   }
       // },
       // Group by customer to calculate accumulated total due
+      // Group by customer to calculate accumulated total due
       {
         $group: {
           _id: "$customer._id",
@@ -222,42 +240,98 @@ export const getAllTransaction = async (req, res) => {
           },
         },
       },
-      // Sort by the latest transaction in the group
+      // Apply advanced filters on grouped data
+      {
+        $match: {
+          ...(statuses.length > 0 ? { "transactions.paymentStatus": { $in: statuses } } : {}),
+          ...(overdue !== "any" ? {
+            "transactions": {
+              $elemMatch: {
+                overdueByDay: overdue === "none" ? 0 :
+                  overdue === "1-7" ? { $gte: 1, $lte: 7 } :
+                    overdue === "8-30" ? { $gte: 8, $lte: 30 } :
+                      overdue === "30+" ? { $gt: 30 } : { $exists: true }
+              }
+            }
+          } : {}),
+          ...(fromDate || toDate ? {
+            "transactions.dueDate": {
+              ...(fromDate ? { $gte: new Date(fromDate) } : {}),
+              ...(toDate ? { $lte: new Date(toDate) } : {})
+            }
+          } : {}),
+          ...(minAmt !== null || maxAmt !== null ? {
+            totalDue: {
+              ...(minAmt !== null ? { $gte: minAmt } : {}),
+              ...(maxAmt !== null ? { $lte: maxAmt } : {})
+            }
+          } : {})
+        }
+      },
+      // Sort by the latest transaction in the group, with secondary stable sort on ID
       {
         $addFields: {
           latestTxAt: { $max: "$transactions.createdAt" },
         },
       },
-      { $sort: { latestTxAt: -1 } },
+      { $sort: { latestTxAt: -1, _id: 1 } },
     ];
 
-    // Get total count of unique customers (groups)
-    const countResult = await Transaction.aggregate([
+    // Perform facet to get both paginated data and overall stats in a single call
+    const aggregationResult = await Transaction.aggregate([
       ...baseAggregation,
-      { $count: "total" },
+      {
+        $facet: {
+          data: [
+            { $skip: skip },
+            { $limit: limit }
+          ],
+          totalStats: [
+            {
+              $group: {
+                _id: null,
+                totalOverallDue: { $sum: "$totalDue" },
+                totalOverallTransactions: { $sum: { $size: "$transactions" } },
+                totalOverdueCustomers: {
+                  $sum: {
+                    $cond: [
+                      { $gt: [{ $max: "$transactions.overdueByDay" }, 0] },
+                      1,
+                      0
+                    ]
+                  }
+                },
+                totalGroups: { $sum: 1 }
+              }
+            }
+          ]
+        }
+      }
     ]);
-    const totalGroups = countResult.length > 0 ? countResult[0].total : 0;
 
-    // Get paginated data
-    const transactions = await Transaction.aggregate([
-      ...baseAggregation,
-      { $skip: skip },
-      { $limit: limit },
-    ]);
+    const transactions = aggregationResult[0].data;
+    const stats = aggregationResult[0].totalStats[0] || {
+      totalOverallDue: 0,
+      totalOverallTransactions: 0,
+      totalOverdueCustomers: 0,
+      totalGroups: 0,
+    };
 
     return new APIResponse(
       200,
       {
         transactions,
+        stats,
         pagination: {
-          totalGroups,
+          totalGroups: stats.totalGroups,
           currentPage: page,
-          totalPages: Math.ceil(totalGroups / limit),
+          totalPages: Math.ceil(stats.totalGroups / limit),
           limit,
         },
       },
       "Transactions fetched successfully",
     ).send(res);
+
   } catch (error) {
     console.error("Transaction fetch error:", error);
     return new APIError(500, [error.message]).send(res);

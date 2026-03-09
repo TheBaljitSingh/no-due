@@ -1,7 +1,7 @@
 import React from "react";
 import { X } from "lucide-react";
 
-export default function EditCustomerModal({  customer,  setEditCustomer,  handleClose,  handleEditSubmit}) {
+export default function EditCustomerModal({ customer, setEditCustomer, handleClose, handleEditSubmit }) {
   if (!customer) return null;
 
   console.log(customer);
@@ -45,7 +45,7 @@ export default function EditCustomerModal({  customer,  setEditCustomer,  handle
 
           {/* Name */}
           <div>
-            <label className="text-sm text-gray-700 after:content-['*'] after:ml-1 after:text-red-500">Name</label>
+            <label className="text-sm font-medium text-gray-600 after:content-['*'] after:ml-1 after:text-gray-400">Name</label>
             <input
               name="name"
               value={customer.name || ""}
@@ -53,14 +53,14 @@ export default function EditCustomerModal({  customer,  setEditCustomer,  handle
               className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
                          focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
+                         transition-all duration-200 outline-none text-gray-800"
               placeholder="Enter name"
             />
           </div>
 
           {/* Email */}
           <div>
-            <label className="text-sm text-gray-700 after:content-['*'] after:ml-1 after:text-red-500">Email</label>
+            <label className="text-sm font-medium text-gray-600 after:content-['*'] after:ml-1 after:text-gray-400">Email</label>
             <input
               name="email"
               value={customer.email || ""}
@@ -68,14 +68,14 @@ export default function EditCustomerModal({  customer,  setEditCustomer,  handle
               className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
                          focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
+                         transition-all duration-200 outline-none text-gray-800"
               placeholder="Email"
             />
           </div>
 
           {/* Phone */}
           <div>
-            <label className="text-sm text-gray-700">Mobile</label>
+            <label className="text-sm font-medium text-gray-600">Mobile</label>
             <input
               name="mobile"
               value={customer.mobile || ""}
@@ -83,14 +83,14 @@ export default function EditCustomerModal({  customer,  setEditCustomer,  handle
               className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
                          focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
+                         transition-all duration-200 outline-none text-gray-800"
               placeholder="Phone number"
             />
           </div>
 
           {/* Gender */}
           <div>
-            <label className="text-sm text-gray-700">Gender</label>
+            <label className="text-sm font-medium text-gray-600">Gender</label>
             <select
               name="gender"
               value={customer?.gender}
@@ -98,17 +98,13 @@ export default function EditCustomerModal({  customer,  setEditCustomer,  handle
               className="w-full border shadow-accertinity inline px-4 py-3 rounded-xl 
                          focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
                          focus:border-gray-300 focus:bg-gray-100 border-transparent 
-                         transition-all duration-200 outline-none"
+                         transition-all duration-200 outline-none text-gray-800"
             >
               <option value="male">Male</option>
               <option value="female">Female</option>
               <option value="other">Other</option>
             </select>
           </div>
-
-         {/* removed the edit due, and due status(if wanted then do in the Manage Transaction Action Button) */}
-        
-
         </div>
 
         {/* Footer */}

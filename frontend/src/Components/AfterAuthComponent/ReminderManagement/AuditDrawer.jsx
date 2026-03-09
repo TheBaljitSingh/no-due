@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { X, MessageSquare, Phone, Mail, Loader2, Inbox } from "lucide-react";
+import { X, MessageSquare, Phone, Mail, Loader2, Inbox, ChartArea, MessagesSquare } from "lucide-react";
 import { getAuditLogs } from "../../../utils/service/reminderService";
 
 const EXIT_DURATION = 240; // must match audit-drawer-out duration in ms
@@ -69,12 +69,12 @@ export default function AuditDrawer({ customer, onClose }) {
         className={`relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col ${drawerClass}`}
       >
         {/* Teal accent bar */}
-        <div className="h-1 bg-gradient-to-r from-teal-500 to-green-500 shrink-0" />
+        <div className="h-1 bg-green-300 shrink-0" />
 
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-4 bg-white shrink-0">
           {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-green-500 flex items-center justify-center text-white font-semibold text-sm shrink-0 shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-green-400 flex items-center justify-center text-white font-semibold text-sm shrink-0 shadow-sm">
             {getInitials(customer?.name)}
           </div>
 
@@ -111,7 +111,7 @@ export default function AuditDrawer({ customer, onClose }) {
         {/* Section label */}
         <div className="px-5 py-2.5 bg-gray-50 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
+            <MessagesSquare className="w-3.5 h-3.5 text-teal-600" />
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
               Communication Logs
             </span>

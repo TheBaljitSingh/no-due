@@ -34,11 +34,19 @@ export function getReminderType(dueDate, now) {
 
 export const getAllReminders = async (req, res) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status, page = 1, limit = 10, query } = req.query;
     const userId = req.user._id;
 
-    // 1. Find all customers belonging to this user
-    const userCustomers = await Customer.find({ CustomerOfComapny: userId }).select('_id');
+    // 1. Find all customers belonging to this user, optionally filtered by query
+    const customerSearch = { CustomerOfComapny: userId };
+    if (query) {
+      customerSearch.$or = [
+        { name: { $regex: query, $options: "i" } }, //case insensitive
+        { mobile: { $regex: query, $options: "i" } },
+      ];
+    }
+
+    const userCustomers = await Customer.find(customerSearch).select("_id").lean();
     const customerIds = userCustomers.map(c => c._id);
 
     // 2. Base filter: Must belong to one of the user's customers

@@ -185,6 +185,7 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
             "createdAt",
             "updatedAt",
             "lastTransaction",
+            "gender"
           ].includes(row),
       );
       const csvRows = [headers.join(",")];

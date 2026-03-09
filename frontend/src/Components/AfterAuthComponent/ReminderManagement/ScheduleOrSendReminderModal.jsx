@@ -255,8 +255,12 @@ export default function ScheduleOrSendReminderModal({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search name or mobile..."
-                    className="w-full rounded-lg border bg-gray-50 pl-9 pr-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
+                    className="w-full border shadow-accertinity inline pl-8 px-2 py-1.5 rounded-xl 
+                         focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 
+                         focus:border-gray-300 focus:bg-gray-100 border-transparent 
+                         transition-all duration-200 outline-none"
                     autoFocus
+                    
                   />
                 </div>
               </div>

@@ -25,7 +25,7 @@ router.get("/", getCustomers); //get all customers
 router.post("/validate-bulk", validateBulkCustomers);
 router.post("/bulk-upload-sse", bulkUploadSSE);
 router.post("/", createCustomer);
-router.delete("/:customerId", deleteCustomers);
+router.delete("/", deleteCustomers);
 router.get("/:customerId", getCustomersById);
 router.put("/:customerId", updateCustomer);
 

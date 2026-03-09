@@ -239,7 +239,7 @@ const CustomerTable = ({ search = "", onStatsReady, selectedCustomers, setSelect
   };
 
   const handleDeleteCustomer = (id) => {
-    setDeletingId(id);
+    setDeletingId([id])
     setConfirmOpen(true);
   };
 
@@ -251,9 +251,9 @@ const CustomerTable = ({ search = "", onStatsReady, selectedCustomers, setSelect
         error: (err) => err?.response?.data?.message || "Error while deleting",
       });
       if (res.success) {
-        setDeletedCustomerId(deletingId);
+        setDeletedCustomerId(deletingId[0]);
         setTimeout(() => {
-          const updatedCustomers = customers.filter((c) => c._id !== deletingId);
+          const updatedCustomers = customers.filter((c) => c._id !== deletingId[0]);
           const newTotalCount = totalCustomers - 1;
           setTotalCustomers(newTotalCount);
 

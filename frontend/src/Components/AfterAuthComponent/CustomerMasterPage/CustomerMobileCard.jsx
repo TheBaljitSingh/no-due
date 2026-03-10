@@ -185,7 +185,11 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
             "createdAt",
             "updatedAt",
             "lastTransaction",
-            "gender"
+            "gender",
+            "transactions",
+            "reminders",
+            "id",
+            "paymentTerm"
           ].includes(row),
       );
       const csvRows = [headers.join(",")];
@@ -244,6 +248,11 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
             "createdAt",
             "updatedAt",
             "lastTransaction",
+            "transactions",
+            "reminders",
+            "id",
+            "paymentTerm",
+            "gender"
           ].includes(row),
       ); // array of headers
 
@@ -252,6 +261,10 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
         const values = tableColumns.map((header) => {
           let val = row[header];
           console.log("val", val);
+          if (header && header === "mobile") {
+            // val = `="${val}"`;
+             val = `+91 ${val.slice(2, 7)}  ${val.slice(7, 12)}`
+          }
           if (
             header &&
             header === "currentDue" &&
@@ -329,7 +342,7 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
           // manually adding some space in that
           [nameIndex]: { cellWidth: 28 },
           [reminderIndex]: { cellWidth: 25 },
-          [mobileIndex]: { cellWidth: 28 },
+          [mobileIndex]: { cellWidth: 32 },
           [currentDueIndex]: { cellWidth: 18 },
           [statusIndex]: { cellWidth: 13 },
           [genderIndex]: { cellWidth: 16 },

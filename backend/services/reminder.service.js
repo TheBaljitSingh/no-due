@@ -292,7 +292,7 @@ class ReminderService {
 
 
   /* CRON: PROCESS SCHEDULED */
-  async processScheduledReminders() {
+    async processScheduledReminders() {
 
 
     const now = new Date();
@@ -311,6 +311,7 @@ class ReminderService {
 
 
     console.log(`will process ${reminders.length} reminders`);
+    reminders.forEach(r => console.log(`reminder id: ${r._id} status: ${r.status} scheduledFor: ${r.scheduledFor} type: ${r.reminderType}`));
 
 
     for (const reminder of reminders) {
@@ -400,6 +401,7 @@ class ReminderService {
         console.log("message payload: ", messagePayload, "\n");
 
         if (messagePayload) {
+          console.log(`Sending message for reminder ${reminder._id}`);
           const sentResponse = await whatsappService.sendTemplateMessage({
             to: `${tx.customerId.mobile}`,
             templateName: messagePayload.templateName,
@@ -408,6 +410,7 @@ class ReminderService {
             accessToken: merchant.whatsapp.accessToken,
             phoneNumberId: merchant.whatsapp.phoneNumberId
           });
+          console.log(`Message sent for reminder ${reminder._id} response: ${JSON.stringify(sentResponse)}`);
 
           if (sentResponse?.messages?.[0]?.id) {
             reminder.whatsappMessageId = sentResponse.messages[0].id;
@@ -417,6 +420,7 @@ class ReminderService {
           reminder.sentAt = new Date();
           reminder.source = "auto";
           await reminder.save();
+          console.log(`Reminder ${reminder._id} marked as sent`);
 
           //same here updating lastReminder for this user
           await Customer.findByIdAndUpdate(targetCustomerId, {
@@ -430,6 +434,7 @@ class ReminderService {
         }
 
       } catch (err) {
+        console.log(`ERROR for reminder ${reminder._id}:`, err.message);
         reminder.attempts += 1;
         reminder.lastError = err.message;
         await reminder.save();

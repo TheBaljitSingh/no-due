@@ -345,6 +345,9 @@ const CustomerTable = ({
             "lastTransaction",
             "lastInteraction",
             "gender",
+            "transactions",
+            "reminders",
+            "id",
           ].includes(row),
       ); // keys array will be stored
 
@@ -427,6 +430,10 @@ const CustomerTable = ({
             "updatedAt",
             "lastTransaction",
             "lastInteraction",
+            "transactions",
+            "reminders",
+            "id",
+            "gender"
           ].includes(row),
       ); // array of headers
 
@@ -434,7 +441,7 @@ const CustomerTable = ({
       data.forEach((row) => {
         const values = tableColumns.map((header) => {
           let val = row[header];
-          console.log("val", val);
+          // console.log("val", val);
           if (
             header &&
             header === "currentDue" &&
@@ -442,6 +449,10 @@ const CustomerTable = ({
             row[header] !== null
           ) {
             val = `Rs. ${row[header]}`;
+          }
+          if (header && header === "mobile") {
+            // val = `="${val}"`;
+             val = `+91 ${val.slice(2, 7)}  ${val.slice(7, 12)}`
           }
           if (header && header === "lastReminder" && row[header]) {
             //formatting date: 13 Feb 2026, 09:24 am
@@ -512,7 +523,7 @@ const CustomerTable = ({
           // manually adding some space in that
           [nameIndex]: { cellWidth: 28 },
           [reminderIndex]: { cellWidth: 25 },
-          [mobileIndex]: { cellWidth: 28 },
+          [mobileIndex]: { cellWidth: 32 },
           [currentDueIndex]: { cellWidth: 18 },
           [statusIndex]: { cellWidth: 13 },
           [genderIndex]: { cellWidth: 16 },

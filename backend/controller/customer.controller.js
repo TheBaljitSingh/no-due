@@ -3,6 +3,7 @@ import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/reminder.model.js";
+import Notification from "../model/notification.model.js";
 import reminderService from "../services/reminder.service.js";
 import {
   getBeforeDueTemplate,
@@ -576,6 +577,7 @@ export const getCustomers = async (req, res) => {
 
       if (tx.type === "DUE_ADDED") {
         dueMap[tx._id] = {
+          type:'DUE_ADDED',
           _id: tx._id,
           amount: tx.amount,
           remainingDue: tx.remainingDue,
@@ -707,7 +709,14 @@ export const deleteCustomers = async (req, res) => {
       return new APIError(400, ["No IDs provided for deletion"]).send(res);
     }
 
-    if (ids.length > 1) {
+    if (ids.length > 0) {
+      // Cascade delete: Transactions, Reminders, and Notifications
+      await Promise.all([
+        Transaction.deleteMany({ customerId: { $in: ids } }),
+        Reminder.deleteMany({ customerId: { $in: ids } }),
+        Notification.deleteMany({ relatedCustomerId: { $in: ids } }),
+      ]);
+
       const result = await Customer.deleteMany({
         _id: { $in: ids },
         CustomerOfComapny: userId,
@@ -716,29 +725,10 @@ export const deleteCustomers = async (req, res) => {
       return new APIResponse(
         200,
         result,
-        `${result.deletedCount} customers deleted`,
+        `${result.deletedCount} customers and their associated data deleted`,
       ).send(res);
     } else {
-      const customerId = ids[0];
-      const customer = await Customer.findOne({
-        _id: customerId,
-        CustomerOfComapny: userId,
-      });
-
-      if (!customer) {
-        return new APIError(404, ["Customer not found"]).send(res);
-      }
-
-      const result = await Customer.deleteOne({
-        _id: customerId,
-        CustomerOfComapny: userId,
-      });
-
-      return new APIResponse(
-        200,
-        result,
-        `Customer with this Id: ${customerId} is deleted`,
-      ).send(res);
+      return new APIError(400, ["No IDs provided for deletion"]).send(res);
     }
   } catch (error) {
     console.error("Delete customer error:", error);
@@ -886,7 +876,28 @@ export const bulkUploadSSE = async (req, res) => {
   };
 
   try {
-    const customerData = req.body;
+
+    const rawCustomerData = req.body;
+    const mergeMap = {};  // Data Structure looks like {{'918709548015'}, {name:'',mobile, etc}};
+    for(const row of rawCustomerData){
+      const raw = row.mobile?.toString().replace(/\D/g, "") ?? "";
+      const formattedMobile = raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;
+      
+      const amount = Number(row.amount) || 0;
+
+      if(!mergeMap[formattedMobile]){
+        mergeMap[formattedMobile]={
+          ...row,
+          mobile:formattedMobile,
+          amount,
+        }
+      }else{
+        //accumulate amount if duplicate
+        mergeMap[formattedMobile].amount+=amount;
+      }
+    }
+    const customerData = Object.values(mergeMap);
+
     if (!Array.isArray(customerData) || customerData.length === 0) {
       sendEvent({
         type: "error",
@@ -916,11 +927,7 @@ export const bulkUploadSSE = async (req, res) => {
 
     // We need to check for existing customers to decide upsert vs insert
     // Do a single batch lookup to avoid N round-trips
-    const normalizedMobiles = customerData.map((c) => {
-      const raw = c.mobile?.toString().replace(/\D/g, "") ?? "";
-      // Only add 91 country code if not already a 12-digit international number
-      return raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;
-    });
+    const normalizedMobiles = customerData.map((c) => c.mobile);
 
     const existingCustomers = await Customer.find({
       mobile: { $in: normalizedMobiles },
@@ -948,7 +955,7 @@ export const bulkUploadSSE = async (req, res) => {
         name: customer.name,
       });
 
-      const formattedMobile = normalizedMobiles[i];
+      const formattedMobile = customer.mobile;
       const dueAmount = Number(customer.amount) || 0;
       const status = (customer.status ?? "due").toString().toLowerCase().trim();
 
@@ -986,6 +993,8 @@ export const bulkUploadSSE = async (req, res) => {
         customerBulkOps.push({
           updateOne: { filter: { _id: existing._id }, update: updateOp },
         });
+
+        //in existing add the accumulate the amount don't create two entry
       } else {
         createdCount++;
         customerMobileMap[formattedMobile] = customerId;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, Ellipsis, Trash, X } from "lucide-react";
+import { Bell, CheckCheck, ChevronDown, ChevronUp, Ellipsis, Trash, X } from "lucide-react";
+
 import { notificationData } from "../../../utils/constants";
 import LogoutModal from "../../auth/LogoutModal";
 import { useAuth } from "../../../context/AuthContext";
@@ -18,16 +19,40 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState({});
+
 
   // const unreadCount = useMemo(
   //   () => notifications?.filter((n) => n.isRead === false).length,
   //   [notifications]
   // );
 
-  const filteredNotifications = useMemo(() => {
-    if (filter === "all") return notifications;
-    return notifications?.filter((n) => n.type === filter);
+  const groupedNotifications = useMemo(() => {
+    const list = filter === "all" ? notifications : notifications?.filter((n) => n.type === filter);
+    if (!list) return {};
+
+    const groups = {};
+    list.forEach((notif) => {
+      const customerId = notif.relatedCustomerId?._id || "system";
+      const customerName = notif.relatedCustomerId?.name || "System Alerts";
+      if (!groups[customerId]) {
+        groups[customerId] = {
+          name: customerName,
+          notifications: [],
+        };
+      }
+      groups[customerId].notifications.push(notif);
+    });
+    return groups;
   }, [notifications, filter]);
+
+  const toggleGroup = (groupId) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
+  };
+
   const { user } = useAuth();
   // console.log(user);
   const fullName = user?.name || (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "") || "";
@@ -215,55 +240,79 @@ const AfterNavbar = ({ profileRef, closeProfileDropdown, isProfileDropdownOpen, 
 
                     {/* List */}
                     <div className="max-h-72 overflow-y-auto">
-                      {filteredNotifications.length === 0 ? (
+                      {Object.keys(groupedNotifications).length === 0 ? (
                         <div className="px-4 py-8 text-center text-sm text-gray-500">
                           {filter === "all" ? "You’re all caught up 🎉" : "No notifications in this category"}
                         </div>
                       ) : (
-                        <ul className="divide-y divide-gray-100 mb-4">
-                          {filteredNotifications.map((notif, idx) => {
-                            const isRead = notif.read !== undefined ? notif.read : notif.isRead;
-                            const title = notif.name || notif.title;
-                            const message = notif.msg || notif.message;
-                            const time = notif.time || formatDate(notif.createdAt);
-                            const img = notificationUI[notif.type]?.img || "https://cdn-icons-png.flaticon.com/512/9131/9131546.png"; // default img
-
+                        <div className="mb-4">
+                          {Object.entries(groupedNotifications).map(([groupId, group]) => {
+                            const isExpanded = expandedGroups[groupId] !== false; // Default to expanded
                             return (
-                              <li
-                                key={notif._id || idx}
-                                className="flex items-center gap-3  px-4 py-3 hover:bg-gray-50 transition"
-                              >
-                                <div className="relative flex">
-                                  <img
-                                    src={img}
-                                    alt={title}
-                                    className="w-8 h-8 p-0.5 rounded-full object-cover ring-1 ring-gray-200"
-                                  />
-                                  {!isRead && (
-                                    <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-white" />
+                              <div key={groupId} className="border-b border-gray-100 last:border-0">
+                                <button
+                                  onClick={() => toggleGroup(groupId)}
+                                  className="w-full flex items-center justify-between px-4 py-2 bg-gray-50/50 hover:bg-gray-100 transition"
+                                >
+                                  <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                                    {group.name} ({group.notifications.length})
+                                  </span>
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-4 h-4 text-gray-400" />
+                                  ) : (
+                                    <ChevronDown className="w-4 h-4 text-gray-400" />
                                   )}
-                                </div>
+                                </button>
+                                {isExpanded && (
+                                  <ul className="divide-y divide-gray-100">
+                                    {group.notifications.map((notif, idx) => {
+                                      const isRead = notif.read !== undefined ? notif.read : notif.isRead;
+                                      const title = notif.relatedCustomerId?.name || notif.title;
+                                      const message = notif.msg || notif.message;
+                                      const time = notif.time || formatDate(notif.createdAt);
+                                      const img = notificationUI[notif.type]?.img || "https://cdn-icons-png.flaticon.com/512/9131/9131546.png";
 
-                                <div className="min-w-0 flex-1">
+                                      return (
+                                        <li
+                                          key={notif._id || idx}
+                                          className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition"
+                                        >
+                                          <div className="relative flex">
+                                            <img
+                                              src={img}
+                                              alt={title}
+                                              className="w-8 h-8 p-0.5 rounded-full object-cover ring-1 ring-gray-200"
+                                            />
+                                            {!isRead && (
+                                              <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-white" />
+                                            )}
+                                          </div>
 
-                                  <p className="text-sm text-gray-700">
-                                    <span className="font-semibold text-gray-900">
-                                      {title}
-                                    </span>
-                                    <span className="text-gray-600">: {message}</span>
-                                  </p>
-                                  <div className="mt-1 text-xs text-gray-500">
-                                    {time}
-                                  </div>
-                                </div>
-                                <div className="flex items-center justify-center">
-                                  <NotificationActionBadge onDelete={() => handleDeleteNotification(notif._id)} />
-                                </div>
-                              </li>
+                                          <div className="min-w-0 flex-1">
+                                            <p className="text-sm text-gray-700">
+                                              <span className="font-semibold text-gray-900">
+                                                {title}
+                                              </span>
+                                              <span className="text-gray-600">: {message}</span>
+                                            </p>
+                                            <div className="mt-1 text-xs text-gray-500">
+                                              {time}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center justify-center">
+                                            <NotificationActionBadge onDelete={() => handleDeleteNotification(notif._id)} />
+                                          </div>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                )}
+                              </div>
                             );
                           })}
-                        </ul>
+                        </div>
                       )}
+
                     </div>
 
                     {/* <button

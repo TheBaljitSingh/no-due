@@ -58,13 +58,20 @@ passport.use(
           user = await existingUser.save();
           return done(null, user);
         }
-        const [firstName, ...rest] = profile.displayName.split(" "); //hello inovation singh
 
+        const nameParts = profile.displayName.trim().split(/\s+/);
+        const firstName = nameParts[0];
+        const rest = nameParts.length > 1 ? nameParts.slice(1) : [];
+        const profileImage = profile.photos[0].value;
+
+        console.log("[Google Stratergy]", profile);
         user = await User.create({
           googleId: profile.id,
           fname: firstName,
           lname: rest.join(""),
+          profileImageUrl: profileImage,
           email: profile.emails[0].value,
+
           password: "GoogleUser@" + Math.random().toString(36).slice(-8), // strong password
         });
 

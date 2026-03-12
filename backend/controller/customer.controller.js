@@ -3,6 +3,7 @@ import { APIError } from "../utils/ResponseAndError/ApiError.utils.js";
 import { APIResponse } from "../utils/ResponseAndError/ApiResponse.utils.js";
 import Transaction from "../model/transaction.model.js";
 import Reminder from "../model/reminder.model.js";
+import Notification from "../model/notification.model.js";
 import reminderService from "../services/reminder.service.js";
 import {
   getBeforeDueTemplate,
@@ -12,6 +13,7 @@ import {
 } from "../utils/reminder.templates.js";
 import PaymentTerm from "../model/PaymentTerm.model.js";
 import User from "../model/user.model.js";
+import mongoose from "mongoose";
 
 export const createCustomer = async (req, res) => {
   try {
@@ -576,6 +578,7 @@ export const getCustomers = async (req, res) => {
 
       if (tx.type === "DUE_ADDED") {
         dueMap[tx._id] = {
+          type:'DUE_ADDED',
           _id: tx._id,
           amount: tx.amount,
           remainingDue: tx.remainingDue,
@@ -699,47 +702,51 @@ export const deleteCustomers = async (req, res) => {
     const userId = req.user._id;
     const bodyIds = req.body;
 
-    console.log("ids to delete", bodyIds);
-
     const ids = Array.isArray(bodyIds) ? bodyIds : [bodyIds];
 
     if (!ids || ids.length === 0 || ids[0] == null) {
       return new APIError(400, ["No IDs provided for deletion"]).send(res);
     }
 
-    if (ids.length > 1) {
-      const result = await Customer.deleteMany({
-        _id: { $in: ids },
-        CustomerOfComapny: userId,
-      });
+    const validCustomers = await Customer.find(
+      { _id: { $in: ids }, CustomerOfComapny: userId },
+      { _id: 1 }
+    );
 
-      return new APIResponse(
-        200,
-        result,
-        `${result.deletedCount} customers deleted`,
-      ).send(res);
-    } else {
-      const customerId = ids[0];
-      const customer = await Customer.findOne({
-        _id: customerId,
-        CustomerOfComapny: userId,
-      });
+    const validIds = validCustomers.map((c)=>c._id);
 
-      if (!customer) {
-        return new APIError(404, ["Customer not found"]).send(res);
+    if (validIds.length === 0) {
+      return new APIError(403, ["No valid customers found"]).send(res);
+    }
+
+    
+    //ATOMICITY with cascade delete
+      let result ;
+      const session = await mongoose.startSession();
+      try {
+        session.startTransaction();
+
+        await Transaction.deleteMany({customerId:{$in:validIds}}).session(session);
+        await Reminder.deleteMany({customerId:{$in:validIds}}).session(session);
+        await Notification.deleteMany({relatedCustomerId:{$in:validIds}}).session(session);
+        result = await Customer.deleteMany({_id:{$in:validIds}}).session(session);
+
+        await session.commitTransaction();
+      } catch (err) {
+        console.log("error",err);
+        await session.abortTransaction();
+        return new APIError(500, [`Failed to delete customer${ids.length>1?'s':''}`]).send(res);
+      } finally {
+        session.endSession();
       }
 
-      const result = await Customer.deleteOne({
-        _id: customerId,
-        CustomerOfComapny: userId,
-      });
 
       return new APIResponse(
         200,
         result,
-        `Customer with this Id: ${customerId} is deleted`,
+        `${result.deletedCount} customers and their associated data deleted`,
       ).send(res);
-    }
+    
   } catch (error) {
     console.error("Delete customer error:", error);
     return new APIError(500, [error.message || "Failed to delete customer"]).send(res);
@@ -813,7 +820,10 @@ export const validateBulkCustomers = async (req, res) => {
 
       // email (optional)
       if (customer.email) {
-        const email = customer.email.toString().trim();
+        let email = customer.email.toString().trim();
+        if(typeof(customer.email)==='object'){
+          email = customer.email?.text;
+        }
         if (!EMAIL_RE.test(email) || email.length < 5 || email.length > 255) {
           errors.push({
             row,
@@ -886,7 +896,28 @@ export const bulkUploadSSE = async (req, res) => {
   };
 
   try {
-    const customerData = req.body;
+
+    const rawCustomerData = req.body;
+    const mergeMap = {};  // Data Structure looks like {{'918709548015'}, {name:'',mobile, etc}};
+    for(const row of rawCustomerData){
+      const raw = row.mobile?.toString().replace(/\D/g, "") ?? "";
+      const formattedMobile = raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;
+      
+      const amount = Number(row.amount) || 0;
+
+      if(!mergeMap[formattedMobile]){
+        mergeMap[formattedMobile]={
+          ...row,
+          mobile:formattedMobile,
+          amount,
+        }
+      }else{
+        //accumulate amount if duplicate
+        mergeMap[formattedMobile].amount+=amount;
+      }
+    }
+    const customerData = Object.values(mergeMap);
+
     if (!Array.isArray(customerData) || customerData.length === 0) {
       sendEvent({
         type: "error",
@@ -916,11 +947,7 @@ export const bulkUploadSSE = async (req, res) => {
 
     // We need to check for existing customers to decide upsert vs insert
     // Do a single batch lookup to avoid N round-trips
-    const normalizedMobiles = customerData.map((c) => {
-      const raw = c.mobile?.toString().replace(/\D/g, "") ?? "";
-      // Only add 91 country code if not already a 12-digit international number
-      return raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;
-    });
+    const normalizedMobiles = customerData.map((c) => c.mobile);
 
     const existingCustomers = await Customer.find({
       mobile: { $in: normalizedMobiles },
@@ -948,7 +975,7 @@ export const bulkUploadSSE = async (req, res) => {
         name: customer.name,
       });
 
-      const formattedMobile = normalizedMobiles[i];
+      const formattedMobile = customer.mobile;
       const dueAmount = Number(customer.amount) || 0;
       const status = (customer.status ?? "due").toString().toLowerCase().trim();
 
@@ -986,6 +1013,8 @@ export const bulkUploadSSE = async (req, res) => {
         customerBulkOps.push({
           updateOne: { filter: { _id: existing._id }, update: updateOp },
         });
+
+        //in existing add the accumulate the amount don't create two entry
       } else {
         createdCount++;
         customerMobileMap[formattedMobile] = customerId;

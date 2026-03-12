@@ -1,4 +1,5 @@
 import mongoose, { Schema, Types } from "mongoose";
+import removeIdVirtual from "../plugins/removeIdVirtual.js"
 
 const TransactionSchema = new Schema(
   {
@@ -101,6 +102,7 @@ TransactionSchema.virtual("remainingDue").get(function () {
   return this.amount - this.paidAmount;
 });
 
+TransactionSchema.plugin(removeIdVirtual)
 
 
 const Transaction = mongoose.model("Transaction", TransactionSchema);

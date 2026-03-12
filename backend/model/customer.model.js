@@ -1,5 +1,6 @@
 import mongoose, { Schema, Types } from "mongoose";
 // import { connection } from "../database/databaseConfig.js";
+import removeIdVirtual from "../plugins/removeIdVirtual.js"
 
 const customerSchema = new Schema({
     name: {
@@ -78,7 +79,13 @@ const customerSchema = new Schema({
         ref: 'PaymentTerm',
         default: null,
     },
-}, { timestamps: true });
+}, 
+{ 
+    timestamps: true, 
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
 
 customerSchema.virtual("transactions", {
   ref: "Transaction",
@@ -92,8 +99,12 @@ customerSchema.virtual("reminders",{
     foreignField:'customerId'
 })
 
-customerSchema.set("toObject", { virtuals: true });
-customerSchema.set("toJSON", { virtuals: true });
+customerSchema.plugin(removeIdVirtual)
+
+customerSchema.index(
+    { mobile:1, CustomerOfComapny:1},
+    {unique:true}
+);
 
 const Customer = mongoose.model('Customer', customerSchema);
 

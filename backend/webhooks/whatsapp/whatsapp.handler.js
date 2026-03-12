@@ -73,6 +73,7 @@ export const handleWhatsappEvent = async (payload) => {
   // Check for duplicate response to the same message// need to verify this one
 
   console.log("printing the intent: ", intent);
+  let shouldEmitEvent = true;
 
   if (intent.context?.id && intent.type === "BUTTON") {
     const existingResponse = await whatsappMessage.findOne({
@@ -81,6 +82,7 @@ export const handleWhatsappEvent = async (payload) => {
     });
 
     if (existingResponse) {
+      shouldEmitEvent = false;
       console.warn(`[Audit] Duplicate response blocked. Message ${intent.context.id} already responded to.`);
       return;
     }
@@ -111,17 +113,19 @@ export const handleWhatsappEvent = async (payload) => {
       );
 
       // Emit live update via socket to the specific merchant's room
-      try {
-        const io = getIo();
-        io.to(merchant._id.toString()).emit("feedback_updated", {
-          feedback: feedbackText,
-          mobile: intent.from,
-          customerName: customer.name,
-          messageId: rawMsg?.id // used to prevent duplicate toasts in frontend
-        });
-        console.log(`[Socket] Emitted feedback_updated to merchant ${merchant._id}`);
-      } catch (error) {
-        console.error("Error emitting feedback update:", error);
+      if(shouldEmitEvent && merchant._id){
+          try {
+            const io = getIo();
+            io.to(merchant._id.toString()).emit("feedback_updated", {
+            feedback: feedbackText,
+            mobile: intent.from,
+            customerName: customer.name,
+            messageId: rawMsg?.id // used to prevent duplicate toasts in frontend
+          });
+          console.log(`[Socket] Emitted feedback_updated to merchant ${merchant._id}`);
+        } catch (error) {
+          console.error("Error emitting feedback update:", error);
+        }
       }
     } else {
       console.warn(`[Webhook] Skipping feedback update: Customer with mobile ${intent.from} not found.`);

@@ -208,7 +208,12 @@ const BulkEntrySection = ({ paymentTerms }) => {
         } else {
           const obj = {};
           row.eachCell((cell, colNumber) => {
-            const value = cell.value;
+            let value = cell.value;
+            //check for email if it is object with {text:'example@gmail.com', hyperlink:'example@gmail.com'}
+            if(value && typeof(value)==='object' && headers[colNumber-1]==='email' && value?.text){
+              value = value.text;
+            }
+
             obj[headers[colNumber - 1]] =
               value !== null && value !== undefined ? value : "";
           });

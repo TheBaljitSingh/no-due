@@ -6,8 +6,8 @@ import Features from "../../Components/Hero/Features";
 
 const Hero = () => {
   return (
-    <div className=" w-full  text-center">
-      <section className="mt-10 px-5  md:mt-20 grid place-items-center">
+    <div className="w-full text-center">
+      <section className="mt-10 px-5 md:mt-20 grid place-items-center">
         <HeroHeader />
       </section>
       <section className="min-h-[50vh] mt-10  flex items-center justify-center">

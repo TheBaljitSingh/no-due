@@ -61,7 +61,7 @@ const Navbar = () => {
 
 
   return (
-    <header className="sticky top-0 z-50 py-4 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 ">
+    <header className="sticky top-0 z-50 py-4 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/10 ">
       <nav className="mx-auto px-4 sm:px-6 lg:px-14">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}

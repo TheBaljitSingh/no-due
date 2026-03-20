@@ -84,7 +84,7 @@ const HeroHeader = () => {
   return (
     <div
       ref={root}
-      className="backgroundtwo rounded-full py-8 z-20 relative overflow-hidden"
+      className="backgroundtwo rounded-full py-8 z-20 relative"
     >
       {/* Ambient glow orb */}
       <div

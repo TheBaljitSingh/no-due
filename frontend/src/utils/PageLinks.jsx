@@ -28,6 +28,7 @@ import WhatsappChats from "../Pages/WhatsappChats/WhatsappChats";
 import AllTransaction from "../Pages/AfterAuthPages/AllTransaction";
 import TransactionHistory from "../Components/AfterAuthComponent/CustomerMasterPage/Transactions";
 import WhatsappConnectivity from "../Pages/AfterAuthPages/WhatsappConnectivity";
+import Main from "../../learning";
 
 const PageLinks = () => {
   const location = useLocation();
@@ -91,6 +92,7 @@ const PageLinks = () => {
         <Route path="whatsapp-chat" element={<WhatsappChats />} />
         <Route path="all-transactions" element={<AllTransaction />} />
         <Route path="settings/whatsapp" element={<WhatsappConnectivity />} />
+        <Route path="learning" element={<Main/>} />
       </Route>
 
       <Route path="*" element={<Error404Page />} />

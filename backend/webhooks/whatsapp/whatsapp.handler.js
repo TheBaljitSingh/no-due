@@ -82,7 +82,7 @@ export const handleWhatsappEvent = async (payload) => {
     });
 
     if (existingResponse) {
-      // shouldEmitEvent = false;
+      shouldEmitEvent = false;
       console.warn(`[Audit] Duplicate response blocked. Message ${intent.context.id} already responded to.`);
       return;
     }

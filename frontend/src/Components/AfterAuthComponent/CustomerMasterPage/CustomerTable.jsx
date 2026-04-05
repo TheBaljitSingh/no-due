@@ -213,7 +213,9 @@ const CustomerTable = ({
       // Update UI state here
       setCustomers((prev) =>
         prev.map((c) =>
-          c.mobile === data.mobile ? { ...c, feedback: data?.feedback } : c,
+          c.mobile === data.mobile
+            ? { ...c, feedback: data?.feedback, lastInteraction: data?.lastInteraction }
+            : c,
         ),
       );
     };
@@ -742,9 +744,24 @@ const CustomerTable = ({
                     </td>
                     <td className="px-3 py-4 text-gray-600 text-sm max-w-[160px] truncate">
                       {c.feedback ? (
-                        c.feedback
-                          .toLowerCase()
-                          .replace(/\b\w/g, (l) => l.toUpperCase())
+                        <>
+                          <span className="block truncate">
+                            {c.feedback
+                              .toLowerCase()
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
+                          </span>
+                          {c?.lastInteraction && (
+                            <span className="text-[10px] text-gray-400 block mt-0.5 font-normal">
+                              {new Date(c.lastInteraction).toLocaleString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              })}
+                            </span>
+                          )}
+                        </>
                       ) : (
                         <span className="text-gray-300">—</span>
                       )}
@@ -818,7 +835,7 @@ const CustomerTable = ({
             onClick={handleDownloadPdf}
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 hover:cursor-pointer"
           >
-            <FileText className="w-4 h-4" />
+            <Download className="w-4 h-4" />
             PDF
           </button>
         </div>

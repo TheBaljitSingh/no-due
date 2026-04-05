@@ -243,7 +243,12 @@ export const getAllTransaction = async (req, res) => {
       // Apply advanced filters on grouped data
       {
         $match: {
-          ...(statuses.length > 0 ? { "transactions.paymentStatus": { $in: statuses } } : {}),
+          ...(statuses.length > 0 ? {
+            $or: [
+              { "transactions.paymentStatus": { $in: statuses } },
+              ...(statuses.includes("OVERDUE") ? [{ "transactions.overdueByDay": { $gt: 0 } }] : [])
+            ]
+          } : {}),
           ...(overdue !== "any" ? {
             "transactions": {
               $elemMatch: {

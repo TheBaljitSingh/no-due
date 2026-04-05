@@ -104,20 +104,22 @@ export const handleWhatsappEvent = async (payload) => {
   if (intent.type === 'BUTTON') {
     if (customer) {
       const feedbackText = intent.text || intent.actionId || "Interaction received";
+      const feedbackAt = new Date();
       await Customer.findByIdAndUpdate(
         customer._id,
         {
           feedback: feedbackText,
-          lastInteraction: new Date()
+          lastInteraction: feedbackAt
         }
       );
 
       // Emit live update via socket to the specific merchant's room
-      if(shouldEmitEvent && merchant._id){
-          try {
-            const io = getIo();
-            io.to(merchant._id.toString()).emit("feedback_updated", {
+      if (shouldEmitEvent && merchant._id) {
+        try {
+          const io = getIo();
+          io.to(merchant._id.toString()).emit("feedback_updated", {
             feedback: feedbackText,
+            lastInteraction: feedbackAt,
             mobile: intent.from,
             customerName: customer.name,
             messageId: rawMsg?.id // used to prevent duplicate toasts in frontend

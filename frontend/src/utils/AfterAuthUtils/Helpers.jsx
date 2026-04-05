@@ -126,19 +126,30 @@ export const formatDate = (d) =>
     : "-";
 
 export const StatusBadge = ({ value, transactions }) => {
+  const status = String(value || "").toUpperCase();
   const styles = {
-    Paid: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
-    Overdue: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
-    Pending:
-      "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
+    PAID: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
+    OVERDUE: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
+    PENDING: "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
+    DUE: "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
+    PARTIAL: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20",
   };
+
+  const displayValue = value === "PENDING" ? "Pending" 
+                    : value === "OVERDUE" ? "Overdue"
+                    : value === "PAID" ? "Paid"
+                    : value === "PARTIAL" ? "Partial"
+                    : value;
+
   return (
     <span
-      className={`inline-flex flex-col  items-start rounded-md px-2 py-1 text-xs font-medium ${styles[value] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}
+      className={`inline-flex flex-col items-start rounded-md px-2 py-1 text-xs font-medium ${styles[status] || "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20"}`}
     >
-      {value}
-      <p className="text-gray-500 text-sm">{value === 'Overdue' && formatDate(transactions?.find(c => c.type === 'DUE_ADDED')?.dueDate)}</p>
-
+      {displayValue}
+      <p className="text-gray-500 text-sm">
+        {status === "OVERDUE" && 
+          formatDate(transactions?.find(c => c.type === "DUE_ADDED")?.dueDate)}
+      </p>
     </span>
   );
 };

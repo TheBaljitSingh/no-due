@@ -1,7 +1,7 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { logoutUser } from '../../utils/service/authService';
 import { useAuth } from '../../context/AuthContext';
+import { socket } from '../../socket/index.js';
 
 const LogoutModal = ({ setShowLogoutModal }) => {
   const { setUser, setIsUserLoggedOut } = useAuth();
@@ -13,7 +13,7 @@ const LogoutModal = ({ setShowLogoutModal }) => {
       setUser(null);
       setShowLogoutModal(false);
       localStorage.removeItem("isUserLoggedIn");
-
+      socket.disconnect();
     }
   }
 

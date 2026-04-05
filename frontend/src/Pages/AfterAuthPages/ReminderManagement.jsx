@@ -880,19 +880,6 @@ export default function ReminderManagement() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-4">
-                                <div className="text-right">
-                                  <p className="text-xs text-gray-500 uppercase font-medium">
-                                    Total Dues
-                                  </p>
-                                  <p className="text-sm font-bold text-gray-900">
-                                    {currency2(
-                                      group.reminders.reduce(
-                                        (acc, r) => acc + Number(r.dueAmount),
-                                        0,
-                                      ),
-                                    )}
-                                  </p>
-                                </div>
                                 <span className="bg-white border border-green-200 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
                                   {group.reminders.length} Reminders
                                 </span>

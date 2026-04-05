@@ -159,7 +159,9 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
     const handleFeedbackUpdate = (data) => {
       setCustomers((prev) =>
         prev.map((c) =>
-          c.mobile === data.mobile ? { ...c, feedback: data?.feedback } : c,
+          c.mobile === data.mobile
+            ? { ...c, feedback: data?.feedback, lastInteraction: data?.lastInteraction }
+            : c,
         ),
       );
     };
@@ -417,6 +419,17 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
                     <p className="text-gray-600 text-xs line-clamp-1">
                       {c.feedback}
                     </p>
+                        {c?.lastInteraction && (
+                            <span className="text-[10px] text-gray-400 block mt-0.5 font-normal">
+                              {new Date(c.lastInteraction).toLocaleString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              })}
+                            </span>
+                          )}
                   </div>
                 )}
               </div>

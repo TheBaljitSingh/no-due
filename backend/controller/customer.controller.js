@@ -572,37 +572,37 @@ export const getCustomers = async (req, res) => {
     const total = await Customer.countDocuments(query);
 
     function groupTransactionsHelper(transactions) {
-    const dueMap = {};
+      const dueMap = {};
 
-    transactions.forEach((tx) => {
+      transactions.forEach((tx) => {
 
-      if (tx.type === "DUE_ADDED") {
-        dueMap[tx._id] = {
-          type:'DUE_ADDED',
-          _id: tx._id,
-          amount: tx.amount,
-          remainingDue: tx.remainingDue,
-          dueDate: tx.dueDate,
-          paymentStatus: tx.paymentStatus,
-          createdAt: tx.createdAt,
-          payments: []
-        };
-      }
-
-      if (tx.type === "PAYMENT") {
-        const dueId = tx.linkedDueTransaction;
-
-        if (dueMap[dueId]) {
-          dueMap[dueId].payments.push(tx);
+        if (tx.type === "DUE_ADDED") {
+          dueMap[tx._id] = {
+            type: 'DUE_ADDED',
+            _id: tx._id,
+            amount: tx.amount,
+            remainingDue: tx.remainingDue,
+            dueDate: tx.dueDate,
+            paymentStatus: tx.paymentStatus,
+            createdAt: tx.createdAt,
+            payments: []
+          };
         }
-      }
 
-    });
+        if (tx.type === "PAYMENT") {
+          const dueId = tx.linkedDueTransaction;
 
-    return Object.values(dueMap).sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-  }
+          if (dueMap[dueId]) {
+            dueMap[dueId].payments.push(tx);
+          }
+        }
+
+      });
+
+      return Object.values(dueMap).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+    }
 
     const formattedCustomers = customers.map((customer) => ({
       ...customer.toObject(),
@@ -612,7 +612,7 @@ export const getCustomers = async (req, res) => {
 
     return new APIResponse(
       200,
-      { customers:formattedCustomers, total, page, limit, totalPages: Math.ceil(total / limit) },
+      { customers: formattedCustomers, total, page, limit, totalPages: Math.ceil(total / limit) },
       "Fetched all customers",
     ).send(res);
   } catch (error) {
@@ -713,40 +713,40 @@ export const deleteCustomers = async (req, res) => {
       { _id: 1 }
     );
 
-    const validIds = validCustomers.map((c)=>c._id);
+    const validIds = validCustomers.map((c) => c._id);
 
     if (validIds.length === 0) {
       return new APIError(403, ["No valid customers found"]).send(res);
     }
 
-    
+
     //ATOMICITY with cascade delete
-      let result ;
-      const session = await mongoose.startSession();
-      try {
-        session.startTransaction();
+    let result;
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
 
-        await Transaction.deleteMany({customerId:{$in:validIds}}).session(session);
-        await Reminder.deleteMany({customerId:{$in:validIds}}).session(session);
-        await Notification.deleteMany({relatedCustomerId:{$in:validIds}}).session(session);
-        result = await Customer.deleteMany({_id:{$in:validIds}}).session(session);
+      await Transaction.deleteMany({ customerId: { $in: validIds } }).session(session);
+      await Reminder.deleteMany({ customerId: { $in: validIds } }).session(session);
+      await Notification.deleteMany({ relatedCustomerId: { $in: validIds } }).session(session);
+      result = await Customer.deleteMany({ _id: { $in: validIds } }).session(session);
 
-        await session.commitTransaction();
-      } catch (err) {
-        console.log("error",err);
-        await session.abortTransaction();
-        return new APIError(500, [`Failed to delete customer${ids.length>1?'s':''}`]).send(res);
-      } finally {
-        session.endSession();
-      }
+      await session.commitTransaction();
+    } catch (err) {
+      console.log("error", err);
+      await session.abortTransaction();
+      return new APIError(500, [`Failed to delete customer${ids.length > 1 ? 's' : ''}`]).send(res);
+    } finally {
+      session.endSession();
+    }
 
 
-      return new APIResponse(
-        200,
-        result,
-        `${result.deletedCount} customers and their associated data deleted`,
-      ).send(res);
-    
+    return new APIResponse(
+      200,
+      result,
+      `${result.deletedCount} customers and their associated data deleted`,
+    ).send(res);
+
   } catch (error) {
     console.error("Delete customer error:", error);
     return new APIError(500, [error.message || "Failed to delete customer"]).send(res);
@@ -821,7 +821,7 @@ export const validateBulkCustomers = async (req, res) => {
       // email (optional)
       if (customer.email) {
         let email = customer.email.toString().trim();
-        if(typeof(customer.email)==='object'){
+        if (typeof (customer.email) === 'object') {
           email = customer.email?.text;
         }
         if (!EMAIL_RE.test(email) || email.length < 5 || email.length > 255) {
@@ -898,25 +898,16 @@ export const bulkUploadSSE = async (req, res) => {
   try {
 
     const rawCustomerData = req.body;
-    const mergeMap = {};  // Data Structure looks like {{'918709548015'}, {name:'',mobile, etc}};
-    for(const row of rawCustomerData){
+    // Normalize mobiles per row — no merging, each row is an independent entry
+    const customerData = rawCustomerData.map((row) => {
       const raw = row.mobile?.toString().replace(/\D/g, "") ?? "";
       const formattedMobile = raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;
-      
-      const amount = Number(row.amount) || 0;
-
-      if(!mergeMap[formattedMobile]){
-        mergeMap[formattedMobile]={
-          ...row,
-          mobile:formattedMobile,
-          amount,
-        }
-      }else{
-        //accumulate amount if duplicate
-        mergeMap[formattedMobile].amount+=amount;
-      }
-    }
-    const customerData = Object.values(mergeMap);
+      return {
+        ...row,
+        mobile: formattedMobile,
+        amount: Number(row.amount) || 0,
+      };
+    });
 
     if (!Array.isArray(customerData) || customerData.length === 0) {
       sendEvent({
@@ -990,12 +981,20 @@ export const bulkUploadSSE = async (req, res) => {
 
       const existing = existingMap[formattedMobile];
 
-      // Generate an ID for the new/existing customer we'll use for transaction linking
-      const customerId = existing ? existing._id : new MongooseTypes.ObjectId();
+      // Check if this mobile was already queued as a new insert in an earlier row
+      const alreadyQueuedNew = customerMobileMap[formattedMobile];
 
-      if (existing) {
+      // Determine the customerId for transaction linking
+      const customerId = existing
+        ? existing._id
+        : alreadyQueuedNew
+          ? alreadyQueuedNew
+          : new MongooseTypes.ObjectId();
+
+      if (existing || alreadyQueuedNew) {
+        // Existing customer (from DB or from a previous row in this upload)
         updatedCount++;
-        // update op — $set and $inc must be sibling operators
+        const filterId = existing ? existing._id : alreadyQueuedNew;
         const updateOp = {
           $set: {
             status:
@@ -1004,21 +1003,19 @@ export const bulkUploadSSE = async (req, res) => {
                 : status === "overdue"
                   ? "Overdue"
                   : "Due",
-            paymentTerm: paymentTermData?._id ?? existing.paymentTerm,
+            paymentTerm: paymentTermData?._id ?? (existing?.paymentTerm ?? null),
           },
         };
         if (dueAmount > 0 && status !== "paid") {
           updateOp.$inc = { currentDue: dueAmount };
         }
         customerBulkOps.push({
-          updateOne: { filter: { _id: existing._id }, update: updateOp },
+          updateOne: { filter: { _id: filterId }, update: updateOp },
         });
-
-        //in existing add the accumulate the amount don't create two entry
       } else {
+        // Brand new customer — first time seeing this mobile
         createdCount++;
         customerMobileMap[formattedMobile] = customerId;
-        // insert op
         customerBulkOps.push({
           insertOne: {
             document: {

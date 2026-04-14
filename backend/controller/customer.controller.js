@@ -809,13 +809,17 @@ export const validateBulkCustomers = async (req, res) => {
           ? rawMobile.slice(2) // already has country code: 919187657653 → 9187657653 ✓
           : rawMobile; // 10-digit number used as-is (including ones starting with 91)
       if (mobile.length !== 10) {
-        errors.push({
-          row,
-          field: "mobile",
-          value: customer.mobile ?? "",
-          message:
+        if(mobile?.length===0){
+          //skip the empty one
+        }else{
+          errors.push({
+            row,
+            field: "mobile",
+            value: customer.mobile ?? "",
+            message:
             "Mobile must be a valid 10-digit number. Accepted formats: 9727131578 | 919727131578 | +91 9727131578 | +91 97271 31578",
-        });
+          });
+        }
       }
 
       // email (optional)
@@ -900,8 +904,11 @@ export const bulkUploadSSE = async (req, res) => {
     const rawCustomerData = req.body;
     // Normalize mobiles per row — no merging, each row is an independent entry
     const customerData = rawCustomerData.map((row) => {
-      const raw = row.mobile?.toString().replace(/\D/g, "") ?? "";
-      const formattedMobile = raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;
+      let formattedMobile =  undefined;
+      if(row?.mobile){
+        const raw = row.mobile?.toString().replace(/\D/g, "") ?? "";
+        formattedMobile = raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;        
+      }
       return {
         ...row,
         mobile: formattedMobile,
@@ -938,7 +945,7 @@ export const bulkUploadSSE = async (req, res) => {
 
     // We need to check for existing customers to decide upsert vs insert
     // Do a single batch lookup to avoid N round-trips
-    const normalizedMobiles = customerData.map((c) => c.mobile);
+    const normalizedMobiles = customerData.map((c) => c.mobile).filter(Boolean); //it will ignore the null mobile numbers
 
     const existingCustomers = await Customer.find({
       mobile: { $in: normalizedMobiles },
@@ -979,10 +986,12 @@ export const bulkUploadSSE = async (req, res) => {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + creditDays);
 
-      const existing = existingMap[formattedMobile];
+      const hasMobile = !!formattedMobile;
+
+      const existing = hasMobile? existingMap[formattedMobile]:null;
 
       // Check if this mobile was already queued as a new insert in an earlier row
-      const alreadyQueuedNew = customerMobileMap[formattedMobile];
+      const alreadyQueuedNew = hasMobile?customerMobileMap[formattedMobile]:null;
 
       // Determine the customerId for transaction linking
       const customerId = existing
@@ -1015,13 +1024,16 @@ export const bulkUploadSSE = async (req, res) => {
       } else {
         // Brand new customer — first time seeing this mobile
         createdCount++;
-        customerMobileMap[formattedMobile] = customerId;
+        if(hasMobile){
+          customerMobileMap[formattedMobile] = customerId;
+        }
+        
         customerBulkOps.push({
           insertOne: {
             document: {
               _id: customerId,
               name: customer.name,
-              mobile: formattedMobile,
+              mobile: formattedMobile || undefined,
               email: customer.email || undefined,
               gender: customer.gender || "other",
               CustomerOfComapny: userId,

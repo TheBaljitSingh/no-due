@@ -13,6 +13,7 @@ const customerSchema = new Schema({
     mobile: {
         type: String,
         trim: true,
+        sparse:true, // allow the multiple null
         validate: {
             validator: function (v) {
                 return /^91\d{10}$/.test(v); // only this format 918709548015
@@ -103,7 +104,11 @@ customerSchema.plugin(removeIdVirtual)
 
 customerSchema.index(
     { mobile:1, CustomerOfComapny:1},
-    {unique:true}
+    {unique:true,
+        partialFilterExpression:{
+            mobile: { $exists: true }
+        }
+    }
 );
 
 const Customer = mongoose.model('Customer', customerSchema);

@@ -314,8 +314,7 @@ const BulkEntrySection = ({ paymentTerms }) => {
   };
   const handleDownloadCSVFormat = () => {
     const link = document.createElement("a");
-    link.href =
-      "https://res.cloudinary.com/dzdt11nsx/raw/upload/v1776180465/Updated_Test_Data_d0br4m.xlsx";
+    link.href = process.env.VITE_BULK_UPLOAD_FORMAT;
     link.click();
   };
 

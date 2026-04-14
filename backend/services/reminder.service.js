@@ -11,6 +11,7 @@ import {
   getOverdueTemplate
 } from "../utils/reminder.templates.js";
 import User from "../model/user.model.js";
+import Notification from "../model/notification.model.js";
 import { formatDate } from "../utils/Helper.js";
 
 const REMINDER_TYPES = {
@@ -312,6 +313,7 @@ class ReminderService {
 
     console.log(`will process ${reminders.length} reminders`);
 
+    const alertedCustomers = new Set();
 
     for (const reminder of reminders) {
       // console.log(reminder);
@@ -320,20 +322,52 @@ class ReminderService {
         // tx have linkedDueTransaction (Id), if it is null then it is the due transaction
         // console.log("tx", tx);
         //there is not use of this, because i'm not updating the transaction of reminder while manking payment
-        const linkedDueTransaction = await Transaction.findById(tx.linkedDueTransaction);
+        const linkedDueTransaction = await Transaction.findById(tx.linkedDueTransaction).populate("customerId");
         if (linkedDueTransaction) {
           tx = linkedDueTransaction;
         }
 
-        if (!tx || !tx.customerId || tx?.paymentStatus === "PAID" || tx?.commitmentStatus === "LOOP_BROKEN") {
+        if (!tx  || !tx.customerId || !tx.customerId?.mobile || tx?.paymentStatus === "PAID" || tx?.commitmentStatus === "LOOP_BROKEN") {
           //if already paid or loop broken then cancelling the rminder for future
+
+          
           reminder.status = "cancelled";
           reminder.cancelledAt = new Date();
           await reminder.save();
+          
+          //send the notification for the merchant(user dashboard that this customer have not mobile number)
+          if (tx?.customerId && !tx.customerId.mobile) {
+            const customerId = tx.customerId._id.toString();
+            const merchantId = tx.customerId.CustomerOfComapny;
+
+            if (!alertedCustomers.has(customerId) && merchantId) {
+              const existingNotification = await Notification.findOne({
+                userId: merchantId,
+                relatedCustomerId: customerId,
+                type: "system_alert",
+                isRead: false,
+              });
+
+              if (!existingNotification) {
+                await Notification.create({
+                  userId: merchantId,
+                  relatedCustomerId: customerId,
+                  title: "Missing Mobile Number",
+                  message: `Cannot send reminders for customer ${tx.customerId.name} because mobile number is missing.`,
+                  type: "system_alert",
+                  metadata: {
+                    action: "update_customer",
+                    customerId: customerId,
+                  },
+                });
+              }
+              alertedCustomers.add(customerId);
+            }
+          }
+
           continue;
         }
 
-        // [very important]
 
         //if you want to still schedule then you have  to use tx?.commitmentStatus==='loop_broken' and schedule soruce is manual i have to add this flag here
 

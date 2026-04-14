@@ -194,10 +194,13 @@ const CustomerMobileCard = ({ search = "", onStatsReady }) => {
             "paymentTerm"
           ].includes(row),
       );
+
+      headers.push("downloadedAt");
+
       const csvRows = [headers.join(",")];
       data.forEach((row) => {
         const values = headers.map((header) => {
-          let val = row[header];
+          let val =  header==='downloadedAt' ? new Date().toLocaleString("en-IN"): row[header];
 
           if (header === "mobile") {
             val = `="${val}"`;

@@ -353,13 +353,15 @@ const CustomerTable = ({
           ].includes(row),
       ); // keys array will be stored
 
+      headers.push("downloadedAt");
+
       // Convert headers to CSV row
       const csvRows = [headers.join(",")]; // keystring
 
       // Convert data rows: N*N Time Complexity
       data.forEach((row) => {
         const values = headers.map((header) => {
-          let val = row[header];
+          let val = header === "downloadedAt" ? new Date().toLocaleString("en-IN") : row[header];
           if (
             header &&
             header === "currentDue" &&
@@ -708,7 +710,7 @@ const CustomerTable = ({
                           />
                         </div>
                       ) : (
-                        `+91 ${c.mobile.slice(2, 7)}  ${c.mobile.slice(7, 12)}`
+                        c?.mobile ? `+91 ${c?.mobile?.slice(2, 7)}  ${c?.mobile?.slice(7, 12)}`:<span className="text-gray-300 mr-12 flex justify-center">—</span>
                       )}
                     </td>
 

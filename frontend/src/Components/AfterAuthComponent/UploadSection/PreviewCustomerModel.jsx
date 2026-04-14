@@ -79,6 +79,7 @@ export default function PreviewCustomerModal({
   name: "Company Name",
   email: "Email Address",
   mobile: "mobile Number",
+  invoiceDate: "Invoice Date"
   };
 
   //have to map here

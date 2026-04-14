@@ -977,13 +977,20 @@ export const bulkUploadSSE = async (req, res) => {
       const dueAmount = Number(customer.amount) || 0;
       const status = (customer.status ?? "due").toString().toLowerCase().trim();
 
+
       const paymentTermData = customer.paymentTerm
         ? await PaymentTerm.findById(customer.paymentTerm)
         : defaultPT;
 
       const creditDays =
         paymentTermData?.creditDays ?? defaultPT?.creditDays ?? 10;
-      const dueDate = new Date();
+      // Default to current date if invoiceDate is missing or invalid to prevent bulk upload failure
+      const rawInvoiceDate = customer?.invoiceDate;
+      const baseDate = (rawInvoiceDate && !isNaN(new Date(rawInvoiceDate).getTime())) 
+        ? new Date(rawInvoiceDate) 
+        : new Date();
+
+      const dueDate = new Date(baseDate);
       dueDate.setDate(dueDate.getDate() + creditDays);
 
       const hasMobile = !!formattedMobile;

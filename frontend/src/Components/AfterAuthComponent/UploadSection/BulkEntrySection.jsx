@@ -315,7 +315,7 @@ const BulkEntrySection = ({ paymentTerms }) => {
   const handleDownloadCSVFormat = () => {
     const link = document.createElement("a");
     link.href =
-      "https://res.cloudinary.com/dzdt11nsx/raw/upload/v1772792867/Updated_Test_Data_d0br4m.xlsx";
+      "https://res.cloudinary.com/dzdt11nsx/raw/upload/v1776180465/Updated_Test_Data_d0br4m.xlsx";
     link.click();
   };
 

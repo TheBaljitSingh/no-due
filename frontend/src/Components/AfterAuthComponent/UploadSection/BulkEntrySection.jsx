@@ -314,7 +314,7 @@ const BulkEntrySection = ({ paymentTerms }) => {
   };
   const handleDownloadCSVFormat = () => {
     const link = document.createElement("a");
-    link.href = process.env.VITE_BULK_UPLOAD_FORMAT;
+    link.href = import.meta.env.VITE_BULK_UPLOAD_FORMAT;
     link.click();
   };
 

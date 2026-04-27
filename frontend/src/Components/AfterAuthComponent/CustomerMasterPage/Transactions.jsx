@@ -319,7 +319,7 @@ const TransactionHistory = () => {
     return (
         <div className="space-y-5 mb-10">
             <PageHeaders
-                header="Due Summafry - Transaction History"
+                header="Due Summary - Transaction History"
                 subheader="View, filter and group all pending dues across customers."
                 buttonName="Add Transaction"
                 handleOnClick={() => setShowAddTransactionModal(true)}
@@ -568,6 +568,7 @@ const TransactionHistory = () => {
                                     <tr>
                                         <th className="w-10"></th>
                                         <th className="px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Customer / Date</th>
+                                        <th className="px-1 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide text-center">Ref Number</th>
                                         <th className="px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide text-center">Remaining</th>
                                         <th className="px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Due Date</th>
                                         <th className="px-3 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Note</th>
@@ -643,7 +644,10 @@ const TransactionHistory = () => {
                                                     <tr key={row._id} className={`border-l-4 border-l-transparent hover:bg-green-50/20 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/30"}`}>
                                                         <td></td>
                                                         <td className="px-3 py-2.5 text-gray-500 pl-8 text-xs italic">
-                                                            {formatDate(row.createdAt)}
+                                                            {row?.invoiceDate?formatDate(row?.invoiceDate): <span className="text-gray-400">—</span>}
+                                                        </td>
+                                                        <td className="px-1 py-2.5 text-center font-medium text-gray-700 text-sm">
+                                                            {row?.referenceNumber? (row?.referenceNumber ): <span className="text-gray-300">—</span>}
                                                         </td>
                                                         <td className="px-3 py-2.5 text-center font-medium text-gray-700 text-sm">
                                                             {currency(row.remainingDue)}

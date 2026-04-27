@@ -8,6 +8,10 @@ if (fs.existsSync('.env.development.local')) {
 }else {
     dotenv.config();
 };
+import { setServers } from "node:dns/promises";
+
+setServers(["1.1.1.1", "8.8.8.8"]);
+
 
 
 // Check if MONGO_URI is loaded

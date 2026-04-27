@@ -18,6 +18,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import ExcelJS from "exceljs";
 import toast from "react-hot-toast";
+import { formatDate } from "../../../utils/AfterAuthUtils/Helpers";
 
 // ─── tiny helpers ──────────────────────────────────────────────────────────
 const FIELD_LABELS = {
@@ -180,6 +181,25 @@ const BulkEntrySection = ({ paymentTerms }) => {
     return () => document.removeEventListener("mousedown", handleMouseClick);
   });
 
+  //helper function for the cscFileToJson
+
+  function normalizeHeader(header) {
+    return header
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "_") // replace special char with _
+      .replace(/_+/g, "_") //one or more _
+      .replace(/^_|_$/g, ""); // starting or ending _
+  }
+
+  const headerMapping = {
+    name:"name",
+    party_name:"name",
+    party_s_name:"name",
+    date:"invoiceDate",
+    ref_no:"referenceNumber"
+  }
+
+
   const csvFileToJson = async (file) => {
     setIsParsing(true);
     setValidationErrors([]);
@@ -204,7 +224,13 @@ const BulkEntrySection = ({ paymentTerms }) => {
       const jsonData = [];
       sheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) {
-          row.eachCell((cell) => headers.push(String(cell.value).trim()));
+          row.eachCell((cell) =>{
+            const rawHeader = String(cell.value).trim();
+            const normalized = normalizeHeader(rawHeader);
+            headers.push(headerMapping[normalized] || normalized)
+            
+          }
+        )
         } else {
           const obj = {};
           row.eachCell((cell, colNumber) => {
@@ -221,7 +247,13 @@ const BulkEntrySection = ({ paymentTerms }) => {
         }
       });
 
-      setPreviewData(jsonData);
+      const normalizedData = jsonData.map((row) => {
+        const newRow = { ...row };
+        if (newRow.invoiceDate) newRow.invoiceDate = formatDate(newRow.invoiceDate);
+        return newRow;
+      });
+
+      setPreviewData(normalizedData);
     } catch (error) {
       console.error("File parsing error:", error);
       toast.error(

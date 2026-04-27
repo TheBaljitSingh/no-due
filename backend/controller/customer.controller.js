@@ -904,13 +904,27 @@ export const bulkUploadSSE = async (req, res) => {
     const rawCustomerData = req.body;
     // Normalize mobiles per row — no merging, each row is an independent entry
     const customerData = rawCustomerData.map((row) => {
-      let formattedMobile =  undefined;
-      if(row?.mobile){
+      let formattedMobile = undefined;
+      if (row?.mobile) {
         const raw = row.mobile?.toString().replace(/\D/g, "") ?? "";
-        formattedMobile = raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;        
+        if (raw) {
+          formattedMobile = raw.length === 12 && raw.startsWith("91") ? raw : `91${raw}`;
+        }
       }
+
+      // Title Case for name
+      const formattedName = row.name
+        ? row.name
+            .trim()
+            .toLowerCase()
+            .split(" ")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ")
+        : "";
+
       return {
         ...row,
+        name: formattedName,
         mobile: formattedMobile,
         amount: Number(row.amount) || 0,
       };
@@ -941,19 +955,16 @@ export const bulkUploadSSE = async (req, res) => {
     const customerBulkOps = []; // for Customer.bulkWrite
     const transactionDocs = []; // for Transaction.insertMany
     const reminderDocs = []; // for Reminder.insertMany
-    const customerMobileMap = {}; // mobile → index in customerBulkOps (to link transaction customerIds)
-
-    // We need to check for existing customers to decide upsert vs insert
-    // Do a single batch lookup to avoid N round-trips
-    const normalizedMobiles = customerData.map((c) => c.mobile).filter(Boolean); //it will ignore the null mobile numbers
+    const customerNameMap = {}; // name → index in customerBulkOps
+    const names = customerData.map((c) => c.name).filter(Boolean);
 
     const existingCustomers = await Customer.find({
-      mobile: { $in: normalizedMobiles },
+      name: { $in: names },
       CustomerOfComapny: userId,
     });
     const existingMap = {};
     existingCustomers.forEach((c) => {
-      existingMap[c.mobile] = c;
+      existingMap[c.name] = c;
     });
 
     let createdCount = 0;
@@ -993,12 +1004,10 @@ export const bulkUploadSSE = async (req, res) => {
       const dueDate = new Date(baseDate);
       dueDate.setDate(dueDate.getDate() + creditDays);
 
-      const hasMobile = !!formattedMobile;
+      const existing = existingMap[customer.name];
 
-      const existing = hasMobile? existingMap[formattedMobile]:null;
-
-      // Check if this mobile was already queued as a new insert in an earlier row
-      const alreadyQueuedNew = hasMobile?customerMobileMap[formattedMobile]:null;
+      // Check if this name was already queued as a new insert in an earlier row
+      const alreadyQueuedNew = customerNameMap[customer.name];
 
       // Determine the customerId for transaction linking
       const customerId = existing
@@ -1029,12 +1038,10 @@ export const bulkUploadSSE = async (req, res) => {
           updateOne: { filter: { _id: filterId }, update: updateOp },
         });
       } else {
-        // Brand new customer — first time seeing this mobile
+        // Brand new customer — first time seeing this name
         createdCount++;
-        if(hasMobile){
-          customerMobileMap[formattedMobile] = customerId;
-        }
-        
+        customerNameMap[customer.name] = customerId;
+
         customerBulkOps.push({
           insertOne: {
             document: {
@@ -1072,11 +1079,13 @@ export const bulkUploadSSE = async (req, res) => {
               : status === "overdue"
                 ? "OVERDUE"
                 : "PENDING",
+          invoiceDate: baseDate,
           dueDate: status !== "paid" ? dueDate : undefined,
           metadata: {
             note:
               customer.note ||
               (status === "paid" ? "Bulk upload payment" : "Bulk upload due"),
+            referenceNumber: customer.referenceNumber || undefined,
             operatorId: userId,
           },
         };

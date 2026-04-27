@@ -18,6 +18,8 @@ export default function PreviewCustomerModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState(new Set());
 
+
+
   const handleContinue = () => {
     if (selectedRows.size > 0) {
       const selectedData = data.filter((_, i) => selectedRows.has(i));
@@ -27,46 +29,6 @@ export default function PreviewCustomerModal({
     handleClose();
   };
 
-  useEffect(() => {
-    if (!data || data.length === 0) return;
-
-    let hasChanges = false;
-    const updatedData = data.map((row) => {
-      const newRow = { ...row };
-      let rowChanged = false;
-
-      Object.keys(newRow).forEach((key) => {
-        if (key.toLowerCase() === "lastreminder") {
-          const val = newRow[key];
-          if (
-            val &&
-            !isNaN(val) &&
-            Number(val) > 30000 &&
-            String(val).indexOf("-") === -1
-          ) {
-            try {
-              const date = new Date(
-                (Number(val) - 25569) * 86400 * 1000 + 43200000,
-              );
-              if (!isNaN(date.getTime())) {
-                newRow[key] = date.toISOString().split("T")[0];
-                rowChanged = true;
-              }
-            } catch (e) {
-              console.error("Date conversion error", e);
-            }
-          }
-        }
-      });
-
-      if (rowChanged) hasChanges = true;
-      return newRow;
-    });
-
-    if (hasChanges) {
-      setData(updatedData);
-    }
-  }, [JSON.stringify(data)]);
 
   // Select all rows on mount
   useEffect(() => {
@@ -76,10 +38,12 @@ export default function PreviewCustomerModal({
   }, [data.length]);
 
   const columnLabelMap = {
-  name: "Company Name",
-  email: "Email Address",
-  mobile: "mobile Number",
-  invoiceDate: "Invoice Date"
+    name: "Company Name",
+    email: "Email Address",
+    mobile: "mobile Number",
+    invoiceDate: "Invoice Date",
+    amount: "Amount",
+    status: "Status"
   };
 
   //have to map here

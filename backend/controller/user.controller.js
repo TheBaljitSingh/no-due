@@ -233,9 +233,11 @@ export const getAllTransaction = async (req, res) => {
               type: "$type",
               paymentStatus: "$paymentStatus",
               dueDate: "$dueDate",
+              invoiceDate: "$invoiceDate",
               createdAt: "$createdAt",
               note: "$metadata.note",
               overdueByDay: { $ifNull: ["$overdueByDay", 0] },
+              referenceNumber: { $ifNull: ["$metadata.referenceNumber", null] }
             },
           },
         },

@@ -40,6 +40,9 @@ const TransactionSchema = new Schema(
     },
 
     // Due date (only for DUE_ADDED)
+    invoiceDate: {
+      type: Date,
+    },
     dueDate: {
       type: Date,
     },
@@ -73,6 +76,7 @@ const TransactionSchema = new Schema(
     metadata: {
       note: String,
       invoiceId: String,
+      referenceNumber: String,
       operatorId: { type: Types.ObjectId, ref: "User" },
     },
   },

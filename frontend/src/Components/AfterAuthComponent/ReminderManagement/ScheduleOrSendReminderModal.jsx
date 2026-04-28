@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { X, Search, Calendar, Send, User, CreditCard, MessageSquare } from "lucide-react";
 import { getAllcustomers, getCustomerTransactions } from "../../../utils/service/customerService";
 import { formatDate } from '../../../utils/AfterAuthUtils/Helpers';
+import toast from "react-hot-toast";
 
 export default function ScheduleOrSendReminderModal({
   open,
@@ -173,6 +174,14 @@ export default function ScheduleOrSendReminderModal({
 
   const handleSubmit = () => {
     if (!selectedTransaction || !template) return;
+
+    if (!selectedUser?.mobile) {
+      toast.error("This customer doesn't have a mobile number saved, so reminder won't be sent.", {
+        duration: 4000,
+        position: 'top-right',
+      });
+      return;
+    }
 
     // Prepare template variables based on selected template
     const variables = [

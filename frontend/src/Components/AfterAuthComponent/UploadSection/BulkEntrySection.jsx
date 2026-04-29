@@ -26,7 +26,7 @@ const FIELD_LABELS = {
   mobile: "Mobile",
   email: "Email",
   status: "Status",
-  amount: "Amount",
+  pendingAmount: "Pending Amount",
 };
 
 const ValidationErrorTable = ({ errors, onDismiss }) => (
@@ -192,12 +192,14 @@ const BulkEntrySection = ({ paymentTerms }) => {
   }
 
   const headerMapping = {
-    name:"name",
-    party_name:"name",
-    party_s_name:"name",
-    date:"invoiceDate",
-    ref_no:"referenceNumber"
-  }
+    name: "name",
+    party_name: "name",
+    party_s_name: "name",
+    date: "invoiceDate",
+    ref_no: "referenceNumber",
+    pending_amount: "pendingAmount",
+    amount: "pendingAmount",
+  };
 
 
   const csvFileToJson = async (file) => {
@@ -224,19 +226,19 @@ const BulkEntrySection = ({ paymentTerms }) => {
       const jsonData = [];
       sheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) {
-          row.eachCell((cell) =>{
+          row.eachCell((cell) => {
             const rawHeader = String(cell.value).trim();
             const normalized = normalizeHeader(rawHeader);
             headers.push(headerMapping[normalized] || normalized)
-            
+
           }
-        )
+          )
         } else {
           const obj = {};
           row.eachCell((cell, colNumber) => {
             let value = cell.value;
             //check for email if it is object with {text:'example@gmail.com', hyperlink:'example@gmail.com'}
-            if(value && typeof(value)==='object' && headers[colNumber-1]==='email' && value?.text){
+            if (value && typeof (value) === 'object' && headers[colNumber - 1] === 'email' && value?.text) {
               value = value.text;
             }
 

@@ -42,8 +42,9 @@ export default function PreviewCustomerModal({
     email: "Email Address",
     mobile: "mobile Number",
     invoiceDate: "Invoice Date",
-    amount: "Amount",
-    status: "Status"
+    pendingAmount: "Pending Amount",
+    status: "Status",
+    referenceNumber: "Reference Number"
   };
 
   //have to map here
@@ -100,7 +101,7 @@ export default function PreviewCustomerModal({
   };
 
   const dropdownFields = {
-    gender: ["male", "female", "other",'unknown'],
+    gender: ["male", "female", "other", 'unknown'],
     status: ["Due", "Overdue"],
   };
 

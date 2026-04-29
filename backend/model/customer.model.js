@@ -110,7 +110,7 @@ customerSchema.index(
         }
     }
 );
-
+customerSchema.index({ name: 1 });
 const Customer = mongoose.model('Customer', customerSchema);
 
 export default Customer;

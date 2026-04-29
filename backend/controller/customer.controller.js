@@ -985,7 +985,7 @@ export const bulkUploadSSE = async (req, res) => {
       });
 
       const formattedMobile = customer.mobile;
-      const dueAmount = Number(customer.amount) || 0;
+      const dueAmount = Number(customer.pendingAmount) || 0;
       const status = (customer.status ?? "due").toString().toLowerCase().trim();
 
 
